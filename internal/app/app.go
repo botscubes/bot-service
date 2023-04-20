@@ -1,5 +1,6 @@
 package app
 
+// net package NOT USED
 import (
 	"os"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 	fastRouter "github.com/fasthttp/router"
 
 	"github.com/botscubes/bot-service/internal/bot"
+	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/net/client"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
@@ -26,6 +28,7 @@ type App struct {
 	bots   map[string]*bot.TBot
 	config *appConfig
 	client *client.TClient
+	db     *pgsql.Db
 }
 
 var app App
@@ -34,16 +37,46 @@ const envPrefix = "TBOT_"
 
 func Run() {
 
+	log.Debug("Init")
+
 	var err error = nil
 
-	webhookBase, ok := env("WEBHOOK_BASE")
+	// TODO: create util for get env, for example: getenv(name, prefix, check required)
+
+	webhookBase, ok := env(envPrefix + "WEBHOOK_BASE")
 	assert(ok, "Environment variable "+envPrefix+"WEBHOOK_BASE not found")
 
-	listenAddress, ok := env("LISTEN_ADDRESS")
+	listenAddress, ok := env(envPrefix + "LISTEN_ADDRESS")
 	assert(ok, "Environment variable "+envPrefix+"LISTEN_ADDRESS not found")
 
-	botToken, ok := env("TOKEN")
+	botToken, ok := env(envPrefix + "TOKEN")
 	assert(ok, "Environment variable "+envPrefix+"TOKEN not found")
+
+	pgsqlBase, ok := env("POSTGRES_DB")
+	assert(ok, "Environment variable POSTGRES_DB not found")
+
+	pgsqlUser, ok := env("POSTGRES_USER")
+	assert(ok, "Environment variable POSTGRES_USER not found")
+
+	pgsqlPass, ok := env("POSTGRES_PASSWORD")
+	assert(ok, "Environment variable POSTGRES_PASSWORD not found")
+
+	pgsqlHost, ok := env("POSTGRES_HOST")
+	assert(ok, "Environment variable POSTGRES_HOST not found")
+
+	pgsqlPort, ok := env("POSTGRES_PORT")
+	assert(ok, "Environment variable POSTGRES_PORT not found")
+
+	pgsqlUrl := "postgres://" + pgsqlUser + ":" + pgsqlPass + "@" + pgsqlHost + ":" + pgsqlPort + "/" + pgsqlBase
+
+	app.db, err = pgsql.OpenConnection(pgsqlUrl)
+	if err != nil {
+		log.Error("Connection Postgresql error ", err)
+	}
+
+	defer app.db.CloseConnection()
+
+	app.db.GetTest()
 
 	app.config = new(appConfig)
 	app.config.webhookBase = webhookBase
@@ -63,6 +96,14 @@ func Run() {
 		},
 	}
 
+	go func() {
+		err = app.server.Start(listenAddress)
+		if err != nil {
+			log.Error("Start server ", err)
+		}
+	}()
+
+	// UNUSED !!
 	app.client = client.NewClient()
 
 	app.bots = make(map[string]*bot.TBot)
@@ -105,7 +146,7 @@ func Run() {
 }
 
 func env(name string) (string, bool) {
-	return os.LookupEnv(envPrefix + name)
+	return os.LookupEnv(name)
 }
 
 // Check ok and exit program if ok is false
