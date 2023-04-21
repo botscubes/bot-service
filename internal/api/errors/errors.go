@@ -1,14 +1,5 @@
 package errors
 
-// TOOD: create Responce package with struct
-//  Ok bool
-//  Data
-//  Error *service_error
-//
-// error_type
-// error_code
-// error_message
-
 import (
 	err "github.com/botscubes/user-service/pkg/service_error"
 )
@@ -25,8 +16,7 @@ var (
 	ErrTokenExistInSystem   = err.New(102, "Token already exist in the system")
 )
 
-var ()
-
+// New new handler
 var (
-	Success = err.New(0, "Success")
+	ErrInvalidTitleLength = err.New(103, "Title is too long")
 )

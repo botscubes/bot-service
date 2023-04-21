@@ -4,14 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"unicode/utf8"
 
 	errors "github.com/botscubes/bot-service/internal/api/errors"
+	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/valyala/fasthttp"
 )
 
-type newBotJson struct {
+type newBotReq struct {
 	UserId *json.Number `json:"user_id"`
+	Title  *string      `json:"title,omitempty"`
+}
+
+type newBotRes struct {
+	Id int64 `json:"id"`
 }
 
 // type newBotJson struct {
@@ -20,6 +27,7 @@ type newBotJson struct {
 
 const (
 	tokenRegexp = `^\d{9,10}:[\w-]{35}$` //nolint:gosec
+	maxTitleLen = 50
 )
 
 var (
@@ -45,41 +53,57 @@ func newBotHandler(ctx *fasthttp.RequestCtx) {
 
 	var err error = nil
 
-	var data newBotJson
+	var data newBotReq
 	err = json.Unmarshal(ctx.PostBody(), &data)
 	if err != nil {
-		log.Errorf("[API: newBotHandler] - Serialisation error;\n %s", err)
-		doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidRequest)
+		log.Debug("[API: newBotHandler] - Serialisation error;\n %s", err)
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 		return
 	}
 
 	if data.UserId == nil {
 		log.Debug("[API: newBotHandler] user_id is misssing")
-		doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidParams)
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidParams))
 		return
 	}
 
 	user_id, err := data.UserId.Int64()
 	if err != nil {
-		log.Errorf("[API: newBotHandler] - (user_id) json.Number convertation to int64 error;\n %s", err)
-		doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidRequest)
+		log.Debug("[API: newBotHandler] - (user_id) json.Number convertation to int64 error;\n %s", err)
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 		return
 	}
+
+	title := data.Title
 	token := ""
 	status := 0
 
-	log.Debug(user_id)
+	if title == nil || *title == "" {
+		log.Debug("[API: newBotHandler] - title is misssing")
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidParams))
+		return
+	}
 
-	botId, err := app.db.AddBot(user_id, token, status)
+	if utf8.RuneCountInString(*title) > maxTitleLen {
+		log.Debug("[API: newBotHandler] - title len > ", maxTitleLen)
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidTitleLength))
+		return
+	}
+
+	botId, err := app.db.AddBot(user_id, &token, title, status)
 	if err != nil {
-		log.Errorf("[API: newBotHandler] - db AppBot error;\n %s", err)
-		doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidRequest)
+		log.Debug("[API: newBotHandler] - db AppBot error;\n %s", err)
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 		return
 	}
 
 	log.Info(botId)
 
-	doJsonRes(ctx, fasthttp.StatusOK, &errors.Success)
+	dataRes := &newBotRes{
+		Id: botId,
+	}
+
+	doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
 }
 
 // Edit to StartBot
