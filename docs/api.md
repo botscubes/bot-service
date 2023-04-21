@@ -24,11 +24,11 @@ POST /new
 
 #### Ответ
 
+Включает только одно из полей: `data`, `error`
+
 ```json
 {
     "ok": "bool",
-
-    //  includes only one of the fields `data`, `error`
     "data": {
         "id": "int64"
     },
