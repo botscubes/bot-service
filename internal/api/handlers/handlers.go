@@ -1,4 +1,4 @@
-package app
+package handlers
 
 import (
 	"encoding/json"
@@ -6,9 +6,11 @@ import (
 	"regexp"
 	"unicode/utf8"
 
-	errors "github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/database/pgsql"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
+	fastRouter "github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 )
 
@@ -48,62 +50,64 @@ func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj interface{}) {
 	}
 }
 
-func newBotHandler(ctx *fasthttp.RequestCtx) {
-	log.Debug("[API: newBotHandler] - Start")
+func newBotHandler(db *pgsql.Db) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		log.Debug("[API: newBotHandler] - Start")
 
-	var err error = nil
+		var err error = nil
 
-	var data newBotReq
-	err = json.Unmarshal(ctx.PostBody(), &data)
-	if err != nil {
-		log.Debug("[API: newBotHandler] - Serialisation error;\n %s", err)
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
-		return
+		var data newBotReq
+		err = json.Unmarshal(ctx.PostBody(), &data)
+		if err != nil {
+			log.Debug("[API: newBotHandler] - Serialisation error;\n %s", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if data.UserId == nil {
+			log.Debug("[API: newBotHandler] user_id is misssing")
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidParams))
+			return
+		}
+
+		user_id, err := data.UserId.Int64()
+		if err != nil {
+			log.Debug("[API: newBotHandler] - (user_id) json.Number convertation to int64 error;\n %s", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		title := data.Title
+		token := ""
+		status := 0
+
+		if title == nil || *title == "" {
+			log.Debug("[API: newBotHandler] - title is misssing")
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidParams))
+			return
+		}
+
+		if utf8.RuneCountInString(*title) > maxTitleLen {
+			log.Debug("[API: newBotHandler] - title len > ", maxTitleLen)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidTitleLength))
+			return
+		}
+
+		botId, err := db.AddBot(user_id, &token, title, status)
+		if err != nil {
+			log.Debug("[API: newBotHandler] - db AppBot error;\n %s", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		log.Info(botId)
+
+		dataRes := &newBotRes{
+			Id: botId,
+		}
+
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
 	}
-
-	if data.UserId == nil {
-		log.Debug("[API: newBotHandler] user_id is misssing")
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidParams))
-		return
-	}
-
-	user_id, err := data.UserId.Int64()
-	if err != nil {
-		log.Debug("[API: newBotHandler] - (user_id) json.Number convertation to int64 error;\n %s", err)
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
-		return
-	}
-
-	title := data.Title
-	token := ""
-	status := 0
-
-	if title == nil || *title == "" {
-		log.Debug("[API: newBotHandler] - title is misssing")
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidParams))
-		return
-	}
-
-	if utf8.RuneCountInString(*title) > maxTitleLen {
-		log.Debug("[API: newBotHandler] - title len > ", maxTitleLen)
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidTitleLength))
-		return
-	}
-
-	botId, err := app.db.AddBot(user_id, &token, title, status)
-	if err != nil {
-		log.Debug("[API: newBotHandler] - db AppBot error;\n %s", err)
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
-		return
-	}
-
-	log.Info(botId)
-
-	dataRes := &newBotRes{
-		Id: botId,
-	}
-
-	doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
 }
 
 // Edit to StartBot
@@ -157,4 +161,12 @@ func healthHandler(ctx *fasthttp.RequestCtx) {
 func startBotHandler(ctx *fasthttp.RequestCtx) {
 	_, _ = ctx.WriteString(fmt.Sprintf("Started: %s", ctx.UserValue("botid")))
 	ctx.SetStatusCode(fasthttp.StatusOK)
+}
+
+func AddHandlers(r *fastRouter.Router, db *pgsql.Db) {
+	r.GET("/start/{botid}", startBotHandler)
+
+	r.GET("/health", healthHandler)
+
+	r.POST("/new", newBotHandler(db))
 }

@@ -10,6 +10,7 @@ import (
 
 	fastRouter "github.com/fasthttp/router"
 
+	"github.com/botscubes/bot-service/internal/api/handlers"
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/net/client"
@@ -87,8 +88,8 @@ func Run() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	app.router = createRouter()
-	initHandlers()
+	app.router = fastRouter.New()
+	handlers.AddHandlers(app.router, app.db)
 
 	app.server = &telego.MultiBotWebhookServer{
 		Server: telego.FastHTTPWebhookServer{
