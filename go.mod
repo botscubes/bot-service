@@ -7,6 +7,7 @@ require (
 	github.com/fasthttp/router v1.4.18
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/mymmrac/telego v0.22.0
+	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/valyala/fasthttp v1.45.0
 )

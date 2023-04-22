@@ -36,8 +36,6 @@ func (btx *TBot) startBotHandler() {
 	go btx.Handler.Start()
 }
 
-// TODO delete args webhookBase, listenAddress
-// get from config
 func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *telego.MultiBotWebhookServer) error {
 	var err error = nil
 

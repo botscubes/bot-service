@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"os"
 	"regexp"
 	"unicode/utf8"
 
 	"github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
@@ -251,7 +251,7 @@ func deleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 	}
 }
 
-func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer) fasthttp.RequestHandler {
+func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer, conf *config.BotConfig) fasthttp.RequestHandler {
 	// TODO: Check token exist (from db)
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
@@ -321,11 +321,7 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 		(*bots)[*token] = new(bot.TBot)
 		(*bots)[*token].Bot = nbot
 
-		// Delete in the future
-		listenAddress, _ := os.LookupEnv("TBOT_LISTEN_ADDRESS")
-		webhookBase, _ := os.LookupEnv("TBOT_WEBHOOK_BASE")
-
-		err = (*bots)[*token].StartBot(webhookBase, listenAddress, server)
+		err = (*bots)[*token].StartBot(conf.WebhookBase, conf.ListenAddress, server)
 		if err != nil {
 			log.Debug("[API: startBot] Start bot error ", err)
 			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrStartBot)
@@ -345,13 +341,7 @@ func healthHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
-func AddHandlers(r *fastRouter.Router, db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer) {
-	// r.GET("/api/start/{botid}", startBotHandler)
-
-	log.Debug("SESESEKSAOPEIOPWI")
-	log.Debugf("%T", server)
-	log.Debug(server)
-
+func AddHandlers(r *fastRouter.Router, db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer, conf *config.BotConfig) {
 	r.GET("/api/bot/health", healthHandler)
 
 	r.POST("/api/bot/new", newBot(db))
@@ -360,5 +350,5 @@ func AddHandlers(r *fastRouter.Router, db *pgsql.Db, bots *map[string]*bot.TBot,
 	// Mb change to DELETE http methon
 	r.POST("/api/bot/deleteToken", deleteToken(db))
 
-	r.POST("/api/bot/start", startBot(db, bots, server))
+	r.POST("/api/bot/start", startBot(db, bots, server, conf))
 }
