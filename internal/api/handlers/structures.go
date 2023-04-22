@@ -25,3 +25,8 @@ type deleteTokenReq struct {
 	UserId *json.Number `json:"user_id"`
 	BotId  *json.Number `json:"bot_id"`
 }
+
+type startBotReq struct {
+	UserId *json.Number `json:"user_id"`
+	BotId  *json.Number `json:"bot_id"`
+}

@@ -17,4 +17,6 @@ var (
 	ErrBotNotFound           = err.New(104, "Bot not found")
 	ErrTokenAlreadyInstalled = err.New(105, "Token is already installed")
 	ErrTokenAlreadyExists    = err.New(106, "Token already exists")
+	ErrTokenNotFound         = err.New(107, "Token not found")
+	ErrStartBot              = err.New(108, "Start bot error")
 )

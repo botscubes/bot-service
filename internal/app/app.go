@@ -91,7 +91,6 @@ func Run() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	app.router = fastRouter.New()
-	handlers.AddHandlers(app.router, app.db)
 
 	app.server = &telego.MultiBotWebhookServer{
 		Server: telego.FastHTTPWebhookServer{
@@ -99,6 +98,8 @@ func Run() {
 			Router: app.router,
 		},
 	}
+
+	handlers.AddHandlers(app.router, app.db, &app.bots, app.server)
 
 	go func() {
 		err = app.server.Start(listenAddress)
@@ -113,7 +114,7 @@ func Run() {
 	app.bots = make(map[string]*bot.TBot)
 
 	app.bots[botToken] = new(bot.TBot)
-	app.bots[botToken].Bot, _ = bot.NewBot(botToken)
+	app.bots[botToken].Bot, _ = bot.NewBot(&botToken)
 
 	err = app.bots[botToken].StartBot(app.config.webhookBase, app.config.listenAddress, app.server)
 	if err != nil {
