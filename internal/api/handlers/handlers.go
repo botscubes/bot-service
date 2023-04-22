@@ -14,6 +14,8 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// TODO: check user access
+
 const (
 	tokenRegexp = `^\d{9,10}:[\w-]{35}$` //nolint:gosec
 	maxTitleLen = 50
@@ -110,7 +112,7 @@ func setToken(db *pgsql.Db) fasthttp.RequestHandler {
 
 		bot_id, err := data.BotId.Int64()
 		if err != nil {
-			log.Debug("[API: setToken] - (user_id) json.Number convertation to int64 error;", err)
+			log.Debug("[API: setToken] - (bot_id) json.Number convertation to int64 error;", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -181,8 +183,65 @@ func setToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		dataRes := &setTokenRes{
+		dataRes := &messageRes{
 			Message: "Token installed",
+		}
+
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
+	}
+}
+
+func deleteToken(db *pgsql.Db) fasthttp.RequestHandler {
+	// TODO: check bot is started
+	return func(ctx *fasthttp.RequestCtx) {
+		var err error = nil
+
+		var data deleteTokenReq
+		err = json.Unmarshal(ctx.PostBody(), &data)
+		if err != nil {
+			log.Debug("[API: deleteToken] - Serialisation error;", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		bot_id, err := data.BotId.Int64()
+		if err != nil {
+			log.Debug("[API: deleteToken] - (bot_id) json.Number convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		user_id, err := data.UserId.Int64()
+		if err != nil {
+			log.Debug("[API: deleteToken] - (user_id) json.Number convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		existBot, err := db.CheckBotExist(user_id, bot_id)
+		if err != nil {
+			log.Debug("[API: deleteToken] - [db: CheckBotExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: deleteToken] - bot not found")
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrBotNotFound))
+			return
+		}
+
+		token := ""
+
+		err = db.SetBotToken(bot_id, &token)
+		if err != nil {
+			log.Debug("[API: deleteToken] - [db: SetBotToken] error;", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		dataRes := &messageRes{
+			Message: "Token deleted",
 		}
 
 		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
@@ -249,4 +308,7 @@ func AddHandlers(r *fastRouter.Router, db *pgsql.Db) {
 
 	r.POST("/api/new", newBotHandler(db))
 	r.POST("/api/setToken", setToken(db))
+
+	// Mb change to DELETE http methon
+	r.POST("/api/deleteToken", deleteToken(db))
 }

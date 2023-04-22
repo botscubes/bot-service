@@ -17,6 +17,11 @@ type setTokenReq struct {
 	Token  *string      `json:"token"`
 }
 
-type setTokenRes struct {
+type messageRes struct {
 	Message string `json:"message"`
+}
+
+type deleteTokenReq struct {
+	UserId *json.Number `json:"user_id"`
+	BotId  *json.Number `json:"bot_id"`
 }
