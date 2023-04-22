@@ -43,7 +43,7 @@ func Run() {
 	var err error = nil
 
 	// TODO: create util for get env, for example: getenv(name, prefix, check required)
-	// Switch to yml configs
+	// MB Switch to yml configs
 
 	webhookBase, ok := env(envPrefix + "WEBHOOK_BASE")
 	assert(ok, "Environment variable "+envPrefix+"WEBHOOK_BASE not found")
