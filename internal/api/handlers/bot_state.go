@@ -24,7 +24,7 @@ func newBot(db *pgsql.Db) fasthttp.RequestHandler {
 
 		var data newBotReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Debug("[API: newBot] - Serialisation error;", err)
+			log.Debug("[API: newBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -37,7 +37,7 @@ func newBot(db *pgsql.Db) fasthttp.RequestHandler {
 
 		user_id, err := data.UserId.Int64()
 		if err != nil {
-			log.Debug("[API: newBot] - (user_id) json.Number convertation to int64 error;", err)
+			log.Debug("[API: newBot] - (user_id) json.Number convertation to int64 error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -58,14 +58,32 @@ func newBot(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
+		// TODO: Mb combine into one query (for rollback all on error)
+
 		botId, err := db.AddBot(user_id, &token, title, status)
 		if err != nil {
-			log.Debug("[API: newBot] - [db: AddBot] error;", err)
+			log.Error("[API: newBot] - [db: AddBot] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
-		log.Info(botId)
+		if err := db.CreateSchema(botId); err != nil {
+			log.Error("[API: newBot] - [db: CreateSchema] error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if err := db.CreateBotUserTable(botId); err != nil {
+			log.Error("[API: newBot] - [db: CreateBotUserTable] error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if err := db.CreateBotStructureTable(botId); err != nil {
+			log.Error("[API: newBot] - [db: CreateBotStructureTable] error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
 
 		dataRes := &newBotRes{
 			Id: botId,
@@ -89,21 +107,21 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 
 		bot_id, err := data.BotId.Int64()
 		if err != nil {
-			log.Debug("[API: startBot] - (bot_id) json.Number convertation to int64 error;", err)
+			log.Debug("[API: startBot] - (bot_id) json.Number convertation to int64 error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
 		user_id, err := data.UserId.Int64()
 		if err != nil {
-			log.Debug("[API: startBot] - (user_id) json.Number convertation to int64 error;", err)
+			log.Debug("[API: startBot] - (user_id) json.Number convertation to int64 error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
 		existBot, err := db.CheckBotExist(user_id, bot_id)
 		if err != nil {
-			log.Debug("[API: startBot] - [db: CheckBotExist] error;", err)
+			log.Debug("[API: startBot] - [db: CheckBotExist] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -116,7 +134,7 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 
 		token, err := db.GetBotToken(bot_id)
 		if err != nil {
-			log.Debug("[API: startBot] - [db: GetBotToken] error;", err)
+			log.Debug("[API: startBot] - [db: GetBotToken] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}

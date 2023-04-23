@@ -99,7 +99,7 @@ func setToken(db *pgsql.Db) fasthttp.RequestHandler {
 		}
 
 		if err = db.SetBotToken(bot_id, token); err != nil {
-			log.Debug("[API: setToken] - [db: SetBotToken] error;", err)
+			log.Error("[API: setToken] - [db: SetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -154,7 +154,7 @@ func deleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 		token := ""
 
 		if err = db.SetBotToken(bot_id, &token); err != nil {
-			log.Debug("[API: deleteToken] - [db: SetBotToken] error;", err)
+			log.Error("[API: deleteToken] - [db: SetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
