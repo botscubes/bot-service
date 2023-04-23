@@ -1,6 +1,5 @@
 package app
 
-// net package NOT USED
 import (
 	"os"
 	"os/signal"
@@ -14,7 +13,6 @@ import (
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
-	"github.com/botscubes/bot-service/internal/net/client"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 )
@@ -24,7 +22,6 @@ type App struct {
 	server *telego.MultiBotWebhookServer
 	bots   map[string]*bot.TBot
 	conf   *config.ServiceConfig
-	client *client.TClient
 	db     *pgsql.Db
 }
 
@@ -46,11 +43,9 @@ func Run() {
 	}
 
 	pgsqlUrl := "postgres://" + app.conf.Pg.User + ":" + app.conf.Pg.Pass + "@" + app.conf.Pg.Host + ":" + app.conf.Pg.Port + "/" + app.conf.Pg.Db
-	app.db, err = pgsql.OpenConnection(pgsqlUrl)
-	if err != nil {
+	if app.db, err = pgsql.OpenConnection(pgsqlUrl); err != nil {
 		log.Error("Connection Postgresql error ", err)
 	}
-
 	defer app.db.CloseConnection()
 
 	done := make(chan struct{}, 1)
@@ -58,7 +53,6 @@ func Run() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	app.router = fastRouter.New()
-
 	app.server = &telego.MultiBotWebhookServer{
 		Server: telego.FastHTTPWebhookServer{
 			Server: &fasthttp.Server{
@@ -71,32 +65,26 @@ func Run() {
 	handlers.AddHandlers(app.router, app.db, &app.bots, app.server, &app.conf.Bot)
 
 	go func() {
-		err = app.server.Start(app.conf.Bot.ListenAddress)
-		if err != nil {
-			log.Error("Start server ", err)
+		if err = app.server.Start(app.conf.Bot.ListenAddress); err != nil {
+			log.Error("Start server: \n", err)
 		}
 	}()
-
-	// UNUSED !!
-	app.client = client.NewClient()
 
 	app.bots = make(map[string]*bot.TBot)
 
 	app.bots[botToken] = new(bot.TBot)
 	app.bots[botToken].Bot, _ = bot.NewBot(&botToken)
 
-	err = app.bots[botToken].StartBot(app.conf.Bot.WebhookBase, app.conf.Bot.ListenAddress, app.server)
-	if err != nil {
-		log.Error("Start bot ", err)
+	if err = app.bots[botToken].StartBot(app.conf.Bot.WebhookBase, app.conf.Bot.ListenAddress, app.server); err != nil {
+		log.Error("Start bot\n", err)
 	}
 
 	// On exit, close, error program
 	go func() {
 		<-sigs
 		log.Info("Stopping...")
-		var err error = nil
 		for _, v := range app.bots {
-			if err = v.StopBot(true); err != nil {
+			if err := v.StopBot(true); err != nil {
 				log.Error("Stop App: bot stop:\n", err)
 			}
 		}

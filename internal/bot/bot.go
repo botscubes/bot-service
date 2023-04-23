@@ -44,18 +44,16 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 	})
 
 	if btx.Updates == nil {
-		btx.Updates, err = btx.Bot.UpdatesViaWebhook(
+		if btx.Updates, err = btx.Bot.UpdatesViaWebhook(
 			"/bot"+btx.Bot.Token(),
 			telego.WithWebhookServer(server),
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
 	}
 
 	if btx.Handler == nil {
-		btx.Handler, err = th.NewBotHandler(btx.Bot, btx.Updates, th.WithStopTimeout(time.Second*10))
-		if err != nil {
+		if btx.Handler, err = th.NewBotHandler(btx.Bot, btx.Updates, th.WithStopTimeout(time.Second*10)); err != nil {
 			return err
 		}
 
@@ -66,8 +64,7 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 
 	if !btx.Bot.IsRunningWebhook() {
 		go func(b *telego.Bot) {
-			err := b.StartWebhook(listenAddress)
-			if err != nil {
+			if err := b.StartWebhook(listenAddress); err != nil {
 				log.Error("Start webhook:", err)
 			}
 		}(btx.Bot)

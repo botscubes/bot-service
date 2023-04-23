@@ -23,8 +23,7 @@ func newBot(db *pgsql.Db) fasthttp.RequestHandler {
 		var err error = nil
 
 		var data newBotReq
-		err = json.Unmarshal(ctx.PostBody(), &data)
-		if err != nil {
+		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: newBot] - Serialisation error;", err)
 			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
@@ -82,8 +81,7 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 		var err error = nil
 
 		var data startBotReq
-		err = json.Unmarshal(ctx.PostBody(), &data)
-		if err != nil {
+		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: startBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidRequest)
 			return
@@ -142,8 +140,7 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 			(*bots)[*token].Bot = nbot
 		}
 
-		err = (*bots)[*token].StartBot(conf.WebhookBase, conf.ListenAddress, server)
-		if err != nil {
+		if err = (*bots)[*token].StartBot(conf.WebhookBase, conf.ListenAddress, server); err != nil {
 			log.Debug("[API: startBot] Start bot error ", err)
 			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrStartBot)
 			return
@@ -164,8 +161,7 @@ func stopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 		var err error = nil
 
 		var data stopBotReq
-		err = json.Unmarshal(ctx.PostBody(), &data)
-		if err != nil {
+		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: stopBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidRequest)
 			return
