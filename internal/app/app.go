@@ -61,7 +61,9 @@ func Run() {
 
 	app.server = &telego.MultiBotWebhookServer{
 		Server: telego.FastHTTPWebhookServer{
-			Server: &fasthttp.Server{},
+			Server: &fasthttp.Server{
+				Handler: nil,
+			},
 			Router: app.router,
 		},
 	}
@@ -94,18 +96,8 @@ func Run() {
 		log.Info("Stopping...")
 		var err error = nil
 		for _, v := range app.bots {
-			err = v.Bot.StopWebhook()
-			if err != nil {
-				log.Error("Stop webhook:", err)
-			}
-
-			if v.Handler != nil {
-				v.Handler.Stop()
-			}
-
-			err = v.Bot.DeleteWebhook(nil)
-			if err != nil {
-				log.Error("Delete webhook:", err)
+			if err = v.StopBot(true); err != nil {
+				log.Error("Stop App: bot stop:\n", err)
 			}
 		}
 		done <- struct{}{}

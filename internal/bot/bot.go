@@ -43,29 +43,61 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 		URL: webhookBase + "/bot" + btx.Bot.Token(),
 	})
 
-	btx.Updates, err = btx.Bot.UpdatesViaWebhook(
-		"/bot"+btx.Bot.Token(),
-		telego.WithWebhookServer(server),
-	)
-	if err != nil {
-		return err
+	if btx.Updates == nil {
+		btx.Updates, err = btx.Bot.UpdatesViaWebhook(
+			"/bot"+btx.Bot.Token(),
+			telego.WithWebhookServer(server),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	btx.Handler, err = th.NewBotHandler(btx.Bot, btx.Updates, th.WithStopTimeout(time.Second*10))
-	if err != nil {
-		return err
-	}
+	if btx.Handler == nil {
+		btx.Handler, err = th.NewBotHandler(btx.Bot, btx.Updates, th.WithStopTimeout(time.Second*10))
+		if err != nil {
+			return err
+		}
 
-	btx.setBotHandler()
+		btx.setBotHandler()
+	}
 
 	btx.startBotHandler()
 
-	go func(b *telego.Bot) {
-		err := b.StartWebhook(listenAddress)
-		if err != nil {
-			log.Error("Start webhook:", err)
+	if !btx.Bot.IsRunningWebhook() {
+		go func(b *telego.Bot) {
+			err := b.StartWebhook(listenAddress)
+			if err != nil {
+				log.Error("Start webhook:", err)
+			}
+		}(btx.Bot)
+	}
+
+	return nil
+}
+
+func (btx *TBot) StopBot(stopWebhookServer bool) error {
+	// WARN: The bot is not removed from the app.bots.
+	// Because btx.Updates and btx.Handler
+	// cannot be initialized again when StartBot is called again.
+	// The reason is that fasthttp/router does not allow you to delete handlers.
+	//
+	// TODO: set state bot stopped (After call this func).
+	// !!!! Find a way to delete handlers (UpdatesViaWebhook) !!!!
+
+	if stopWebhookServer {
+		if err := btx.Bot.StopWebhook(); err != nil {
+			return err
 		}
-	}(btx.Bot)
+	}
+
+	if btx.Handler != nil {
+		btx.Handler.Stop()
+	}
+
+	if err := btx.Bot.DeleteWebhook(nil); err != nil {
+		return err
+	}
 
 	return nil
 }

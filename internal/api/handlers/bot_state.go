@@ -77,13 +77,14 @@ func newBot(db *pgsql.Db) fasthttp.RequestHandler {
 }
 
 func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer, conf *config.BotConfig) fasthttp.RequestHandler {
+	// check bot already started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
 		var data startBotReq
 		err = json.Unmarshal(ctx.PostBody(), &data)
 		if err != nil {
-			log.Errorf("[API: startBot] - Serialisation error;\n %s", err)
+			log.Error("[API: startBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidRequest)
 			return
 		}
@@ -128,22 +129,18 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 			return
 		}
 
-		// TODO: Own token health check to get a specific error
-		nbot, err := bot.NewBot(token)
-		if err != nil {
-			log.Debug("[API: startBot] ", err)
-			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidToken)
-			return
-		}
+		if _, ok := (*bots)[*token]; !ok {
+			// TODO: Own token health check to get a specific error
+			nbot, err := bot.NewBot(token)
+			if err != nil {
+				log.Debug("[API: startBot] ", err)
+				doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidToken)
+				return
+			}
 
-		if _, ok := (*bots)[*token]; ok {
-			log.Debug("[API: startBot] Token already exist in bots map")
-			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrTokenExistInSystem)
-			return
+			(*bots)[*token] = new(bot.TBot)
+			(*bots)[*token].Bot = nbot
 		}
-
-		(*bots)[*token] = new(bot.TBot)
-		(*bots)[*token].Bot = nbot
 
 		err = (*bots)[*token].StartBot(conf.WebhookBase, conf.ListenAddress, server)
 		if err != nil {
@@ -154,6 +151,80 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 
 		dataRes := &messageRes{
 			Message: "Bot started",
+		}
+
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
+	}
+}
+
+func stopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
+	// TODO: check bot is running
+	// check bot already stopped
+	return func(ctx *fasthttp.RequestCtx) {
+		var err error = nil
+
+		var data stopBotReq
+		err = json.Unmarshal(ctx.PostBody(), &data)
+		if err != nil {
+			log.Error("[API: stopBot] - Serialisation error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidRequest)
+			return
+		}
+
+		bot_id, err := data.BotId.Int64()
+		if err != nil {
+			log.Debug("[API: stopBot] - (bot_id) json.Number convertation to int64 error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		user_id, err := data.UserId.Int64()
+		if err != nil {
+			log.Debug("[API: stopBot] - (user_id) json.Number convertation to int64 error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		existBot, err := db.CheckBotExist(user_id, bot_id)
+		if err != nil {
+			log.Debug("[API: stopBot] - [db: CheckBotExist] error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: stopBot] - bot not found")
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrBotNotFound))
+			return
+		}
+
+		token, err := db.GetBotToken(bot_id)
+		if err != nil {
+			log.Debug("[API: stopBot] - [db: GetBotToken] error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if token == nil || *token == "" {
+			log.Debug("[API: stopBot] - Token not found")
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrTokenNotFound))
+			return
+		}
+
+		if _, ok := (*bots)[*token]; !ok {
+			log.Debug("[API: startBot] Bot not found in bots map")
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrBotNotFoundInSystem))
+			return
+		}
+
+		if err := (*bots)[*token].StopBot(false); err != nil {
+			log.Error("[API: stopBot] - Bot stop:\n", err)
+			doJsonRes(ctx, fasthttp.StatusOK, resp.New(false, nil, errors.ErrStopBot))
+			return
+		}
+
+		dataRes := &messageRes{
+			Message: "Bot stopped",
 		}
 
 		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))

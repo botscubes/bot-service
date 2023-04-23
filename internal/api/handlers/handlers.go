@@ -42,4 +42,5 @@ func AddHandlers(r *fastRouter.Router, db *pgsql.Db, bots *map[string]*bot.TBot,
 	r.POST("/api/bot/deleteToken", deleteToken(db))
 
 	r.POST("/api/bot/start", startBot(db, bots, server, conf))
+	r.POST("/api/bot/stop", stopBot(db, bots))
 }
