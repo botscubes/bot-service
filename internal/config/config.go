@@ -7,8 +7,10 @@ import (
 )
 
 type ServiceConfig struct {
-	Bot BotConfig
-	Pg  PostgresConfig
+	Bot       BotConfig
+	Pg        PostgresConfig
+	RedisAuth RedisAuthConfig
+	JWTKey    string `env:"JWT_SECRET_KEY,required"`
 }
 
 type BotConfig struct {
@@ -22,6 +24,13 @@ type PostgresConfig struct {
 	Pass string `env:"POSTGRES_PASSWORD,required"`
 	Host string `env:"POSTGRES_HOST,required"`
 	Port string `env:"POSTGRES_PORT,required"`
+}
+
+type RedisAuthConfig struct {
+	Db   int    `env:"REDIS_AUTH_DB,required"`
+	Pass string `env:"REDIS_AUTH_PASS,required"`
+	Host string `env:"REDIS_AUTH_HOST,required"`
+	Port string `env:"REDIS_AUTH_PORT,required"`
 }
 
 func GetConfig() (*ServiceConfig, error) {

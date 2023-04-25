@@ -6,8 +6,9 @@ import (
 
 var (
 	ErrInvalidRequest = err.New(1400, "Invalid request")
-	ErrInvalidParams  = err.New(1401, "Required parameters are missing")
+	ErrInvalidParams  = err.New(1411, "Required parameters are missing")
 	ErrInternalServer = err.New(1500, "Internal server error")
+	ErrUnauthorized   = err.New(1401, "Unauthorized")
 )
 
 var (

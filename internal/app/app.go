@@ -1,10 +1,12 @@
 package app
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/valyala/fasthttp"
 
 	fastRouter "github.com/fasthttp/router"
@@ -13,16 +15,20 @@ import (
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+	bcRedis "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/pkg/log"
+	"github.com/botscubes/user-service/pkg/token_storage"
 	"github.com/mymmrac/telego"
 )
 
 type App struct {
-	router *fastRouter.Router
-	server *telego.MultiBotWebhookServer
-	bots   map[string]*bot.TBot
-	conf   *config.ServiceConfig
-	db     *pgsql.Db
+	router         *fastRouter.Router
+	server         *telego.MultiBotWebhookServer
+	bots           map[string]*bot.TBot
+	conf           *config.ServiceConfig
+	db             *pgsql.Db
+	sessionStorage token_storage.TokenStorage
+	redisAuth      *redis.Client
 }
 
 var app App
@@ -62,7 +68,11 @@ func Run() {
 		},
 	}
 
-	handlers.AddHandlers(app.router, app.db, &app.bots, app.server, &app.conf.Bot)
+	app.redisAuth = bcRedis.NewClient(&app.conf.RedisAuth)
+
+	app.sessionStorage = token_storage.NewRedisTokenStorage(context.Background(), app.redisAuth)
+
+	handlers.AddHandlers(app.router, app.db, &app.bots, app.server, &app.conf.Bot, app.sessionStorage, &app.conf.JWTKey)
 
 	go func() {
 		if err = app.server.Start(app.conf.Bot.ListenAddress); err != nil {
