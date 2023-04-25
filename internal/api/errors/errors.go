@@ -7,12 +7,12 @@ import (
 var (
 	ErrInvalidRequest = err.New(1400, "Invalid request")
 	ErrInvalidParams  = err.New(1401, "Required parameters are missing")
+	ErrInternalServer = err.New(1500, "Internal server error")
 )
 
 var (
 	ErrIncorrectTokenFormat  = err.New(100, "Token has an incorrect format")
 	ErrInvalidToken          = err.New(101, "Invalid token")
-	ErrBotExistInSystem      = err.New(102, "Bot already exist in the system")
 	ErrInvalidTitleLength    = err.New(103, "Title is too long")
 	ErrBotNotFound           = err.New(104, "Bot not found")
 	ErrTokenAlreadyInstalled = err.New(105, "Token is already installed")
