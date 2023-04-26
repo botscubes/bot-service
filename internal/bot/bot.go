@@ -40,12 +40,12 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 	var err error = nil
 
 	_ = btx.Bot.SetWebhook(&telego.SetWebhookParams{
-		URL: webhookBase + "/bot" + btx.Bot.Token(),
+		URL: webhookBase + "/webhook/bot" + btx.Bot.Token(),
 	})
 
 	if btx.Updates == nil {
 		if btx.Updates, err = btx.Bot.UpdatesViaWebhook(
-			"/bot"+btx.Bot.Token(),
+			"/webhook/bot"+btx.Bot.Token(),
 			telego.WithWebhookServer(server),
 		); err != nil {
 			return err
