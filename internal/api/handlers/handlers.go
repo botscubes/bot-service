@@ -5,15 +5,11 @@ import (
 	"strings"
 
 	"github.com/botscubes/bot-service/internal/api/errors"
-	"github.com/botscubes/bot-service/internal/bot"
-	"github.com/botscubes/bot-service/internal/config"
-	"github.com/botscubes/bot-service/internal/database/pgsql"
+	"github.com/botscubes/bot-service/internal/app"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/jwt"
 	"github.com/botscubes/user-service/pkg/token_storage"
-	fastRouter "github.com/fasthttp/router"
-	"github.com/mymmrac/telego"
 	"github.com/valyala/fasthttp"
 )
 
@@ -33,7 +29,7 @@ func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj interface{}) {
 	}
 }
 
-func auth(h fasthttp.RequestHandler, st token_storage.TokenStorage, jwtKey *string) fasthttp.RequestHandler {
+func auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *string) fasthttp.RequestHandler {
 	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
 		const prefix = "Bearer "
 
@@ -42,6 +38,7 @@ func auth(h fasthttp.RequestHandler, st token_storage.TokenStorage, jwtKey *stri
 			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
 			return
 		}
+
 		token := string(auth)
 		if !strings.HasPrefix(token, prefix) {
 			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
@@ -49,12 +46,8 @@ func auth(h fasthttp.RequestHandler, st token_storage.TokenStorage, jwtKey *stri
 		}
 
 		token = strings.TrimPrefix(token, prefix)
-		if token != "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.Vl16d9RIxtWDeGXgh3cdK-KRvesGhjr96qcYqDncj8k" {
-			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
-			return
-		}
-
-		exists, err := st.CheckToken(token)
+		// too slow method
+		exists, err := (*st).CheckToken(token)
 		if err != nil {
 			log.Error("[API: auth middleware] [CheckToken]\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -67,13 +60,11 @@ func auth(h fasthttp.RequestHandler, st token_storage.TokenStorage, jwtKey *stri
 		}
 
 		// WARN: fix error !!!
-		id, err := jwt.GetIdFromToken(token, *jwtKey)
+		_, err = jwt.GetIdFromToken(token, *jwtKey)
 		if err != nil {
 			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
 			return
 		}
-
-		log.Info(id)
 
 		h(ctx)
 	})
@@ -84,15 +75,16 @@ func health(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
-func AddHandlers(r *fastRouter.Router, db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer, conf *config.BotConfig, st token_storage.TokenStorage, jwtKey *string) {
-	r.GET("/api/bot/health", auth(health, st, jwtKey))
+func AddHandlers(app *app.App) {
+	app.Router.GET("/api/bot/health", auth(health, &app.SessionStorage, &app.Conf.JWTKey))
+	app.Router.GET("/api/bot/healt2", health)
 
-	r.POST("/api/bot/new", newBot(db))
-	r.POST("/api/bot/setToken", setToken(db))
+	app.Router.POST("/api/bot/new", newBot(app.Db))
+	app.Router.POST("/api/bot/setToken", setToken(app.Db))
 
 	// Mb change to DELETE http methon
-	r.POST("/api/bot/deleteToken", deleteToken(db))
+	app.Router.POST("/api/bot/deleteToken", deleteToken(app.Db))
 
-	r.POST("/api/bot/start", startBot(db, bots, server, conf))
-	r.POST("/api/bot/stop", stopBot(db, bots))
+	app.Router.POST("/api/bot/start", startBot(app.Db, &app.Bots, app.Server, &app.Conf.Bot))
+	app.Router.POST("/api/bot/stop", stopBot(app.Db, &app.Bots))
 }
