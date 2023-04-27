@@ -30,8 +30,6 @@ type App struct {
 	RedisAuth      *redis.Client
 }
 
-const envPrefix = "TBOT_"
-
 func (app *App) Run() {
 	log.Debug("App Run")
 
@@ -49,7 +47,7 @@ func (app *App) Run() {
 	app.Server = &telego.MultiBotWebhookServer{
 		Server: telego.FastHTTPWebhookServer{
 			Server: &fasthttp.Server{
-				Handler: nil,
+				Handler: app.Router.Handler,
 			},
 			Router: app.Router,
 		},
@@ -64,6 +62,7 @@ func (app *App) Run() {
 	if app.Db, err = pgsql.OpenConnection(pgsqlUrl); err != nil {
 		log.Error("Connection Postgresql error ", err)
 	}
+
 	defer app.Db.CloseConnection()
 
 	app.addHandlers()
@@ -74,17 +73,7 @@ func (app *App) Run() {
 		}
 	}()
 
-	botToken, ok := env(envPrefix + "TOKEN")
-	assert(ok, "Environment variable "+envPrefix+"TOKEN not found")
-
-	app.Bots[botToken] = new(bot.TBot)
-	app.Bots[botToken].Bot, _ = bot.NewBot(&botToken)
-
-	if err = app.Bots[botToken].StartBot(app.Conf.Bot.WebhookBase, app.Conf.Bot.ListenAddress, app.Server); err != nil {
-		log.Error("Start bot\n", err)
-	}
-
-	// On exit, close, error program
+	// On close, error program
 	go func() {
 		<-sigs
 		log.Info("Stopping...")
@@ -100,15 +89,4 @@ func (app *App) Run() {
 
 	<-done
 	log.Info("App Done")
-}
-
-func env(name string) (string, bool) {
-	return os.LookupEnv(name)
-}
-
-// Check ok and exit program if ok is false
-func assert(ok bool, args ...any) {
-	if !ok {
-		log.Fatal(append([]any{"FATAL:"}, args...)...)
-	}
 }
