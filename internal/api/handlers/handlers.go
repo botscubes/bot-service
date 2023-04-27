@@ -60,11 +60,13 @@ func Auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *str
 		}
 
 		// WARN: fix error !!!
-		_, err = jwt.GetIdFromToken(token, *jwtKey)
+		user_id, err := jwt.GetIdFromToken(token, *jwtKey)
 		if err != nil {
 			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
 			return
 		}
+
+		ctx.SetUserValue("user_id", int64(user_id))
 
 		h(ctx)
 	})

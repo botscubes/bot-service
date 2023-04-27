@@ -38,12 +38,6 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if data.UserId == nil {
-			log.Debug("[API: setToken] user_id is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
-
 		bot_id, err := data.BotId.Int64()
 		if err != nil {
 			log.Debug("[API: setToken] - (bot_id) json.Number convertation to int64 error;", err)
@@ -51,12 +45,7 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		user_id, err := data.UserId.Int64()
-		if err != nil {
-			log.Debug("[API: setToken] - (user_id) json.Number convertation to int64 error;", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
-			return
-		}
+		user_id := ctx.UserValue("user_id").(int64)
 
 		token := data.Token
 		if token == nil {
@@ -129,7 +118,7 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data deleteTokenReq
+		var data botIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: deleteToken] - Serialisation error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
@@ -142,12 +131,6 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if data.UserId == nil {
-			log.Debug("[API: deleteToken] user_id is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
-
 		bot_id, err := data.BotId.Int64()
 		if err != nil {
 			log.Debug("[API: deleteToken] - (bot_id) json.Number convertation to int64 error;", err)
@@ -155,12 +138,7 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		user_id, err := data.UserId.Int64()
-		if err != nil {
-			log.Debug("[API: deleteToken] - (user_id) json.Number convertation to int64 error;", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
-			return
-		}
+		user_id := ctx.UserValue("user_id").(int64)
 
 		existBot, err := db.CheckBotExist(user_id, bot_id)
 		if err != nil {
