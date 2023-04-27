@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +16,7 @@ import (
 	bcRedis "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/token_storage"
+
 	"github.com/mymmrac/telego"
 )
 
@@ -54,7 +54,7 @@ func New() *App {
 	app.Bots = make(map[string]*bot.TBot)
 
 	app.RedisAuth = bcRedis.NewClient(&app.Conf.RedisAuth)
-	app.SessionStorage = token_storage.NewRedisTokenStorage(context.Background(), app.RedisAuth)
+	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)
 
 	return &app
 }

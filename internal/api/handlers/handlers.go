@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/jwt"
 	"github.com/botscubes/user-service/pkg/token_storage"
+
 	"github.com/valyala/fasthttp"
 )
 
@@ -46,8 +48,7 @@ func auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *str
 		}
 
 		token = strings.TrimPrefix(token, prefix)
-		// too slow method
-		exists, err := (*st).CheckToken(token)
+		exists, err := (*st).CheckToken(context.Background(), token)
 		if err != nil {
 			log.Error("[API: auth middleware] [CheckToken]\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))

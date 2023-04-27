@@ -3,7 +3,7 @@ module github.com/botscubes/bot-service
 go 1.20
 
 require (
-	github.com/botscubes/user-service v0.0.0-20230422152033-31403337259d
+	github.com/botscubes/user-service v0.0.0-20230427145246-bf89bbd8212f
 	github.com/fasthttp/router v1.4.18
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/mymmrac/telego v0.22.1
