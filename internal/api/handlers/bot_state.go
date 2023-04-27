@@ -18,7 +18,7 @@ const (
 	maxTitleLen = 50
 )
 
-func newBot(db *pgsql.Db) fasthttp.RequestHandler {
+func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
@@ -93,7 +93,7 @@ func newBot(db *pgsql.Db) fasthttp.RequestHandler {
 	}
 }
 
-func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer, conf *config.BotConfig) fasthttp.RequestHandler {
+func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer, conf *config.BotConfig) fasthttp.RequestHandler {
 	// check bot already started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
@@ -184,7 +184,7 @@ func startBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 	}
 }
 
-func stopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
+func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 	// TODO: check bot is running
 	// check bot already stopped
 	return func(ctx *fasthttp.RequestCtx) {

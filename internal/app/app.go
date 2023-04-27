@@ -32,10 +32,14 @@ type App struct {
 
 const envPrefix = "TBOT_"
 
-func New() *App {
-	var app App
+func (app *App) Run() {
+	log.Debug("App Run")
 
 	var err error
+	done := make(chan struct{}, 1)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
 	app.Conf, err = config.GetConfig()
 	if err != nil {
 		log.Fatal("GetConfig:\n", err)
@@ -56,23 +60,13 @@ func New() *App {
 	app.RedisAuth = bcRedis.NewClient(&app.Conf.RedisAuth)
 	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)
 
-	return &app
-}
-
-func (app *App) Run() {
-	log.Debug("App Run")
-
-	var err error
-
 	pgsqlUrl := "postgres://" + app.Conf.Pg.User + ":" + app.Conf.Pg.Pass + "@" + app.Conf.Pg.Host + ":" + app.Conf.Pg.Port + "/" + app.Conf.Pg.Db
 	if app.Db, err = pgsql.OpenConnection(pgsqlUrl); err != nil {
 		log.Error("Connection Postgresql error ", err)
 	}
 	defer app.Db.CloseConnection()
 
-	done := make(chan struct{}, 1)
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	app.addHandlers()
 
 	go func() {
 		if err = app.Server.Start(app.Conf.Bot.ListenAddress); err != nil {

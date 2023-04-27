@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/botscubes/bot-service/internal/api/errors"
-	"github.com/botscubes/bot-service/internal/app"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/jwt"
@@ -31,7 +30,7 @@ func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj interface{}) {
 	}
 }
 
-func auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *string) fasthttp.RequestHandler {
+func Auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *string) fasthttp.RequestHandler {
 	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
 		const prefix = "Bearer "
 
@@ -71,21 +70,7 @@ func auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *str
 	})
 }
 
-func health(ctx *fasthttp.RequestCtx) {
+func Health(ctx *fasthttp.RequestCtx) {
 	_, _ = ctx.WriteString("OK")
 	ctx.SetStatusCode(fasthttp.StatusOK)
-}
-
-func AddHandlers(app *app.App) {
-	app.Router.GET("/api/bot/health", auth(health, &app.SessionStorage, &app.Conf.JWTKey))
-	app.Router.GET("/api/bot/healt2", health)
-
-	app.Router.POST("/api/bot/new", newBot(app.Db))
-	app.Router.POST("/api/bot/setToken", setToken(app.Db))
-
-	// Mb change to DELETE http methon
-	app.Router.POST("/api/bot/deleteToken", deleteToken(app.Db))
-
-	app.Router.POST("/api/bot/start", startBot(app.Db, &app.Bots, app.Server, &app.Conf.Bot))
-	app.Router.POST("/api/bot/stop", stopBot(app.Db, &app.Bots))
 }

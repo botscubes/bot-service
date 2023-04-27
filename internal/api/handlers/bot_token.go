@@ -20,7 +20,7 @@ func validateToken(token string) bool {
 	return reg.MatchString(token)
 }
 
-func setToken(db *pgsql.Db) fasthttp.RequestHandler {
+func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
@@ -124,7 +124,7 @@ func setToken(db *pgsql.Db) fasthttp.RequestHandler {
 	}
 }
 
-func deleteToken(db *pgsql.Db) fasthttp.RequestHandler {
+func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
