@@ -6,6 +6,10 @@ import (
 	"github.com/sethvargo/go-envconfig"
 )
 
+const (
+	PrefixSchema = "bot_"
+)
+
 type ServiceConfig struct {
 	Bot       BotConfig
 	Pg        PostgresConfig

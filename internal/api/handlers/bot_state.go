@@ -8,6 +8,7 @@ import (
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
@@ -48,7 +49,14 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 
 		// TODO: Mb combine into one query (for rollback all on error)
 
-		botId, err := db.AddBot(user_id, &token, title, status)
+		m := &model.Bot{
+			User_id: user_id,
+			Token:   &token,
+			Title:   title,
+			Status:  status,
+		}
+
+		botId, err := db.AddBot(m)
 		if err != nil {
 			log.Error("[API: newBot] - [db: AddBot] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))

@@ -2,12 +2,16 @@ package pgsql
 
 import (
 	"context"
+
+	"github.com/botscubes/bot-service/internal/model"
 )
 
-func (db *Db) AddBot(user_id int64, token *string, title *string, status int) (int64, error) {
+func (db *Db) AddBot(m *model.Bot) (int64, error) {
 	var id int64
 	query := `INSERT INTO public.bot (user_id, token, title, status) VALUES ($1, $2, $3, $4) RETURNING id;`
-	if err := db.Pool.QueryRow(context.Background(), query, user_id, token, title, status).Scan(&id); err != nil {
+	if err := db.Pool.QueryRow(
+		context.Background(), query, m.User_id, m.Token, m.Title, m.Status,
+	).Scan(&id); err != nil {
 		return 0, err
 	}
 
@@ -17,7 +21,9 @@ func (db *Db) AddBot(user_id int64, token *string, title *string, status int) (i
 func (db *Db) CheckBotExist(user_id int64, bot_id int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2) AS "exists";`
-	if err := db.Pool.QueryRow(context.Background(), query, bot_id, user_id).Scan(&c); err != nil {
+	if err := db.Pool.QueryRow(
+		context.Background(), query, bot_id, user_id,
+	).Scan(&c); err != nil {
 		return false, err
 	}
 
@@ -27,7 +33,9 @@ func (db *Db) CheckBotExist(user_id int64, bot_id int64) (bool, error) {
 func (db *Db) CheckTokenExist(token *string) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE token = $1) AS "exists";`
-	if err := db.Pool.QueryRow(context.Background(), query, token).Scan(&c); err != nil {
+	if err := db.Pool.QueryRow(
+		context.Background(), query, token,
+	).Scan(&c); err != nil {
 		return false, err
 	}
 
@@ -37,7 +45,9 @@ func (db *Db) CheckTokenExist(token *string) (bool, error) {
 func (db *Db) GetBotToken(bot_id int64) (*string, error) {
 	var data string
 	query := `SELECT token FROM public.bot WHERE id = $1;`
-	if err := db.Pool.QueryRow(context.Background(), query, bot_id).Scan(&data); err != nil {
+	if err := db.Pool.QueryRow(
+		context.Background(), query, bot_id,
+	).Scan(&data); err != nil {
 		return nil, err
 	}
 
