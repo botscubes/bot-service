@@ -213,7 +213,7 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 
 		if _, ok := (*bots)[*token]; !ok {
 			log.Debug("[API: startBot] Bot not found in bots map")
-			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrBotNotFoundInSystem))
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrBotNotRunning))
 			return
 		}
 

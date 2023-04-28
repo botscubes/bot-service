@@ -21,5 +21,5 @@ var (
 	ErrTokenNotFound         = err.New(107, "Token not found")
 	ErrStartBot              = err.New(108, "Start bot error")
 	ErrStopBot               = err.New(109, "Stop bot error")
-	ErrBotNotFoundInSystem   = err.New(110, "Bot not found in the system")
+	ErrBotNotRunning         = err.New(110, "The bot is not running")
 )
