@@ -129,7 +129,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 			return
 		}
 
-		token, err := db.GetBotToken(bot_id)
+		token, err := db.GetBotToken(user_id, bot_id)
 		if err != nil {
 			log.Debug("[API: startBot] - [db: GetBotToken] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -206,7 +206,7 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 			return
 		}
 
-		token, err := db.GetBotToken(bot_id)
+		token, err := db.GetBotToken(user_id, bot_id)
 		if err != nil {
 			log.Debug("[API: stopBot] - [db: GetBotToken] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))

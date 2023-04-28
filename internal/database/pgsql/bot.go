@@ -42,11 +42,11 @@ func (db *Db) CheckTokenExist(token *string) (bool, error) {
 	return c, nil
 }
 
-func (db *Db) GetBotToken(bot_id int64) (*string, error) {
+func (db *Db) GetBotToken(user_id int64, bot_id int64) (*string, error) {
 	var data string
-	query := `SELECT token FROM public.bot WHERE id = $1;`
+	query := `SELECT token FROM public.bot WHERE id = $1 AND user_id = $2;`
 	if err := db.Pool.QueryRow(
-		context.Background(), query, bot_id,
+		context.Background(), query, bot_id, user_id,
 	).Scan(&data); err != nil {
 		return nil, err
 	}
@@ -54,8 +54,8 @@ func (db *Db) GetBotToken(bot_id int64) (*string, error) {
 	return &data, nil
 }
 
-func (db *Db) SetBotToken(bot_id int64, token *string) error {
-	query := `UPDATE public.bot SET token = $1 WHERE id = $2;`
-	_, err := db.Pool.Exec(context.Background(), query, token, bot_id)
+func (db *Db) SetBotToken(user_id int64, bot_id int64, token *string) error {
+	query := `UPDATE public.bot SET token = $1 WHERE id = $2 AND user_id = $3;`
+	_, err := db.Pool.Exec(context.Background(), query, token, bot_id, user_id)
 	return err
 }
