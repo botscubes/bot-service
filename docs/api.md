@@ -1,26 +1,33 @@
 # Bot API
 
-## Методы
+## Methods
+
+- [New bot](#new-bot)
+- [Set token](#set-token)
+- [Delete token](#delete-token)
+- [Start](#start)
+- [Stop](#stop)
+
 
 ## New bot
 
-Создать нового бота
+[Наверх](#methods)
+
+Создание нового бота
 
 ```plaintext
-POST /new
+POST /api/bot/new
 ```
 
 ```json
 {
-    "user_id": "int64",
     "title": "string"
 }
 ```
 
-Параметры | Тип | Обязательный | Описание 
---------- | ---- | -------- | -----------
-`user_id` | int64 | yes | Id пользователя
-`title` | string | yes | Название бота
+Параметры | Тип | Описание 
+--------- | ---- | -----------
+`title` | string | Название бота
 
 #### Ответ
 
@@ -30,20 +37,165 @@ POST /new
 {
     "ok": "bool",
     "data": {
-        "id": "int64"
+        "id": "integer"
     },
     "error": {
-        "code": "int",
+        "code": "integer",
+        "message": "string"
+    }
+}
+
+```
+_response.data_
+
+Параметры | Тип | Описание 
+--------- | ---- | -----------
+`id` | integer  | id бота
+
+- - -
+
+## Set token
+
+[Наверх](#methods)
+
+Установка токена бота
+
+```plaintext
+POST /api/bot/setToken
+```
+
+```json
+{
+    "bot_id": "integer",
+    "token": "string"
+}
+```
+
+Параметры | Тип | Описание 
+--------- | ---- | -----------
+`bot_id` | integer | id бота
+`token` | string | Токен
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
         "message": "string"
     }
 }
 
 ```
 
-#### Список возможных ошибок
+- - -
 
-Код ошибки | Текст ошибки | Описание ошибки
------ | ----- | -----
-1400 | Invalid request | Техническая ошибка
-1401 | Required parameters are missing | Отсутсвует обязательный параметр
-103 | Title is too long | Название бота слишком длинное
+## Delete token
+
+[Наверх](#methods)
+
+Удаление токена бота
+
+```plaintext
+POST /api/bot/deleteToken
+```
+
+```json
+{
+    "bot_id": "integer"
+}
+```
+
+Параметры | Тип  | Описание 
+--------- | ---- | -----------
+`bot_id` | integer | id бота
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+
+```
+
+- - -
+
+## Start
+
+[Наверх](#methods)
+
+Запуск бота
+
+```plaintext
+POST /api/bot/start
+```
+
+```json
+{
+    "bot_id": "integer"
+}
+```
+
+Параметры | Тип  | Описание 
+--------- | ---- | -----------
+`bot_id` | integer | id бота
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+```
+
+- - -
+
+## Stop
+
+[Наверх](#methods)
+
+Остановка бота
+
+```plaintext
+POST /api/bot/stop
+```
+
+```json
+{
+    "bot_id": "integer"
+}
+```
+
+Параметры | Тип  | Описание 
+--------- | ---- | -----------
+`bot_id` | integer | id бота
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+```
