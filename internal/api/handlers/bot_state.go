@@ -89,7 +89,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 		var data botIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: startBot] - Serialisation error;\n", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, &errors.ErrInvalidRequest)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
@@ -139,7 +139,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 			nbot, err := bot.NewBot(token)
 			if err != nil {
 				log.Debug("[API: startBot] ", err)
-				doJsonRes(ctx, fasthttp.StatusOK, &errors.ErrInvalidToken)
+				doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidToken))
 				return
 			}
 
@@ -149,7 +149,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 
 		if err = (*bots)[*token].StartBot(conf.WebhookBase, conf.ListenAddress, server); err != nil {
 			log.Debug("[API: startBot] Start bot error ", err)
-			doJsonRes(ctx, fasthttp.StatusInternalServerError, &errors.ErrStartBot)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrStartBot))
 			return
 		}
 
@@ -166,7 +166,7 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 		var data botIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: stopBot] - Serialisation error;\n", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, &errors.ErrInvalidRequest)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
