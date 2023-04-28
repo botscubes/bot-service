@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/api/schema"
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
@@ -23,7 +24,7 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data newBotReq
+		var data schema.NewBotReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: newBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
@@ -81,7 +82,7 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		dataRes := &newBotRes{
+		dataRes := &schema.NewBotRes{
 			Id: botId,
 		}
 
@@ -94,7 +95,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data botIdReq
+		var data schema.BotIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: startBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
@@ -171,7 +172,7 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data botIdReq
+		var data schema.BotIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: stopBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))

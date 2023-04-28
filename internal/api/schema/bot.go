@@ -1,20 +1,20 @@
-package handlers
+package schema
 
 import "encoding/json"
 
-type newBotReq struct {
+type NewBotReq struct {
 	Title *string `json:"title"`
 }
 
-type newBotRes struct {
+type NewBotRes struct {
 	Id int64 `json:"id"`
 }
 
-type setTokenReq struct {
+type SetTokenReq struct {
 	BotId *json.Number `json:"bot_id"`
 	Token *string      `json:"token"`
 }
 
-type botIdReq struct {
+type BotIdReq struct {
 	BotId *json.Number `json:"bot_id"`
 }

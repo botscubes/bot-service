@@ -23,7 +23,6 @@ type Content struct {
 }
 
 type Keyboard struct {
-	Ka      int        `json:"ka,omitempty"`
 	Buttons [][]Button `json:"buttons,omitempty"`
 }
 

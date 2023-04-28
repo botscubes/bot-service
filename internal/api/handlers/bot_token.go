@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/api/schema"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
@@ -25,7 +26,7 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data setTokenReq
+		var data schema.SetTokenReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: setToken] - Serialisation error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
@@ -114,7 +115,7 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data botIdReq
+		var data schema.BotIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: deleteToken] - Serialisation error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
