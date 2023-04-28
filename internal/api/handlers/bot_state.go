@@ -153,11 +153,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 			return
 		}
 
-		dataRes := &messageRes{
-			Message: "Bot started",
-		}
-
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, nil, nil))
 	}
 }
 
@@ -227,10 +223,6 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 			return
 		}
 
-		dataRes := &messageRes{
-			Message: "Bot stopped",
-		}
-
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, nil, nil))
 	}
 }

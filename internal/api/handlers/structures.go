@@ -15,10 +15,6 @@ type setTokenReq struct {
 	Token *string      `json:"token"`
 }
 
-type messageRes struct {
-	Message string `json:"message"`
-}
-
 type botIdReq struct {
 	BotId *json.Number `json:"bot_id"`
 }
