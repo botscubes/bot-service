@@ -155,3 +155,90 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))
 	}
 }
+
+type setNextForComponentReq struct {
+	NextId *int64 `json:"next_id"`
+}
+
+func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		var err error = nil
+
+		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: SetNextForComponent] - bot_id param error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		comp_id, err := strconv.ParseInt(ctx.UserValue("comp_id").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: SetNextForComponent] - comp_id param error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		var reqData setNextForComponentReq
+		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
+			log.Debug("[API: SetNextForComponent] - Serialisation error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if reqData.NextId == nil {
+			log.Debug("[API: SetNextForComponent] next_id is misssing")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
+			return
+		}
+
+		nextId := reqData.NextId
+		user_id := ctx.UserValue("user_id").(int64)
+
+		existBot, err := db.CheckBotExist(user_id, bot_id)
+		if err != nil {
+			log.Debug("[API: SetNextForComponent] - [db: CheckBotExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: SetNextForComponent] - bot not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrBotNotFound))
+			return
+		}
+
+		existInitialComp, err := db.CheckComponentExist(bot_id, comp_id)
+		if err != nil {
+			log.Debug("[API: SetNextForComponent] - [db: CheckComponentExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existInitialComp {
+			log.Debug("[API: SetNextForComponent] - initial component not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrComponentNotFound))
+			return
+		}
+
+		existNextComp, err := db.CheckComponentExist(bot_id, *nextId)
+		if err != nil {
+			log.Debug("[API: SetNextForComponent] - [db: CheckComponentExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existNextComp {
+			log.Debug("[API: SetNextForComponent] - next component not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrNextComponentNotFound))
+			return
+		}
+
+		if err = db.SetNextIdForComponent(bot_id, comp_id, *nextId); err != nil {
+			log.Debug("[API: SetNextForComponent] - [db: SetNextIdForComponent] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, nil, nil))
+	}
+}

@@ -52,3 +52,25 @@ func (db *Db) AddCommand(bot_id int64, m *model.Command) (int64, error) {
 
 	return id, nil
 }
+
+func (db *Db) CheckComponentExist(botId int64, compId int64) (bool, error) {
+	var c bool
+	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+			WHERE id = $1) AS "exists";`
+
+	if err := db.Pool.QueryRow(
+		context.Background(), query, compId,
+	).Scan(&c); err != nil {
+		return false, err
+	}
+
+	return c, nil
+}
+
+func (db *Db) SetNextIdForComponent(botId int64, compId int64, nextId int64) error {
+	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET next_id = $1 WHERE id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, nextId, compId)
+	return err
+}
