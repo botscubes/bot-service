@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strconv"
 	"unicode/utf8"
 
 	"github.com/goccy/go-json"
@@ -105,22 +106,9 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data botIdReq
-		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Error("[API: startBot] - Serialisation error;\n", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
-			return
-		}
-
-		if data.BotId == nil {
-			log.Debug("[API: startBot] bot_id is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
-
-		bot_id, err := data.BotId.Int64()
+		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: startBot] - (bot_id) json.Number convertation to int64 error;\n", err)
+			log.Debug("[API: StartBot] - bot_id param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -182,22 +170,9 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data botIdReq
-		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Error("[API: stopBot] - Serialisation error;\n", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
-			return
-		}
-
-		if data.BotId == nil {
-			log.Debug("[API: stopBot] bot_id is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
-
-		bot_id, err := data.BotId.Int64()
+		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: stopBot] - (bot_id) json.Number convertation to int64 error;\n", err)
+			log.Debug("[API: StopBot] - bot_id param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}

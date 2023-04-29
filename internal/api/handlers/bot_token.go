@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"regexp"
+	"strconv"
 
 	"github.com/goccy/go-json"
 
@@ -12,18 +12,8 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-const (
-	tokenRegexp = `^\d{9,10}:[\w-]{35}$` //nolint:gosec
-)
-
-func validateToken(token string) bool {
-	reg := regexp.MustCompile(tokenRegexp)
-	return reg.MatchString(token)
-}
-
 type setTokenReq struct {
-	BotId *json.Number `json:"bot_id"`
-	Token *string      `json:"token"`
+	Token *string `json:"token"`
 }
 
 func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
@@ -38,15 +28,9 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if data.BotId == nil {
-			log.Debug("[API: setToken] bot_id is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
-
-		bot_id, err := data.BotId.Int64()
+		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: setToken] - (bot_id) json.Number convertation to int64 error;", err)
+			log.Debug("[API: SetToken] - bot_id param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -120,22 +104,9 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data botIdReq
-		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Debug("[API: deleteToken] - Serialisation error;", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
-			return
-		}
-
-		if data.BotId == nil {
-			log.Debug("[API: deleteToken] bot_id is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
-
-		bot_id, err := data.BotId.Int64()
+		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: deleteToken] - (bot_id) json.Number convertation to int64 error;", err)
+			log.Debug("[API: DeleteToken] - bot_id param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
