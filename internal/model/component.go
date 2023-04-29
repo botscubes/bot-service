@@ -23,10 +23,12 @@ type Content struct {
 }
 
 type Keyboard struct {
-	Buttons [][]Button `json:"buttons,omitempty"`
+	Buttons [][]*int64 `json:"buttons,omitempty"`
 }
 
-type Button struct {
-	Text   string `json:"text,omitempty"`
-	NextId int64  `json:"next_id,omitempty"`
+type Command struct {
+	Id      int64
+	Type    string
+	Data    string
+	Next_id *int64
 }

@@ -82,6 +82,12 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
+		if err := db.CreateBotCommandTable(botId); err != nil {
+			log.Error("[API: newBot] - [db: CreateBotCommandTable] error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
 		dataRes := &schema.NewBotRes{
 			Id: botId,
 		}

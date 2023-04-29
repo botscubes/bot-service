@@ -53,3 +53,20 @@ func (db *Db) CreateBotStructureTable(bot_id int64) error {
 
 	return nil
 }
+
+func (db *Db) CreateBotCommandTable(bot_id int64) error {
+	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.command
+	(
+		id bigserial NOT NULL,
+		type character varying(20) NOT NULL,
+		data text NOT NULL,
+		next_id bigint,
+		PRIMARY KEY (id)
+	)`
+
+	if _, err := db.Pool.Exec(context.Background(), query); err != nil {
+		return err
+	}
+
+	return nil
+}
