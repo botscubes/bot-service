@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
 	"regexp"
 
+	"github.com/goccy/go-json"
+
 	"github.com/botscubes/bot-service/internal/api/errors"
-	"github.com/botscubes/bot-service/internal/api/schema"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
@@ -21,12 +21,17 @@ func validateToken(token string) bool {
 	return reg.MatchString(token)
 }
 
+type setTokenReq struct {
+	BotId *json.Number `json:"bot_id"`
+	Token *string      `json:"token"`
+}
+
 func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data schema.SetTokenReq
+		var data setTokenReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: setToken] - Serialisation error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
@@ -115,7 +120,7 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data schema.BotIdReq
+		var data botIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: deleteToken] - Serialisation error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))

@@ -9,9 +9,9 @@ import (
 	"github.com/botscubes/bot-service/pkg/log"
 )
 
-func (db *Db) NewComponent(bot_id int64, m *model.Component) (int64, error) {
+func (db *Db) AddComponent(bot_id int64, m *model.Component) (int64, error) {
 	var id int64
-	query := `INSERT INTO` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.structure
+	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.component
 			("data", keyboard, next_id, "position", status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 
 	if err := db.Pool.QueryRow(
@@ -26,7 +26,7 @@ func (db *Db) NewComponent(bot_id int64, m *model.Component) (int64, error) {
 func (db *Db) GetComponent() {
 	data := new(model.Component)
 
-	query := `SELECT * FROM bot_41.structure WHERE id = 5;`
+	query := `SELECT * FROM bot_41.component WHERE id = 5;`
 	if err := db.Pool.QueryRow(
 		context.Background(), query,
 	).Scan(&data.Id, &data.Data, &data.Keyboard, &data.NextId, &data.Position, &data.Status); err != nil {
@@ -37,4 +37,18 @@ func (db *Db) GetComponent() {
 	log.Debug(data)
 
 	log.Debug(123)
+}
+
+func (db *Db) AddCommand(bot_id int64, m *model.Command) (int64, error) {
+	var id int64
+	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.command
+			("type", "data", next_id) VALUES ($1, $2, $3) RETURNING id;`
+
+	if err := db.Pool.QueryRow(
+		context.Background(), query, m.Type, m.Data, m.NextId,
+	).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }

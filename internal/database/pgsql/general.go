@@ -35,8 +35,8 @@ func (db *Db) CreateBotUserTable(bot_id int64) error {
 	return nil
 }
 
-func (db *Db) CreateBotStructureTable(bot_id int64) error {
-	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.structure
+func (db *Db) CreateBotComponentTable(bot_id int64) error {
+	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.component
 	(
 		id bigserial NOT NULL,
 		data jsonb,

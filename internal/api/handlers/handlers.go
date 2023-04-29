@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
+
+	"github.com/goccy/go-json"
 
 	"github.com/botscubes/bot-service/internal/api/errors"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
@@ -21,6 +22,10 @@ var (
 	strContentType     = []byte("Content-Type")
 	strApplicationJSON = []byte("application/json")
 )
+
+type botIdReq struct {
+	BotId *json.Number `json:"bot_id"`
+}
 
 func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj interface{}) {
 	ctx.Response.Header.SetCanonical(strContentType, strApplicationJSON)

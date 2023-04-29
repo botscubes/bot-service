@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
 	"unicode/utf8"
 
+	"github.com/goccy/go-json"
+
 	"github.com/botscubes/bot-service/internal/api/errors"
-	"github.com/botscubes/bot-service/internal/api/schema"
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
@@ -16,15 +16,19 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-const (
-	maxTitleLen = 50
-)
+type newBotReq struct {
+	Title *string `json:"title"`
+}
+
+type newBotRes struct {
+	Id int64 `json:"id"`
+}
 
 func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data schema.NewBotReq
+		var data newBotReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Debug("[API: newBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
@@ -42,8 +46,8 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if utf8.RuneCountInString(*title) > maxTitleLen {
-			log.Debug("[API: newBot] - title len > ", maxTitleLen)
+		if utf8.RuneCountInString(*title) > config.MaxTitleLen {
+			log.Debug("[API: newBot] - title len > ", config.MaxTitleLen)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidTitleLength))
 			return
 		}
@@ -76,8 +80,8 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if err := db.CreateBotStructureTable(botId); err != nil {
-			log.Error("[API: newBot] - [db: CreateBotStructureTable] error;\n", err)
+		if err := db.CreateBotComponentTable(botId); err != nil {
+			log.Error("[API: newBot] - [db: CreateBotComponentTable] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -88,7 +92,7 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		dataRes := &schema.NewBotRes{
+		dataRes := &newBotRes{
 			Id: botId,
 		}
 
@@ -101,7 +105,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data schema.BotIdReq
+		var data botIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: startBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
@@ -178,7 +182,7 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error = nil
 
-		var data schema.BotIdReq
+		var data botIdReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
 			log.Error("[API: stopBot] - Serialisation error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))

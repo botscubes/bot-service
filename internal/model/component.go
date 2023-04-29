@@ -5,30 +5,30 @@ import (
 )
 
 type Component struct {
-	Id       int64
-	Data     Data
-	Keyboard Keyboard
-	NextId   *int64
-	Position pgtype.Point
-	Status   int
+	Id       int64         `json:"id"`
+	Data     *Data         `json:"data"`
+	Keyboard *Keyboard     `json:"keyboard,omitempty"`
+	NextId   *int64        `json:"next_id,omitempty"`
+	Position *pgtype.Point `json:"position"`
+	Status   int           `json:"status"`
 }
 
 type Data struct {
-	Type    string  `json:"type,omitempty"`
-	Content Content `json:"content,omitempty"`
+	Type    *string  `json:"type"`
+	Content *Content `json:"content"`
 }
 
 type Content struct {
-	Text string `json:"text,omitempty"`
+	Text *string `json:"text,omitempty"`
 }
 
 type Keyboard struct {
-	Buttons [][]*int64 `json:"buttons,omitempty"`
+	Buttons [][]*int64 `json:"buttons"`
 }
 
 type Command struct {
-	Id      int64
-	Type    string
-	Data    string
-	Next_id *int64
+	Id     *int64  `json:"id"`
+	Type   *string `json:"type"`
+	Data   *string `json:"data"`
+	NextId *int64  `json:"next_id,omitempty"`
 }

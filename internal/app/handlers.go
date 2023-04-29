@@ -5,6 +5,8 @@ import (
 )
 
 func (app *App) addHandlers() {
+	// TODO: Correct methods (create, delete, ...)
+
 	app.Router.GET("/api/bot/health", h.Auth(h.Health, &app.SessionStorage, &app.Conf.JWTKey))
 
 	app.Router.POST("/api/bot/new", h.Auth(h.NewBot(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
@@ -16,4 +18,6 @@ func (app *App) addHandlers() {
 
 	app.Router.POST("/api/bot/start", h.Auth(h.StartBot(app.Db, &app.Bots, app.Server, &app.Conf.Bot), &app.SessionStorage, &app.Conf.JWTKey))
 	app.Router.POST("/api/bot/stop", h.Auth(h.StopBot(app.Db, &app.Bots), &app.SessionStorage, &app.Conf.JWTKey))
+
+	app.Router.POST("/api/bot/{bot_id}/component/add", h.Auth(h.AddComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 }
