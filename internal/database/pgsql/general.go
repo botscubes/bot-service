@@ -7,8 +7,8 @@ import (
 	"github.com/botscubes/bot-service/internal/config"
 )
 
-func (db *Db) CreateSchema(bot_id int64) error {
-	query := `CREATE SCHEMA IF NOT EXISTS ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10)
+func (db *Db) CreateSchema(botId int64) error {
+	query := `CREATE SCHEMA IF NOT EXISTS ` + config.PrefixSchema + strconv.FormatInt(botId, 10)
 	if _, err := db.Pool.Exec(context.Background(), query); err != nil {
 		return err
 	}
@@ -16,8 +16,8 @@ func (db *Db) CreateSchema(bot_id int64) error {
 	return nil
 }
 
-func (db *Db) CreateBotUserTable(bot_id int64) error {
-	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.user
+func (db *Db) CreateBotUserTable(botId int64) error {
+	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.user
 	(
 		id bigserial NOT NULL,
 		tg_id bigint NOT NULL,
@@ -35,8 +35,8 @@ func (db *Db) CreateBotUserTable(bot_id int64) error {
 	return nil
 }
 
-func (db *Db) CreateBotComponentTable(bot_id int64) error {
-	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.component
+func (db *Db) CreateBotComponentTable(botId int64) error {
+	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
 	(
 		id bigserial NOT NULL,
 		data jsonb,
@@ -54,8 +54,8 @@ func (db *Db) CreateBotComponentTable(bot_id int64) error {
 	return nil
 }
 
-func (db *Db) CreateBotCommandTable(bot_id int64) error {
-	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(bot_id, 10) + `.command
+func (db *Db) CreateBotCommandTable(botId int64) error {
+	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 	(
 		id bigserial NOT NULL,
 		type character varying(20) NOT NULL,

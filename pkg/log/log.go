@@ -58,7 +58,7 @@ func getLevel() logrus.Level {
 	case "fatal":
 		level = logrus.FatalLevel
 	default:
-		fmt.Println("unknown log level ", lvl)
+		fmt.Printf("unknown log level %q", lvl)
 		level = defaultLevel
 	}
 
@@ -89,73 +89,73 @@ func getOutput() io.Writer {
 		return os.Stderr
 	}
 
-	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec,gomnd
 	if err != nil {
 		fmt.Printf("failed open log file %q;\n%s", filePath, err)
 	}
 	return file
 }
 
-func Debugf(format string, args ...interface{}) {
+func Debugf(format string, args ...any) {
 	log.Debugf(format, args...)
 }
 
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	log.Infof(format, args...)
 }
 
-func Printf(format string, args ...interface{}) {
+func Printf(format string, args ...any) {
 	log.Printf(format, args...)
 }
 
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, args ...any) {
 	log.Warnf(format, args...)
 }
 
-func Warningf(format string, args ...interface{}) {
+func Warningf(format string, args ...any) {
 	log.Warningf(format, args...)
 }
 
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	log.Errorf(format, args...)
 }
 
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	log.Fatalf(format, args...)
 }
 
-func Panicf(format string, args ...interface{}) {
+func Panicf(format string, args ...any) {
 	log.Panicf(format, args...)
 }
 
-func Debug(args ...interface{}) {
+func Debug(args ...any) {
 	log.Debug(args...)
 }
 
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	log.Info(args...)
 }
 
-func Print(args ...interface{}) {
+func Print(args ...any) {
 	log.Print(args...)
 }
 
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	log.Warn(args...)
 }
 
-func Warning(args ...interface{}) {
+func Warning(args ...any) {
 	log.Warning(args...)
 }
 
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	log.Error(args...)
 }
 
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	log.Fatal(args...)
 }
 
-func Panic(args ...interface{}) {
+func Panic(args ...any) {
 	log.Panic(args...)
 }

@@ -66,14 +66,14 @@ POST /api/bot/setToken
 
 ```json
 {
-    "bot_id": "integer",
+    "botId": "integer",
     "token": "string"
 }
 ```
 
 Параметры | Тип | Описание 
 --------- | ---- | -----------
-`bot_id` | integer | id бота
+`botId` | integer | id бота
 `token` | string | Токен
 
 #### Ответ
@@ -105,13 +105,13 @@ POST /api/bot/deleteToken
 
 ```json
 {
-    "bot_id": "integer"
+    "botId": "integer"
 }
 ```
 
 Параметры | Тип  | Описание 
 --------- | ---- | -----------
-`bot_id` | integer | id бота
+`botId` | integer | id бота
 
 #### Ответ
 
@@ -142,13 +142,13 @@ POST /api/bot/start
 
 ```json
 {
-    "bot_id": "integer"
+    "botId": "integer"
 }
 ```
 
 Параметры | Тип  | Описание 
 --------- | ---- | -----------
-`bot_id` | integer | id бота
+`botId` | integer | id бота
 
 #### Ответ
 
@@ -178,13 +178,13 @@ POST /api/bot/stop
 
 ```json
 {
-    "bot_id": "integer"
+    "botId": "integer"
 }
 ```
 
 Параметры | Тип  | Описание 
 --------- | ---- | -----------
-`bot_id` | integer | id бота
+`botId` | integer | id бота
 
 #### Ответ
 

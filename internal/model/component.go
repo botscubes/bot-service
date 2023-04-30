@@ -8,7 +8,7 @@ type Component struct {
 	Id       int64         `json:"id"`
 	Data     *Data         `json:"data"`
 	Keyboard *Keyboard     `json:"keyboard,omitempty"`
-	NextId   *int64        `json:"next_id,omitempty"`
+	NextId   *int64        `json:"nextId,omitempty"`
 	Position *pgtype.Point `json:"position"`
 	Status   int           `json:"status"`
 }
@@ -30,5 +30,5 @@ type Command struct {
 	Id     *int64  `json:"id"`
 	Type   *string `json:"type"`
 	Data   *string `json:"data"`
-	NextId *int64  `json:"next_id,omitempty"`
+	NextId *int64  `json:"nextId,omitempty"`
 }

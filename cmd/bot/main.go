@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/botscubes/bot-service/internal/app"
+	a "github.com/botscubes/bot-service/internal/app"
 )
 
 func main() {
-	var app app.App
+	var app a.App
 	app.Run()
 }

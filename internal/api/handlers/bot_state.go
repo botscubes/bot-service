@@ -27,17 +27,23 @@ type newBotRes struct {
 
 func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
-		var err error = nil
+		var err error
 
 		var data newBotReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Debug("[API: newBot] - Serialisation error;\n", err)
+			log.Debug("[API: newBot] - Serialization error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
 		title := data.Title
-		user_id := ctx.UserValue("user_id").(int64)
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: newBot] - get userId convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
 		token := ""
 		status := 0
 
@@ -56,10 +62,10 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 		// TODO: Mb combine into one query (for rollback all on error)
 
 		m := &model.Bot{
-			User_id: user_id,
-			Token:   &token,
-			Title:   title,
-			Status:  status,
+			UserId: userId,
+			Token:  &token,
+			Title:  title,
+			Status: status,
 		}
 
 		botId, err := db.AddBot(m)
@@ -101,21 +107,26 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 	}
 }
 
-func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotWebhookServer, conf *config.BotConfig) fasthttp.RequestHandler {
+func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig) fasthttp.RequestHandler {
 	// check bot already started
 	return func(ctx *fasthttp.RequestCtx) {
-		var err error = nil
+		var err error
 
-		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: StartBot] - bot_id param error;\n", err)
+			log.Debug("[API: StartBot] - botId param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
-		user_id := ctx.UserValue("user_id").(int64)
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: StartBot] - get userId convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
 
-		existBot, err := db.CheckBotExist(user_id, bot_id)
+		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: startBot] - [db: CheckBotExist] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -128,7 +139,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 			return
 		}
 
-		token, err := db.GetBotToken(user_id, bot_id)
+		token, err := db.GetBotToken(userId, botId)
 		if err != nil {
 			log.Debug("[API: startBot] - [db: GetBotToken] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -154,7 +165,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, server *telego.MultiBotW
 			(*bots)[*token].Bot = nbot
 		}
 
-		if err = (*bots)[*token].StartBot(conf.WebhookBase, conf.ListenAddress, server); err != nil {
+		if err = (*bots)[*token].StartBot(c.WebhookBase, c.ListenAddress, s); err != nil {
 			log.Debug("[API: startBot] Start bot error ", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrStartBot))
 			return
@@ -168,18 +179,23 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 	// TODO: check bot is running
 	// check bot already stopped
 	return func(ctx *fasthttp.RequestCtx) {
-		var err error = nil
+		var err error
 
-		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: StopBot] - bot_id param error;\n", err)
+			log.Debug("[API: StopBot] - botId param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
-		user_id := ctx.UserValue("user_id").(int64)
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: StopBot] - get userId convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
 
-		existBot, err := db.CheckBotExist(user_id, bot_id)
+		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: stopBot] - [db: CheckBotExist] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -192,7 +208,7 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
 			return
 		}
 
-		token, err := db.GetBotToken(user_id, bot_id)
+		token, err := db.GetBotToken(userId, botId)
 		if err != nil {
 			log.Debug("[API: stopBot] - [db: GetBotToken] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))

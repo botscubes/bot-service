@@ -15,13 +15,15 @@ type TBot struct {
 	Handler *th.BotHandler
 }
 
+const handlerTimeout = 10 // sec
+
 func NewBot(token *string) (*telego.Bot, error) {
 	return telego.NewBot(*token, telego.WithHealthCheck(), telego.WithDefaultDebugLogger())
 }
 
 func (btx *TBot) setBotHandler() {
 	btx.Handler.HandleMessage(func(bot *telego.Bot, message telego.Message) {
-		var err error = nil
+		var err error
 		chatID := tu.ID(message.Chat.ID)
 		_, err = bot.CopyMessage(tu.CopyMessage(chatID, chatID, message.MessageID))
 		if err != nil {
@@ -37,7 +39,7 @@ func (btx *TBot) startBotHandler() {
 }
 
 func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *telego.MultiBotWebhookServer) error {
-	var err error = nil
+	var err error
 
 	_ = btx.Bot.SetWebhook(&telego.SetWebhookParams{
 		URL: webhookBase + "/webhook/bot" + btx.Bot.Token(),
@@ -53,7 +55,7 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 	}
 
 	if btx.Handler == nil {
-		if btx.Handler, err = th.NewBotHandler(btx.Bot, btx.Updates, th.WithStopTimeout(time.Second*10)); err != nil {
+		if btx.Handler, err = th.NewBotHandler(btx.Bot, btx.Updates, th.WithStopTimeout(time.Second*handlerTimeout)); err != nil {
 			return err
 		}
 
@@ -92,9 +94,5 @@ func (btx *TBot) StopBot(stopWebhookServer bool) error {
 		btx.Handler.Stop()
 	}
 
-	if err := btx.Bot.DeleteWebhook(nil); err != nil {
-		return err
-	}
-
-	return nil
+	return btx.Bot.DeleteWebhook(nil)
 }

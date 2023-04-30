@@ -11,5 +11,4 @@ func NewClient(c *config.RedisAuthConfig) *redis.Client {
 		Password: c.Pass,
 		DB:       c.Db,
 	})
-
 }

@@ -23,11 +23,7 @@ var (
 	strApplicationJSON = []byte("application/json")
 )
 
-type botIdReq struct {
-	BotId *json.Number `json:"bot_id"`
-}
-
-func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj interface{}) {
+func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj any) {
 	ctx.Response.Header.SetCanonical(strContentType, strApplicationJSON)
 	ctx.Response.SetStatusCode(code)
 	if err := json.NewEncoder(ctx).Encode(obj); err != nil {
@@ -65,13 +61,13 @@ func Auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *str
 		}
 
 		// WARN: fix error !!!
-		user_id, err := jwt.GetIdFromToken(token, *jwtKey)
+		userId, err := jwt.GetIdFromToken(token, *jwtKey)
 		if err != nil {
 			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
 			return
 		}
 
-		ctx.SetUserValue("user_id", int64(user_id))
+		ctx.SetUserValue("userId", int64(userId))
 
 		h(ctx)
 	})

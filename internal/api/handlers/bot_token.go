@@ -19,23 +19,28 @@ type setTokenReq struct {
 func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
-		var err error = nil
+		var err error
 
 		var data setTokenReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Debug("[API: setToken] - Serialisation error;", err)
+			log.Debug("[API: setToken] - Serialization error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
-		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: SetToken] - bot_id param error;\n", err)
+			log.Debug("[API: SetToken] - botId param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
-		user_id := ctx.UserValue("user_id").(int64)
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: SetToken] - get userId convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
 
 		token := data.Token
 		if token == nil {
@@ -50,7 +55,7 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		existBot, err := db.CheckBotExist(user_id, bot_id)
+		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: setToken] - [db: CheckBotExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -63,7 +68,7 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		oldToken, err := db.GetBotToken(user_id, bot_id)
+		oldToken, err := db.GetBotToken(userId, botId)
 		if err != nil {
 			log.Debug("[API: setToken] - [db: GetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -89,7 +94,7 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if err = db.SetBotToken(user_id, bot_id, token); err != nil {
+		if err = db.SetBotToken(userId, botId, token); err != nil {
 			log.Error("[API: setToken] - [db: SetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
@@ -102,18 +107,23 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
-		var err error = nil
+		var err error
 
-		bot_id, err := strconv.ParseInt(ctx.UserValue("bot_id").(string), 10, 64)
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: DeleteToken] - bot_id param error;\n", err)
+			log.Debug("[API: DeleteToken] - botId param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
-		user_id := ctx.UserValue("user_id").(int64)
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: DeleteToken] - get userId convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
 
-		existBot, err := db.CheckBotExist(user_id, bot_id)
+		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: deleteToken] - [db: CheckBotExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -128,7 +138,7 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 
 		token := ""
 
-		if err = db.SetBotToken(user_id, bot_id, &token); err != nil {
+		if err = db.SetBotToken(userId, botId, &token); err != nil {
 			log.Error("[API: deleteToken] - [db: SetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
