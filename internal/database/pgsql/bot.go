@@ -30,7 +30,7 @@ func (db *Db) CheckBotExist(userId int64, botId int64) (bool, error) {
 	return c, nil
 }
 
-func (db *Db) CheckTokenExist(token *string) (bool, error) {
+func (db *Db) CheckBotTokenExist(token *string) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE token = $1) AS "exists";`
 	if err := db.Pool.QueryRow(

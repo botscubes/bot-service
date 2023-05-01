@@ -12,18 +12,18 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type setTokenReq struct {
+type setBotTokenReq struct {
 	Token *string `json:"token"`
 }
 
-func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
+func SetBotToken(db *pgsql.Db) fasthttp.RequestHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 
-		var data setTokenReq
+		var data setBotTokenReq
 		if err = json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Debug("[API: setToken] - Serialization error;", err)
+			log.Debug("[API: SetBotToken] - Serialization error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -44,58 +44,58 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 
 		token := data.Token
 		if token == nil {
-			log.Debug("[API: setToken] - token is misssing")
+			log.Debug("[API: SetBotToken] - token is misssing")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
 			return
 		}
 
 		if !validateToken(*token) {
-			log.Debug("[API: setToken] - Incorrect token")
+			log.Debug("[API: SetBotToken] - Incorrect token")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrIncorrectTokenFormat))
 			return
 		}
 
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Debug("[API: setToken] - [db: CheckBotExist] error;", err)
+			log.Debug("[API: SetBotToken] - [db: CheckBotExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
 
 		if !existBot {
-			log.Debug("[API: setToken] - bot not found")
+			log.Debug("[API: SetBotToken] - bot not found")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrBotNotFound))
 			return
 		}
 
 		oldToken, err := db.GetBotToken(userId, botId)
 		if err != nil {
-			log.Debug("[API: setToken] - [db: GetBotToken] error;", err)
+			log.Debug("[API: SetBotToken] - [db: GetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
 
 		if oldToken != nil && *oldToken != "" {
-			log.Debug("[API: setToken] - Token is already installed")
+			log.Debug("[API: SetBotToken] - Token is already installed")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrTokenAlreadyInstalled))
 			return
 		}
 
-		existToken, err := db.CheckTokenExist(token)
+		existToken, err := db.CheckBotTokenExist(token)
 		if err != nil {
-			log.Debug("[API: setToken] - [db: CheckTokenExist] error;", err)
+			log.Debug("[API: SetBotToken] - [db: CheckBotTokenExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
 
 		if existToken {
-			log.Debug("[API: setToken] - token exists")
+			log.Debug("[API: SetBotToken] - token exists")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrTokenAlreadyExists))
 			return
 		}
 
 		if err = db.SetBotToken(userId, botId, token); err != nil {
-			log.Error("[API: setToken] - [db: SetBotToken] error;", err)
+			log.Error("[API: SetBotToken] - [db: SetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -104,34 +104,34 @@ func SetToken(db *pgsql.Db) fasthttp.RequestHandler {
 	}
 }
 
-func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
+func DeleteBotToken(db *pgsql.Db) fasthttp.RequestHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: DeleteToken] - botId param error;\n", err)
+			log.Debug("[API: DeleteBotToken] - botId param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: DeleteToken] - get userId convertation to int64 error;", err)
+			log.Debug("[API: DeleteBotToken] - get userId convertation to int64 error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Debug("[API: deleteToken] - [db: CheckBotExist] error;", err)
+			log.Debug("[API: DeleteBotToken] - [db: CheckBotExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
 
 		if !existBot {
-			log.Debug("[API: deleteToken] - bot not found")
+			log.Debug("[API: DeleteBotToken] - bot not found")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrBotNotFound))
 			return
 		}
@@ -139,7 +139,7 @@ func DeleteToken(db *pgsql.Db) fasthttp.RequestHandler {
 		token := ""
 
 		if err = db.SetBotToken(userId, botId, &token); err != nil {
-			log.Error("[API: deleteToken] - [db: SetBotToken] error;", err)
+			log.Error("[API: DeleteBotToken] - [db: SetBotToken] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}

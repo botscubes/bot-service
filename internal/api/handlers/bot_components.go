@@ -14,26 +14,17 @@ import (
 	"github.com/botscubes/bot-service/pkg/log"
 )
 
-// all field reqired
-// comands: [] | []command
-type addComponentReq struct {
-	Data     *data      `json:"data"`
-	Commands []*command `json:"commands"`
-	Position *point     `json:"position"`
-}
+// TODO:
+// add commands ids to components keyboard
+// select command from components keyboard
 
-type point struct {
-	X *json.Number `json:"x"`
-	Y *json.Number `json:"y"`
-}
-
-type data struct {
-	Type    *string  `json:"type"`
-	Content *content `json:"content"`
-}
-
-type content struct {
-	Text *string `json:"text"`
+type component struct {
+	Id         int64          `json:"id"`
+	Data       *componentData `json:"data"`
+	Keyboard   *keyboard      `json:"keyboard"`
+	Commands   *[]*command    `json:"commands"`
+	NextStepId *int64         `json:"nextStepId"`
+	Position   *point         `json:"position"`
 }
 
 type command struct {
@@ -43,24 +34,50 @@ type command struct {
 	NextStepId *int64  `json:"nextStepId,omitempty"`
 }
 
-type addComponentRes struct {
+type point struct {
+	X *float64 `json:"x"`
+	Y *float64 `json:"y"`
+}
+
+type componentData struct {
+	Type    *string      `json:"type"`
+	Content *dataContent `json:"content"`
+}
+
+type dataContent struct {
+	Text *string `json:"text"`
+}
+
+type keyboard struct {
+	Buttons [][]*int64 `json:"buttons"`
+}
+
+// all field reqired
+// comands: [] | []command
+type addBotComponentReq struct {
+	Data     *componentData `json:"data"`
+	Commands []*command     `json:"commands"`
+	Position *point         `json:"position"`
+}
+
+type addBotComponentRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
+func AddBotComponent(db *pgsql.Db) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: AddComponent] - botId param error;\n", err)
+			log.Debug("[API: AddBotComponent] - botId param error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
-		var reqData addComponentReq
+		var reqData addBotComponentReq
 		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
-			log.Debug("[API: AddComponent] - Serialization error;\n", err)
+			log.Debug("[API: AddBotComponent] - Serialization error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
@@ -68,42 +85,42 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 		// TODO: check fields limits:
 		// eg. data.commands._.data max size
 
-		if err := validateComponent(&reqData); err != nil {
+		if err := validateBotComponent(&reqData); err != nil {
 			log.Debug(err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
 			return
 		}
 
-		px, err := reqData.Position.X.Float64()
-		if err != nil {
-			log.Debug("[API: AddComponent] - (position.X) json.Number convertation to Float64 error;", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+		px := reqData.Position.X
+		if px != nil {
+			log.Debug("[API: AddBotComponent] Position.X is misssing")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
 			return
 		}
 
-		py, err := reqData.Position.Y.Float64()
-		if err != nil {
-			log.Debug("[API: AddComponent] - (position.Y) json.Number convertation to Float64 error;", err)
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+		py := reqData.Position.Y
+		if py != nil {
+			log.Debug("[API: AddBotComponent] Position.Y is misssing")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
 			return
 		}
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: AddComponent] - get userId convertation to int64 error;", err)
+			log.Debug("[API: AddBotComponent] - get userId convertation to int64 error;", err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
 			return
 		}
 
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Debug("[API: AddComponent] - [db: CheckBotExist] error;", err)
+			log.Debug("[API: AddBotComponent] - [db: CheckBotExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
 
 		if !existBot {
-			log.Debug("[API: AddComponent] - bot not found")
+			log.Debug("[API: AddBotComponent] - bot not found")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrBotNotFound))
 			return
 		}
@@ -122,15 +139,15 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			},
 			NextStepId: nil,
 			Position: &pgtype.Point{
-				P:      pgtype.Vec2{X: px, Y: py},
+				P:      pgtype.Vec2{X: *px, Y: *py},
 				Status: pgtype.Present,
 			},
 			Status: status,
 		}
 
-		compId, err := db.AddComponent(botId, m)
+		compId, err := db.AddBotComponent(botId, m)
 		if err != nil {
-			log.Error("[API: AddComponent] - [db: AddComponent] error;\n", err)
+			log.Error("[API: AddBotComponent] - [db: AddBotComponent] error;\n", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -147,16 +164,16 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 					Status:      commandStatus,
 				}
 
-				_, err := db.AddCommand(botId, mc)
+				_, err := db.AddBotCommand(botId, mc)
 				if err != nil {
-					log.Error("[API: AddComponent] - [db: AddCommand] error;\n", err)
+					log.Error("[API: AddBotComponent] - [db: AddBotCommand] error;\n", err)
 					doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 					return
 				}
 			}
 		}
 
-		dataRes := &addComponentRes{
+		dataRes := &addBotComponentRes{
 			Id: compId,
 		}
 
@@ -220,9 +237,9 @@ func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		existInitialComp, err := db.CheckComponentExist(botId, compId)
+		existInitialComp, err := db.CheckBotComponentExist(botId, compId)
 		if err != nil {
-			log.Debug("[API: SetNextForComponent] - [db: CheckComponentExist] error;", err)
+			log.Debug("[API: SetNextForComponent] - [db: CheckBotComponentExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -233,9 +250,9 @@ func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
+		existNextComp, err := db.CheckBotComponentExist(botId, *nextComponentId)
 		if err != nil {
-			log.Debug("[API: SetNextForComponent] - [db: CheckComponentExist] error;", err)
+			log.Debug("[API: SetNextForComponent] - [db: CheckBotComponentExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -321,9 +338,9 @@ func SetNextForCommand(db *pgsql.Db) fasthttp.RequestHandler {
 		}
 
 		// Check initial component exists
-		existInitialComp, err := db.CheckComponentExist(botId, compId)
+		existInitialComp, err := db.CheckBotComponentExist(botId, compId)
 		if err != nil {
-			log.Debug("[API: SetNextForCommand] - [db: CheckComponentExist] error;", err)
+			log.Debug("[API: SetNextForCommand] - [db: CheckBotComponentExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -335,9 +352,9 @@ func SetNextForCommand(db *pgsql.Db) fasthttp.RequestHandler {
 		}
 
 		// Check next component exists
-		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
+		existNextComp, err := db.CheckBotComponentExist(botId, *nextComponentId)
 		if err != nil {
-			log.Debug("[API: SetNextForCommand] - [db: CheckComponentExist] error;", err)
+			log.Debug("[API: SetNextForCommand] - [db: CheckBotComponentExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -349,9 +366,9 @@ func SetNextForCommand(db *pgsql.Db) fasthttp.RequestHandler {
 		}
 
 		// Check command exists
-		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
+		existCommand, err := db.CheckBotCommandExist(botId, compId, commandId)
 		if err != nil {
-			log.Debug("[API: SetNextForCommand] - [db: CheckCommandExist] error;", err)
+			log.Debug("[API: SetNextForCommand] - [db: CheckBotCommandExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
@@ -369,5 +386,57 @@ func SetNextForCommand(db *pgsql.Db) fasthttp.RequestHandler {
 		}
 
 		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, nil, nil))
+	}
+}
+
+type getBotComponentsRes []*component
+
+func GetBotComponents(db *pgsql.Db) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		var err error
+
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: GetBotComponents] - botId param error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: GetBotComponents] - get userId convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Debug("[API: GetBotComponents] - [db: CheckBotExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: GetBotComponents] - bot not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrBotNotFound))
+			return
+		}
+
+		commands, err := db.GetBotCommands(botId)
+		if err != nil {
+			log.Debug("[API: GetBotCommands] - [db: SetNextStepForCommand] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		components, err := db.GetBotComponents(botId)
+		if err != nil {
+			log.Debug("[API: GetBotComponents] - [db: SetNextStepForCommand] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, botComponentsRes(components, commands), nil))
 	}
 }

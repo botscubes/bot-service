@@ -14,8 +14,8 @@ func validateToken(token string) bool {
 	return reg.MatchString(token)
 }
 
-// Check component required fields
-func validateComponent(c *addComponentReq) error {
+// Check bot component request struct required fields
+func validateBotComponent(c *addBotComponentReq) error {
 	if c.Data == nil {
 		return errors.New("data.data not found")
 	}

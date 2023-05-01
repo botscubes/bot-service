@@ -8,7 +8,7 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-func (db *Db) AddComponent(botId int64, m *model.Component) (int64, error) {
+func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
 			("data", keyboard, next_step_id, "position", status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
@@ -22,23 +22,7 @@ func (db *Db) AddComponent(botId int64, m *model.Component) (int64, error) {
 	return id, nil
 }
 
-// func (db *Db) GetComponent() {
-// 	data := new(model.Component)
-
-// 	query := `SELECT * FROM bot_41.component WHERE id = 5;`
-// 	if err := db.Pool.QueryRow(
-// 		context.Background(), query,
-// 	).Scan(&data.Id, &data.Data, &data.Keyboard, &data.NextId, &data.Position, &data.Status); err != nil {
-// 		log.Debug("err")
-// 		log.Debug(err)
-// 	}
-
-// 	log.Debug(data)
-
-// 	log.Debug("23")
-// }
-
-func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
+func (db *Db) AddBotCommand(botId int64, m *model.Command) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 			("type", "data", component_id, next_step_id, status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
@@ -52,7 +36,7 @@ func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
 	return id, nil
 }
 
-func (db *Db) CheckComponentExist(botId int64, compId int64) (bool, error) {
+func (db *Db) CheckBotComponentExist(botId int64, compId int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
 			WHERE id = $1) AS "exists";`
@@ -74,7 +58,7 @@ func (db *Db) SetNextStepForComponent(botId int64, compId int64, nextStepId int6
 	return err
 }
 
-func (db *Db) CheckCommandExist(botId int64, compId int64, commandId int64) (bool, error) {
+func (db *Db) CheckBotCommandExist(botId int64, compId int64, commandId int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 			WHERE id = $1 AND component_id = $2) AS "exists";`
@@ -94,4 +78,62 @@ func (db *Db) SetNextStepForCommand(botId int64, commandId int64, nextStepId int
 
 	_, err := db.Pool.Exec(context.Background(), query, nextStepId, commandId)
 	return err
+}
+
+func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
+	var data []*model.Component
+	status := 0
+
+	query := `SELECT * FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+			WHERE status = $1;`
+
+	rows, err := db.Pool.Query(context.Background(), query, status)
+	if err != nil {
+		return nil, err
+	}
+
+	// WARN: status not used
+	for rows.Next() {
+		var r model.Component
+		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.NextStepId, &r.Position, &r.Status); err != nil {
+			return nil, err
+		}
+
+		data = append(data, &r)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return &data, nil
+}
+
+func (db *Db) GetBotCommands(botId int64) (*[]*model.Command, error) {
+	var data []*model.Command
+	status := 0
+
+	query := `SELECT * FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+			WHERE status = $1;`
+
+	rows, err := db.Pool.Query(context.Background(), query, status)
+	if err != nil {
+		return nil, err
+	}
+
+	// WARN: status not used
+	for rows.Next() {
+		var r model.Command
+		if err = rows.Scan(&r.Id, &r.Type, &r.Data, &r.ComponentId, &r.NextStepId, &r.Status); err != nil {
+			return nil, err
+		}
+
+		data = append(data, &r)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return &data, nil
 }
