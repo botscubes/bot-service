@@ -37,10 +37,10 @@ type content struct {
 }
 
 type command struct {
-	Id     *int64  `json:"id,omitempty"`
-	Type   *string `json:"type"`
-	Data   *string `json:"data"`
-	NextId *int64  `json:"nextId,omitempty"`
+	Id         *int64  `json:"id,omitempty"`
+	Type       *string `json:"type"`
+	Data       *string `json:"data"`
+	NextStepId *int64  `json:"nextStepId,omitempty"`
 }
 
 type addComponentRes struct {
@@ -120,7 +120,7 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			Keyboard: &model.Keyboard{
 				Buttons: [][]*int64{},
 			},
-			NextId: nil,
+			NextStepId: nil,
 			Position: &pgtype.Point{
 				P:      pgtype.Vec2{X: px, Y: py},
 				Status: pgtype.Present,
@@ -140,11 +140,11 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			commandStatus := 0
 			for _, v := range reqData.Commands {
 				mc := &model.Command{
-					Type:            v.Type,
-					Data:            v.Data,
-					ComponentId:     &compId,
-					NextComponentId: nil,
-					Status:          commandStatus,
+					Type:        v.Type,
+					Data:        v.Data,
+					ComponentId: &compId,
+					NextStepId:  nil,
+					Status:      commandStatus,
 				}
 
 				_, err := db.AddCommand(botId, mc)
@@ -165,7 +165,7 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 }
 
 type setNextForComponentReq struct {
-	NextId *int64 `json:"nextId"`
+	NextStepId *int64 `json:"nextStepId"`
 }
 
 func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
@@ -193,13 +193,13 @@ func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if reqData.NextId == nil {
-			log.Debug("[API: SetNextForComponent] nextId is misssing")
+		if reqData.NextStepId == nil {
+			log.Debug("[API: SetNextForComponent] nextStepId is misssing")
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
 			return
 		}
 
-		nextId := reqData.NextId
+		nextComponentId := reqData.NextStepId
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
 			log.Debug("[API: SetNextForComponent] - get userId convertation to int64 error;", err)
@@ -233,7 +233,7 @@ func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		existNextComp, err := db.CheckComponentExist(botId, *nextId)
+		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
 		if err != nil {
 			log.Debug("[API: SetNextForComponent] - [db: CheckComponentExist] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
@@ -246,8 +246,124 @@ func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
 			return
 		}
 
-		if err = db.SetNextIdForComponent(botId, compId, *nextId); err != nil {
-			log.Debug("[API: SetNextForComponent] - [db: SetNextIdForComponent] error;", err)
+		if err = db.SetNextStepForComponent(botId, compId, *nextComponentId); err != nil {
+			log.Debug("[API: SetNextForComponent] - [db: SetNextStepForComponent] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, nil, nil))
+	}
+}
+
+type SetNextForCommandReq struct {
+	NextStepId *int64 `json:"nextStepId"`
+}
+
+func SetNextForCommand(db *pgsql.Db) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		var err error
+
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: SetNextForCommand] - botId param error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: SetNextForCommand] - compId param error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: SetNextForCommand] - commandId param error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		var reqData SetNextForCommandReq
+		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
+			log.Debug("[API: SetNextForCommand] - Serialization error;\n", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		if reqData.NextStepId == nil {
+			log.Debug("[API: SetNextForCommand] nextStepId is misssing")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
+			return
+		}
+
+		nextComponentId := reqData.NextStepId
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: SetNextForCommand] - get userId convertation to int64 error;", err)
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidRequest))
+			return
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Debug("[API: SetNextForCommand] - [db: CheckBotExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: SetNextForCommand] - bot not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrBotNotFound))
+			return
+		}
+
+		// Check initial component exists
+		existInitialComp, err := db.CheckComponentExist(botId, compId)
+		if err != nil {
+			log.Debug("[API: SetNextForCommand] - [db: CheckComponentExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existInitialComp {
+			log.Debug("[API: SetNextForCommand] - initial component not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrComponentNotFound))
+			return
+		}
+
+		// Check next component exists
+		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
+		if err != nil {
+			log.Debug("[API: SetNextForCommand] - [db: CheckComponentExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existNextComp {
+			log.Debug("[API: SetNextForCommand] - next component not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrNextComponentNotFound))
+			return
+		}
+
+		// Check command exists
+		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
+		if err != nil {
+			log.Debug("[API: SetNextForCommand] - [db: CheckCommandExist] error;", err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		if !existCommand {
+			log.Debug("[API: SetNextForCommand] - command not found")
+			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrCommandNotFound))
+			return
+		}
+
+		if err = db.SetNextStepForCommand(botId, compId, *nextComponentId); err != nil {
+			log.Debug("[API: SetNextForCommand] - [db: SetNextStepForCommand] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}

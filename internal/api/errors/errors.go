@@ -24,4 +24,5 @@ var (
 	ErrBotNotRunning         = err.New(109, "The bot is not running")
 	ErrComponentNotFound     = err.New(110, "Component not found")
 	ErrNextComponentNotFound = err.New(111, "Next component not found")
+	ErrCommandNotFound       = err.New(112, "Command not found")
 )

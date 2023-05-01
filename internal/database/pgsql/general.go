@@ -41,7 +41,7 @@ func (db *Db) CreateBotComponentTable(botId int64) error {
 		id bigserial NOT NULL,
 		data jsonb,
 		keyboard jsonb,
-		next_id bigint,
+		next_step_id bigint,
 		position point,
 		status integer NOT NULL,
 		PRIMARY KEY (id)
@@ -61,7 +61,7 @@ func (db *Db) CreateBotCommandTable(botId int64) error {
 		type character varying(20) NOT NULL,
 		data text NOT NULL,
 		component_id bigint NOT NULL,
-		next_component_id bigint,
+		next_step_id bigint,
 		status integer NOT NULL,
 		PRIMARY KEY (id)
 	)`
