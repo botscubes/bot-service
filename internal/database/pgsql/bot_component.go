@@ -41,10 +41,10 @@ func (db *Db) AddComponent(botId int64, m *model.Component) (int64, error) {
 func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
-			("type", "data", next_id) VALUES ($1, $2, $3) RETURNING id;`
+			("type", "data", component_id, next_component_id, status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, m.Type, m.Data, m.NextId,
+		context.Background(), query, m.Type, m.Data, m.ComponentId, m.NextComponentId, m.Status,
 	).Scan(&id); err != nil {
 		return 0, err
 	}

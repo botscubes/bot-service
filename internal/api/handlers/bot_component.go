@@ -137,11 +137,14 @@ func AddComponent(db *pgsql.Db) fasthttp.RequestHandler {
 
 		// TODO: check commands max count
 		if reqData.Commands != nil {
+			commandStatus := 0
 			for _, v := range reqData.Commands {
 				mc := &model.Command{
-					Type:   v.Type,
-					Data:   v.Data,
-					NextId: nil,
+					Type:            v.Type,
+					Data:            v.Data,
+					ComponentId:     &compId,
+					NextComponentId: nil,
+					Status:          commandStatus,
 				}
 
 				_, err := db.AddCommand(botId, mc)

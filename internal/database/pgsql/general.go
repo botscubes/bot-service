@@ -60,7 +60,9 @@ func (db *Db) CreateBotCommandTable(botId int64) error {
 		id bigserial NOT NULL,
 		type character varying(20) NOT NULL,
 		data text NOT NULL,
-		next_id bigint,
+		component_id bigint NOT NULL,
+		next_component_id bigint,
+		status integer NOT NULL,
 		PRIMARY KEY (id)
 	)`
 

@@ -27,8 +27,10 @@ type Keyboard struct {
 }
 
 type Command struct {
-	Id     *int64  `json:"id"`
-	Type   *string `json:"type"`
-	Data   *string `json:"data"`
-	NextId *int64  `json:"nextId,omitempty"`
+	Id              *int64  `json:"id"`
+	Type            *string `json:"type"`
+	Data            *string `json:"data"`
+	ComponentId     *int64  `json:"componentId"`
+	NextComponentId *int64  `json:"nextComponentId,omitempty"`
+	Status          int     `json:"status"`
 }
