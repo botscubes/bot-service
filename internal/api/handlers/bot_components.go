@@ -64,7 +64,7 @@ type addBotComponentRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddBotComponent(db *pgsql.Db) fasthttp.RequestHandler {
+func AddBotComponent(db *pgsql.Db) reqHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 
@@ -185,7 +185,7 @@ type setNextForComponentReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextForComponent(db *pgsql.Db) fasthttp.RequestHandler {
+func SetNextForComponent(db *pgsql.Db) reqHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 
@@ -277,7 +277,7 @@ type SetNextForCommandReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextForCommand(db *pgsql.Db) fasthttp.RequestHandler {
+func SetNextForCommand(db *pgsql.Db) reqHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 
@@ -391,7 +391,7 @@ func SetNextForCommand(db *pgsql.Db) fasthttp.RequestHandler {
 
 type getBotComponentsRes []*component
 
-func GetBotComponents(db *pgsql.Db) fasthttp.RequestHandler {
+func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 

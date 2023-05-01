@@ -16,7 +16,7 @@ type setBotTokenReq struct {
 	Token *string `json:"token"`
 }
 
-func SetBotToken(db *pgsql.Db) fasthttp.RequestHandler {
+func SetBotToken(db *pgsql.Db) reqHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
@@ -104,7 +104,7 @@ func SetBotToken(db *pgsql.Db) fasthttp.RequestHandler {
 	}
 }
 
-func DeleteBotToken(db *pgsql.Db) fasthttp.RequestHandler {
+func DeleteBotToken(db *pgsql.Db) reqHandler {
 	// TODO: check bot is started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error

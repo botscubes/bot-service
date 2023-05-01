@@ -23,6 +23,8 @@ var (
 	strApplicationJSON = []byte("application/json")
 )
 
+type reqHandler = fasthttp.RequestHandler
+
 func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj any) {
 	ctx.Response.Header.SetCanonical(strContentType, strApplicationJSON)
 	ctx.Response.SetStatusCode(code)
@@ -31,7 +33,7 @@ func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj any) {
 	}
 }
 
-func Auth(h fasthttp.RequestHandler, st *token_storage.TokenStorage, jwtKey *string) fasthttp.RequestHandler {
+func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string) reqHandler {
 	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
 		const prefix = "Bearer "
 

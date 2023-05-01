@@ -40,6 +40,8 @@ linters:
     - nestif # Reports deeply nested if statements
     - gofumpt # Gofumpt checks whether code was gofumpt-ed.
     - forbidigo # Forbids identifiers
+    - dupl # Tool for code clone detection
+    - cyclop # checks function and package cyclomatic complexity
 
     # Disabled because of generics
     - rowserrcheck # checks whether Err of rows is checked successfully
@@ -94,7 +96,7 @@ linters-settings:
     unusedresult: true # check for unused results of calls to some functions
   gocyclo: # Computes and checks the cyclomatic complexity of functions
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 15
+    min-complexity: 25
   misspell: # Finds commonly misspelled English words in comments
     # Correct spellings using locale preferences for US or UK.
     # Default is to use a neutral variety of English.
@@ -181,7 +183,7 @@ linters-settings:
       - name: cyclomatic
         severity: warning
         disabled: false
-        arguments: [ 15 ]
+        arguments: [ 25 ]
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#file-header
       - name: file-header
         disabled: true
@@ -232,10 +234,6 @@ linters-settings:
         disabled: false
         arguments:
           - "fmt.Printf"
-  cyclop:
-    # The maximal code complexity to report.
-    # Default: 10
-    max-complexity: 15
   stylecheck:
     checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022"]
 

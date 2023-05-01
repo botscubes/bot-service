@@ -25,7 +25,7 @@ type newBotRes struct {
 	Id int64 `json:"id"`
 }
 
-func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
+func NewBot(db *pgsql.Db) reqHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
 
@@ -107,7 +107,7 @@ func NewBot(db *pgsql.Db) fasthttp.RequestHandler {
 	}
 }
 
-func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig) fasthttp.RequestHandler {
+func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig) reqHandler {
 	// check bot already started
 	return func(ctx *fasthttp.RequestCtx) {
 		var err error
@@ -175,7 +175,7 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, s *telego.MultiBotWebhoo
 	}
 }
 
-func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) fasthttp.RequestHandler {
+func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) reqHandler {
 	// TODO: check bot is running
 	// check bot already stopped
 	return func(ctx *fasthttp.RequestCtx) {
