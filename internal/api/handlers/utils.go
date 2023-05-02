@@ -4,24 +4,23 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-func botComponentCommands(compId int64, commands *[]*model.Command) *[]*command {
-	var result = make([]*command, 0)
-	for _, c := range *commands {
-		if *c.ComponentId == compId {
-			cmd := &command{
-				Id:         c.Id,
-				Type:       c.Type,
-				Data:       c.Data,
-				NextStepId: c.NextStepId,
-			}
-			result = append(result, cmd)
+func botComponentCommands(commands *[]*model.Command) *[]*command {
+	var result = make([]*command, len(*commands))
+	for i, c := range *commands {
+		cmd := &command{
+			Id:          c.Id,
+			Type:        c.Type,
+			Data:        c.Data,
+			ComponentId: c.ComponentId,
+			NextStepId:  c.NextStepId,
 		}
+		result[i] = cmd
 	}
 	return &result
 }
 
-func botComponentsRes(components *[]*model.Component, commands *[]*model.Command) *getBotComponentsRes {
-	var result = make(getBotComponentsRes, len(*components))
+func botFullComponentsRes(components *[]*model.ComponentFull) *botFullCompsRes {
+	var result = make(botFullCompsRes, len(*components))
 
 	for i, v := range *components {
 		cmt := &component{
@@ -35,7 +34,7 @@ func botComponentsRes(components *[]*model.Component, commands *[]*model.Command
 			Keyboard: &keyboard{
 				Buttons: v.Keyboard.Buttons,
 			},
-			Commands:   botComponentCommands(v.Id, commands),
+			Commands:   botComponentCommands(&v.Commands),
 			NextStepId: v.NextStepId,
 			Position: &point{
 				X: &v.Position.P.X,

@@ -28,10 +28,11 @@ type component struct {
 }
 
 type command struct {
-	Id         *int64  `json:"id,omitempty"`
-	Type       *string `json:"type"`
-	Data       *string `json:"data"`
-	NextStepId *int64  `json:"nextStepId,omitempty"`
+	Id          *int64  `json:"id,omitempty"`
+	Type        *string `json:"type"`
+	Data        *string `json:"data"`
+	ComponentId *int64  `json:"componentId"`
+	NextStepId  *int64  `json:"nextStepId"`
 }
 
 type point struct {
@@ -389,7 +390,7 @@ func SetNextForCommand(db *pgsql.Db) reqHandler {
 	}
 }
 
-type getBotComponentsRes []*component
+type botFullCompsRes []*component
 
 func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fasthttp.RequestCtx) {
@@ -423,20 +424,13 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		commands, err := db.GetBotCommands(botId)
+		components, err := db.GetBotFullComponents(botId)
 		if err != nil {
-			log.Debug("[API: GetBotCommands] - [db: SetNextStepForCommand] error;", err)
+			log.Debug("[API: GetBotComponents] - [db: GetBotFullComponents] error;", err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
 
-		components, err := db.GetBotComponents(botId)
-		if err != nil {
-			log.Debug("[API: GetBotComponents] - [db: SetNextStepForCommand] error;", err)
-			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
-			return
-		}
-
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, botComponentsRes(components, commands), nil))
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, botFullComponentsRes(components), nil))
 	}
 }

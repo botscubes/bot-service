@@ -109,6 +109,37 @@ func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
 	return &data, nil
 }
 
+func (db *Db) GetBotFullComponents(botId int64) (*[]*model.ComponentFull, error) {
+	var data []*model.ComponentFull
+	status := 0
+
+	query := `SELECT id, data, keyboard, ARRAY(
+				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
+				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command where component_id = t.id
+			), next_step_id, position, status FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t WHERE status = $1;`
+
+	rows, err := db.Pool.Query(context.Background(), query, status)
+	if err != nil {
+		return nil, err
+	}
+
+	// WARN: status not used
+	for rows.Next() {
+		var r model.ComponentFull
+		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.Position, &r.Status); err != nil {
+			return nil, err
+		}
+
+		data = append(data, &r)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return &data, nil
+}
+
 func (db *Db) GetBotCommands(botId int64) (*[]*model.Command, error) {
 	var data []*model.Command
 	status := 0
