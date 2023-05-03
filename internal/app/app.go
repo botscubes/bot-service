@@ -60,7 +60,7 @@ func (app *App) Run() error {
 
 	pgsqlUrl := "postgres://" + app.Conf.Pg.User + ":" + app.Conf.Pg.Pass + "@" + app.Conf.Pg.Host + ":" + app.Conf.Pg.Port + "/" + app.Conf.Pg.Db
 	if app.Db, err = pgsql.OpenConnection(pgsqlUrl); err != nil {
-		log.Error("Connection Postgresql error ", err)
+		return err
 	}
 
 	defer app.Db.CloseConnection()
@@ -69,7 +69,8 @@ func (app *App) Run() error {
 
 	go func() {
 		if err = app.Server.Start(app.Conf.Bot.ListenAddress); err != nil {
-			log.Error("Start server: \n", err)
+			log.Error(err)
+			sigs <- syscall.SIGTERM
 		}
 	}()
 

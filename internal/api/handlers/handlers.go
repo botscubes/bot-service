@@ -52,7 +52,7 @@ func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string) reqHandl
 		token = strings.TrimPrefix(token, prefix)
 		exists, err := (*st).CheckToken(context.Background(), token)
 		if err != nil {
-			log.Error("[API: auth middleware] [CheckToken]\n", err)
+			log.Error(err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
