@@ -144,8 +144,6 @@ func NewBot(db *pgsql.Db) reqHandler {
 func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig) reqHandler {
 	// check bot already started
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: StartBot] - botId param error;\n", err)
@@ -213,8 +211,6 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) reqHandler {
 	// TODO: check bot is running
 	// check bot already stopped
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: StopBot] - botId param error;\n", err)

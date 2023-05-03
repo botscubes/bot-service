@@ -36,11 +36,11 @@ func (app *App) addHandlers() {
 
 	// Set next step from the component
 	app.Router.POST("/api/bots/{botId}/components/{compId}/next",
-		h.Auth(h.SetNextForComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.SetNextStepComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Set next step from the component command
 	app.Router.POST("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
-		h.Auth(h.SetNextForCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.SetNextStepCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Get bot components
 	app.Router.GET("/api/bots/{botId}/components",

@@ -110,8 +110,6 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 func DeleteBotToken(db *pgsql.Db) reqHandler {
 	// TODO: check bot is started
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: DeleteBotToken] - botId param error;\n", err)

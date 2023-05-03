@@ -58,7 +58,7 @@ func (db *Db) CheckBotComponentExist(botId int64, compId int64) (bool, error) {
 	return c, nil
 }
 
-func (db *Db) SetNextStepForComponent(botId int64, compId int64, nextStepId int64) error {
+func (db *Db) SetNextStepComponent(botId int64, compId int64, nextStepId int64) error {
 	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET next_step_id = $1 WHERE id = $2;`
 
@@ -80,7 +80,7 @@ func (db *Db) CheckBotCommandExist(botId int64, compId int64, commandId int64) (
 	return c, nil
 }
 
-func (db *Db) SetNextStepForCommand(botId int64, commandId int64, nextStepId int64) error {
+func (db *Db) SetNextStepCommand(botId int64, commandId int64, nextStepId int64) error {
 	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET next_step_id = $1 WHERE id = $2;`
 

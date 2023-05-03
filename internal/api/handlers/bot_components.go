@@ -64,8 +64,6 @@ type addBotComponentRes struct {
 
 func AddBotComponent(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: AddBotComponent] - botId param error;\n", err)
@@ -168,37 +166,35 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 	}
 }
 
-type setNextForComponentReq struct {
+type setNextStepComponentReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextForComponent(db *pgsql.Db) reqHandler {
+func SetNextStepComponent(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: SetNextForComponent] - botId param error;\n", err)
+			log.Debug("[API: SetNextStepComponent] - botId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
 		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: SetNextForComponent] - compId param error;\n", err)
+			log.Debug("[API: SetNextStepComponent] - compId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
-		var reqData setNextForComponentReq
+		var reqData setNextStepComponentReq
 		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
-			log.Debug("[API: SetNextForComponent] - Serialization error;\n", err)
+			log.Debug("[API: SetNextStepComponent] - Serialization error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
 		if reqData.NextStepId == nil {
-			log.Debug("[API: SetNextForComponent] nextStepId is misssing")
+			log.Debug("[API: SetNextStepComponent] nextStepId is misssing")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
 			return
 		}
@@ -206,7 +202,7 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 		nextComponentId := reqData.NextStepId
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: SetNextForComponent] - get userId convertation to int64 error;")
+			log.Debug("[API: SetNextStepComponent] - get userId convertation to int64 error;")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
@@ -220,7 +216,7 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 		}
 
 		if !existBot {
-			log.Debug("[API: SetNextForComponent] - bot not found")
+			log.Debug("[API: SetNextStepComponent] - bot not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
 			return
 		}
@@ -234,7 +230,7 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 		}
 
 		if !existInitialComp {
-			log.Debug("[API: SetNextForComponent] - initial component not found")
+			log.Debug("[API: SetNextStepComponent] - initial component not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
 			return
 		}
@@ -248,12 +244,12 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 		}
 
 		if !existNextComp {
-			log.Debug("[API: SetNextForComponent] - next component not found")
+			log.Debug("[API: SetNextStepComponent] - next component not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrNextComponentNotFound))
 			return
 		}
 
-		if err = db.SetNextStepForComponent(botId, compId, *nextComponentId); err != nil {
+		if err = db.SetNextStepComponent(botId, compId, *nextComponentId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
@@ -263,44 +259,42 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 	}
 }
 
-type SetNextForCommandReq struct {
+type setNextStepCommandReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextForCommand(db *pgsql.Db) reqHandler {
+func SetNextStepCommand(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: SetNextForCommand] - botId param error;\n", err)
+			log.Debug("[API: SetNextStepCommand] - botId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
 		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: SetNextForCommand] - compId param error;\n", err)
+			log.Debug("[API: SetNextStepCommand] - compId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
 		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: SetNextForCommand] - commandId param error;\n", err)
+			log.Debug("[API: SetNextStepCommand] - commandId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
-		var reqData SetNextForCommandReq
+		var reqData setNextStepCommandReq
 		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
-			log.Debug("[API: SetNextForCommand] - Serialization error;\n", err)
+			log.Debug("[API: SetNextStepCommand] - Serialization error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
 		if reqData.NextStepId == nil {
-			log.Debug("[API: SetNextForCommand] nextStepId is misssing")
+			log.Debug("[API: SetNextStepCommand] nextStepId is misssing")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
 			return
 		}
@@ -308,7 +302,7 @@ func SetNextForCommand(db *pgsql.Db) reqHandler {
 		nextComponentId := reqData.NextStepId
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: SetNextForCommand] - get userId convertation to int64 error;")
+			log.Debug("[API: SetNextStepCommand] - get userId convertation to int64 error;")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
@@ -322,7 +316,7 @@ func SetNextForCommand(db *pgsql.Db) reqHandler {
 		}
 
 		if !existBot {
-			log.Debug("[API: SetNextForCommand] - bot not found")
+			log.Debug("[API: SetNextStepCommand] - bot not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
 			return
 		}
@@ -336,7 +330,7 @@ func SetNextForCommand(db *pgsql.Db) reqHandler {
 		}
 
 		if !existInitialComp {
-			log.Debug("[API: SetNextForCommand] - initial component not found")
+			log.Debug("[API: SetNextStepCommand] - initial component not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
 			return
 		}
@@ -350,7 +344,7 @@ func SetNextForCommand(db *pgsql.Db) reqHandler {
 		}
 
 		if !existNextComp {
-			log.Debug("[API: SetNextForCommand] - next component not found")
+			log.Debug("[API: SetNextStepCommand] - next component not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrNextComponentNotFound))
 			return
 		}
@@ -364,12 +358,12 @@ func SetNextForCommand(db *pgsql.Db) reqHandler {
 		}
 
 		if !existCommand {
-			log.Debug("[API: SetNextForCommand] - command not found")
+			log.Debug("[API: SetNextStepCommand] - command not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrCommandNotFound))
 			return
 		}
 
-		if err = db.SetNextStepForCommand(botId, compId, *nextComponentId); err != nil {
+		if err = db.SetNextStepCommand(botId, compId, *nextComponentId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
@@ -383,8 +377,6 @@ type getBotCompsRes []*component
 
 func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: GetBotComponents] - botId param error;\n", err)
@@ -426,8 +418,6 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 
 func DelNextStepComponent(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
-		var err error
-
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: DelNextStepComponent] - botId param error;\n", err)
