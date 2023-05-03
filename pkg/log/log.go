@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -96,6 +97,14 @@ func getOutput() io.Writer {
 	return file
 }
 
+func callingLine() string {
+	pc, file, line, ok := runtime.Caller(2)
+	if ok {
+		return fmt.Sprintf("\nCalled from %s, line #%d, func: %v\n", file, line, runtime.FuncForPC(pc).Name())
+	}
+	return ""
+}
+
 func Debugf(format string, args ...any) {
 	log.Debugf(format, args...)
 }
@@ -117,10 +126,12 @@ func Warningf(format string, args ...any) {
 }
 
 func Errorf(format string, args ...any) {
+	format += callingLine()
 	log.Errorf(format, args...)
 }
 
 func Fatalf(format string, args ...any) {
+	format += callingLine()
 	log.Fatalf(format, args...)
 }
 
@@ -149,10 +160,12 @@ func Warning(args ...any) {
 }
 
 func Error(args ...any) {
+	args = append(args, callingLine())
 	log.Error(args...)
 }
 
 func Fatal(args ...any) {
+	args = append(args, callingLine())
 	log.Fatal(args...)
 }
 
