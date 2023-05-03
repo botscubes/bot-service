@@ -98,7 +98,8 @@ func getOutput() io.Writer {
 }
 
 func callingLine() string {
-	pc, file, line, ok := runtime.Caller(2)
+	const skip = 2
+	pc, file, line, ok := runtime.Caller(skip)
 	if ok {
 		return fmt.Sprintf("\nCalled from %s, line #%d, func: %v\n", file, line, runtime.FuncForPC(pc).Name())
 	}
