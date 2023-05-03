@@ -30,7 +30,7 @@ type App struct {
 	RedisAuth      *redis.Client
 }
 
-func (app *App) Run() {
+func (app *App) Run() error {
 	log.Debug("App Run")
 
 	var err error
@@ -40,7 +40,7 @@ func (app *App) Run() {
 
 	app.Conf, err = config.GetConfig()
 	if err != nil {
-		log.Fatal("GetConfig:\n", err)
+		return err
 	}
 
 	app.Router = fastRouter.New()
@@ -89,4 +89,5 @@ func (app *App) Run() {
 
 	<-done
 	log.Info("App Done")
+	return nil
 }

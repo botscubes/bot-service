@@ -6,6 +6,11 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
+// Statuses:
+// * bot
+// 0 - Active
+//
+
 func (db *Db) AddBot(m *model.Bot) (int64, error) {
 	var id int64
 	query := `INSERT INTO public.bot (user_id, token, title, status) VALUES ($1, $2, $3, $4) RETURNING id;`

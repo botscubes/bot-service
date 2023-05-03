@@ -6,11 +6,11 @@ require (
 	github.com/botscubes/user-service v0.0.0-20230427145246-bf89bbd8212f
 	github.com/fasthttp/router v1.4.18
 	github.com/jackc/pgx/v5 v5.3.1
-	github.com/mymmrac/telego v0.22.1
-	github.com/redis/go-redis/v9 v9.0.3
+	github.com/mymmrac/telego v0.23.0
+	github.com/redis/go-redis/v9 v9.0.4
 	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/valyala/fasthttp v1.46.0
+	github.com/valyala/fasthttp v1.47.0
 )
 
 require (

@@ -19,8 +19,8 @@ func botComponentCommands(commands *[]*model.Command) *[]*command {
 	return &result
 }
 
-func botFullComponentsRes(components *[]*model.ComponentFull) *botFullCompsRes {
-	var result = make(botFullCompsRes, len(*components))
+func botFullComponentsRes(components *[]*model.ComponentFull) *getBotCompsRes {
+	var result = make(getBotCompsRes, len(*components))
 
 	for i, v := range *components {
 		cmt := &component{

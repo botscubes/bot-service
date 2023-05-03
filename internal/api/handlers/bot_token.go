@@ -42,6 +42,7 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check token
 		token := data.Token
 		if token == nil {
 			log.Debug("[API: SetBotToken] - token is misssing")
@@ -55,6 +56,7 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: SetBotToken] - [db: CheckBotExist] error;", err)
@@ -68,6 +70,7 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check bot token installed
 		oldToken, err := db.GetBotToken(userId, botId)
 		if err != nil {
 			log.Debug("[API: SetBotToken] - [db: GetBotToken] error;", err)
@@ -81,6 +84,7 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check token exists
 		existToken, err := db.CheckBotTokenExist(token)
 		if err != nil {
 			log.Debug("[API: SetBotToken] - [db: CheckBotTokenExist] error;", err)
@@ -123,6 +127,7 @@ func DeleteBotToken(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: DeleteBotToken] - [db: CheckBotExist] error;", err)

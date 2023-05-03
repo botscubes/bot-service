@@ -14,10 +14,6 @@ import (
 	"github.com/botscubes/bot-service/pkg/log"
 )
 
-// TODO:
-// add commands ids to components keyboard
-// select command from components keyboard
-
 type component struct {
 	Id         int64          `json:"id"`
 	Data       *componentData `json:"data"`
@@ -86,25 +82,14 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 		// TODO: check fields limits:
 		// eg. data.commands._.data max size
 
-		if err := validateBotComponent(&reqData); err != nil {
+		if err := validateAddBotComponent(&reqData); err != nil {
 			log.Debug(err)
 			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
 			return
 		}
 
 		px := reqData.Position.X
-		if px != nil {
-			log.Debug("[API: AddBotComponent] Position.X is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
-
 		py := reqData.Position.Y
-		if py != nil {
-			log.Debug("[API: AddBotComponent] Position.Y is misssing")
-			doJsonRes(ctx, fasthttp.StatusBadRequest, resp.New(false, nil, errors.ErrInvalidParams))
-			return
-		}
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
@@ -113,6 +98,7 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: AddBotComponent] - [db: CheckBotExist] error;", err)
@@ -225,6 +211,7 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Debug("[API: SetNextForComponent] - [db: CheckBotExist] error;", err)
@@ -238,6 +225,7 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check bot component exists
 		existInitialComp, err := db.CheckBotComponentExist(botId, compId)
 		if err != nil {
 			log.Debug("[API: SetNextForComponent] - [db: CheckBotComponentExist] error;", err)
@@ -251,6 +239,7 @@ func SetNextForComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check bot next component exists
 		existNextComp, err := db.CheckBotComponentExist(botId, *nextComponentId)
 		if err != nil {
 			log.Debug("[API: SetNextForComponent] - [db: CheckBotComponentExist] error;", err)
@@ -390,7 +379,7 @@ func SetNextForCommand(db *pgsql.Db) reqHandler {
 	}
 }
 
-type botFullCompsRes []*component
+type getBotCompsRes []*component
 
 func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fasthttp.RequestCtx) {

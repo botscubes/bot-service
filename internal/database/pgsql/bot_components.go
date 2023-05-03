@@ -8,6 +8,14 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
+// Statuses:
+// * .component
+// 0 - Active
+//
+// * .command
+// 0 - Active
+//
+
 func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
@@ -80,35 +88,6 @@ func (db *Db) SetNextStepForCommand(botId int64, commandId int64, nextStepId int
 	return err
 }
 
-func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
-	var data []*model.Component
-	status := 0
-
-	query := `SELECT * FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
-			WHERE status = $1;`
-
-	rows, err := db.Pool.Query(context.Background(), query, status)
-	if err != nil {
-		return nil, err
-	}
-
-	// WARN: status not used
-	for rows.Next() {
-		var r model.Component
-		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.NextStepId, &r.Position, &r.Status); err != nil {
-			return nil, err
-		}
-
-		data = append(data, &r)
-	}
-
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-
-	return &data, nil
-}
-
 func (db *Db) GetBotFullComponents(botId int64) (*[]*model.ComponentFull, error) {
 	var data []*model.ComponentFull
 	status := 0
@@ -127,35 +106,6 @@ func (db *Db) GetBotFullComponents(botId int64) (*[]*model.ComponentFull, error)
 	for rows.Next() {
 		var r model.ComponentFull
 		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.Position, &r.Status); err != nil {
-			return nil, err
-		}
-
-		data = append(data, &r)
-	}
-
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-
-	return &data, nil
-}
-
-func (db *Db) GetBotCommands(botId int64) (*[]*model.Command, error) {
-	var data []*model.Command
-	status := 0
-
-	query := `SELECT * FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
-			WHERE status = $1;`
-
-	rows, err := db.Pool.Query(context.Background(), query, status)
-	if err != nil {
-		return nil, err
-	}
-
-	// WARN: status not used
-	for rows.Next() {
-		var r model.Command
-		if err = rows.Scan(&r.Id, &r.Type, &r.Data, &r.ComponentId, &r.NextStepId, &r.Status); err != nil {
 			return nil, err
 		}
 
