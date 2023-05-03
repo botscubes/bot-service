@@ -6,13 +6,13 @@ import (
 
 	"github.com/goccy/go-json"
 
-	"github.com/botscubes/bot-service/internal/api/errors"
+	e "github.com/botscubes/bot-service/internal/api/errors"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/jwt"
 	"github.com/botscubes/user-service/pkg/token_storage"
 
-	"github.com/valyala/fasthttp"
+	fh "github.com/valyala/fasthttp"
 )
 
 // TODO: check user access
@@ -23,29 +23,29 @@ var (
 	strApplicationJSON = []byte("application/json")
 )
 
-type reqHandler = fasthttp.RequestHandler
+type reqHandler = fh.RequestHandler
 
-func doJsonRes(ctx *fasthttp.RequestCtx, code int, obj any) {
+func doJsonRes(ctx *fh.RequestCtx, code int, obj any) {
 	ctx.Response.Header.SetCanonical(strContentType, strApplicationJSON)
 	ctx.Response.SetStatusCode(code)
 	if err := json.NewEncoder(ctx).Encode(obj); err != nil {
-		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		ctx.Error(err.Error(), fh.StatusInternalServerError)
 	}
 }
 
 func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string) reqHandler {
-	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
+	return fh.RequestHandler(func(ctx *fh.RequestCtx) {
 		const prefix = "Bearer "
 
 		auth := ctx.Request.Header.Peek("Authorization")
 		if auth == nil {
-			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
+			doJsonRes(ctx, fh.StatusUnauthorized, resp.New(false, nil, e.ErrUnauthorized))
 			return
 		}
 
 		token := string(auth)
 		if !strings.HasPrefix(token, prefix) {
-			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
+			doJsonRes(ctx, fh.StatusUnauthorized, resp.New(false, nil, e.ErrUnauthorized))
 			return
 		}
 
@@ -53,19 +53,19 @@ func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string) reqHandl
 		exists, err := (*st).CheckToken(context.Background(), token)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
 		if !exists {
-			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
+			doJsonRes(ctx, fh.StatusUnauthorized, resp.New(false, nil, e.ErrUnauthorized))
 			return
 		}
 
 		// WARN: fix error !!!
 		userId, err := jwt.GetIdFromToken(token, *jwtKey)
 		if err != nil {
-			doJsonRes(ctx, fasthttp.StatusUnauthorized, resp.New(false, nil, errors.ErrUnauthorized))
+			doJsonRes(ctx, fh.StatusUnauthorized, resp.New(false, nil, e.ErrUnauthorized))
 			return
 		}
 
@@ -75,7 +75,7 @@ func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string) reqHandl
 	})
 }
 
-func Health(ctx *fasthttp.RequestCtx) {
+func Health(ctx *fh.RequestCtx) {
 	_, _ = ctx.WriteString("OK")
-	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.SetStatusCode(fh.StatusOK)
 }

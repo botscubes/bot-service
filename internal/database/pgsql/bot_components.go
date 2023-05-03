@@ -95,7 +95,8 @@ func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
 	query := `SELECT id, data, keyboard, ARRAY(
 				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
 				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command where component_id = t.id
-			), next_step_id, is_start, position, status FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t WHERE status = $1;`
+			), next_step_id, is_start, position, status FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
+			WHERE status = $1 ORDER BY id;`
 
 	rows, err := db.Pool.Query(context.Background(), query, status)
 	if err != nil {
