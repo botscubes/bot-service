@@ -119,3 +119,11 @@ func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
 
 	return &data, nil
 }
+
+func (db *Db) DelNextStepComponent(botId int64, compId int64) error {
+	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET next_step_id = null WHERE id = $1;`
+
+	_, err := db.Pool.Exec(context.Background(), query, compId)
+	return err
+}

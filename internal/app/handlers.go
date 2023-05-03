@@ -45,4 +45,8 @@ func (app *App) addHandlers() {
 	// Get bot components
 	app.Router.GET("/api/bots/{botId}/components",
 		h.Auth(h.GetBotComponents(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+
+	// Delete next step from the component
+	app.Router.DELETE("/api/bots/{botId}/components/{compId}/next",
+		h.Auth(h.DelNextStepComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 }
