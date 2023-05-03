@@ -16,11 +16,11 @@ type Component struct {
 }
 
 type Data struct {
-	Type    *string  `json:"type"`
-	Content *Content `json:"content"`
+	Type    *string        `json:"type"`
+	Content []*CompContent `json:"content"`
 }
 
-type Content struct {
+type CompContent struct {
 	Text *string `json:"text,omitempty"`
 }
 

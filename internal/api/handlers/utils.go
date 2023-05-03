@@ -21,18 +21,26 @@ func botComponentCommands(commands *[]*model.Command) *[]*command {
 	return &result
 }
 
-func botComponentRes(v *model.Component) *component {
-	var dcontent dataContent
+func compContentsRes(contents *[]*model.CompContent) *[]*dataContent {
+	var result = make([]*dataContent, len(*contents))
 
-	if v.Data.Content != nil {
-		dcontent.Text = v.Data.Content.Text
+	for i, c := range *contents {
+		cnt := &dataContent{
+			Text: c.Text,
+		}
+		result[i] = cnt
 	}
+
+	return &result
+}
+
+func botComponentRes(v *model.Component) *component {
 
 	cmt := &component{
 		Id: v.Id,
 		Data: &componentData{
 			Type:    v.Data.Type,
-			Content: &dcontent,
+			Content: compContentsRes(&v.Data.Content),
 		},
 		Keyboard: &keyboard{
 			Buttons: v.Keyboard.Buttons,
@@ -53,6 +61,19 @@ func botComponentsRes(components *[]*model.Component) *getBotCompsRes {
 
 	for i, v := range *components {
 		result[i] = botComponentRes(v)
+	}
+
+	return &result
+}
+
+func compContentsMod(contents *[]*dataContent) *[]*model.CompContent {
+	var result = make([]*model.CompContent, len(*contents))
+
+	for i, c := range *contents {
+		cnt := &model.CompContent{
+			Text: c.Text,
+		}
+		result[i] = cnt
 	}
 
 	return &result

@@ -28,9 +28,9 @@ func validateAddBotComponent(c *addBotComponentReq) error {
 		return errors.New("data.content not found")
 	}
 
-	if c.Data.Content.Text == nil {
-		return errors.New("data.content.text not found")
-	}
+	// if c.Data.Content.Text == nil {
+	// 	return errors.New("data.content.text not found")
+	// }
 
 	if c.Commands == nil {
 		return errors.New("data.commands not found")

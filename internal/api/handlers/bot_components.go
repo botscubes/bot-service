@@ -38,8 +38,8 @@ type point struct {
 }
 
 type componentData struct {
-	Type    *string      `json:"type"`
-	Content *dataContent `json:"content"`
+	Type    *string         `json:"type"`
+	Content *[]*dataContent `json:"content"`
 }
 
 type dataContent struct {
@@ -117,10 +117,8 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 
 		m := &model.Component{
 			Data: &model.Data{
-				Type: reqData.Data.Type,
-				Content: &model.Content{
-					Text: reqData.Data.Content.Text,
-				},
+				Type:    reqData.Data.Type,
+				Content: *compContentsMod(reqData.Data.Content),
 			},
 			Keyboard: &model.Keyboard{
 				Buttons: [][]*int64{},
