@@ -19,10 +19,10 @@ import (
 func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
-			("data", keyboard, next_step_id, "position", status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+			("data", keyboard, next_step_id, is_start,"position", status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, m.Data, m.Keyboard, m.NextStepId, m.Position, m.Status,
+		context.Background(), query, m.Data, m.Keyboard, m.NextStepId, m.IsStart, m.Position, m.Status,
 	).Scan(&id); err != nil {
 		return 0, err
 	}
@@ -88,14 +88,14 @@ func (db *Db) SetNextStepForCommand(botId int64, commandId int64, nextStepId int
 	return err
 }
 
-func (db *Db) GetBotFullComponents(botId int64) (*[]*model.ComponentFull, error) {
-	var data []*model.ComponentFull
+func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
+	var data []*model.Component
 	status := 0
 
 	query := `SELECT id, data, keyboard, ARRAY(
 				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
 				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command where component_id = t.id
-			), next_step_id, position, status FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t WHERE status = $1;`
+			), next_step_id, is_start, position, status FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t WHERE status = $1;`
 
 	rows, err := db.Pool.Query(context.Background(), query, status)
 	if err != nil {
@@ -104,8 +104,8 @@ func (db *Db) GetBotFullComponents(botId int64) (*[]*model.ComponentFull, error)
 
 	// WARN: status not used
 	for rows.Next() {
-		var r model.ComponentFull
-		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.Position, &r.Status); err != nil {
+		var r model.Component
+		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.IsStart, &r.Position, &r.Status); err != nil {
 			return nil, err
 		}
 

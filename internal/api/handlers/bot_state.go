@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/goccy/go-json"
+	"github.com/jackc/pgx/pgtype"
 
 	"github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
@@ -22,7 +23,8 @@ type newBotReq struct {
 }
 
 type newBotRes struct {
-	Id int64 `json:"id"`
+	Id        int64      `json:"id"`
+	Component *component `json:"conponent"`
 }
 
 func NewBot(db *pgsql.Db) reqHandler {
@@ -99,8 +101,41 @@ func NewBot(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		status = 0
+		dataType := "start"
+		px := 50
+		py := 50
+
+		mc := &model.Component{
+			Data: &model.Data{
+				Type:    &dataType,
+				Content: nil,
+			},
+			Keyboard: &model.Keyboard{
+				Buttons: [][]*int64{},
+			},
+			NextStepId: nil,
+			IsStart:    true,
+			Position: &pgtype.Point{
+				P:      pgtype.Vec2{X: float64(px), Y: float64(py)},
+				Status: pgtype.Present,
+			},
+			Status: status,
+		}
+
+		compId, err := db.AddBotComponent(botId, mc)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
+			return
+		}
+
+		mc.Id = compId
+		mc.Commands = []*model.Command{}
+
 		dataRes := &newBotRes{
-			Id: botId,
+			Id:        botId,
+			Component: botComponentRes(mc),
 		}
 
 		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, dataRes, nil))

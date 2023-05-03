@@ -8,17 +8,9 @@ type Component struct {
 	Id         int64         `json:"id"`
 	Data       *Data         `json:"data"`
 	Keyboard   *Keyboard     `json:"keyboard,omitempty"`
-	NextStepId *int64        `json:"nextStepId,omitempty"`
-	Position   *pgtype.Point `json:"position"`
-	Status     int           `json:"status"`
-}
-
-type ComponentFull struct {
-	Id         int64         `json:"id"`
-	Data       *Data         `json:"data"`
-	Keyboard   *Keyboard     `json:"keyboard,omitempty"`
 	Commands   []*Command    `json:"commands,omitempty"`
-	NextStepId *int64        `json:"nextStepId,omitempty"`
+	NextStepId *int64        `json:"next_step_id,omitempty"`
+	IsStart    bool          `json:"is_start"`
 	Position   *pgtype.Point `json:"position"`
 	Status     int           `json:"status"`
 }

@@ -20,6 +20,7 @@ type component struct {
 	Keyboard   *keyboard      `json:"keyboard"`
 	Commands   *[]*command    `json:"commands"`
 	NextStepId *int64         `json:"nextStepId"`
+	IsStart    bool           `json:"isStart"`
 	Position   *point         `json:"position"`
 }
 
@@ -42,7 +43,7 @@ type componentData struct {
 }
 
 type dataContent struct {
-	Text *string `json:"text"`
+	Text *string `json:"text,omitempty"`
 }
 
 type keyboard struct {
@@ -125,6 +126,7 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 				Buttons: [][]*int64{},
 			},
 			NextStepId: nil,
+			IsStart:    false,
 			Position: &pgtype.Point{
 				P:      pgtype.Vec2{X: *px, Y: *py},
 				Status: pgtype.Present,
@@ -413,13 +415,13 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		components, err := db.GetBotFullComponents(botId)
+		components, err := db.GetBotComponents(botId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fasthttp.StatusInternalServerError, resp.New(false, nil, errors.ErrInternalServer))
 			return
 		}
 
-		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, botFullComponentsRes(components), nil))
+		doJsonRes(ctx, fasthttp.StatusOK, resp.New(true, botComponentsRes(components), nil))
 	}
 }
