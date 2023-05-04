@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/botscubes/bot-service/internal/config"
+	"github.com/botscubes/bot-service/pkg/log"
 )
 
 func (db *Db) CreateBotSchema(botId int64) error {
@@ -15,7 +16,11 @@ func (db *Db) CreateBotSchema(botId int64) error {
 		return err
 	}
 
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			log.Error(err)
+		}
+	}()
 
 	newSchemaQ := `CREATE SCHEMA IF NOT EXISTS ` + config.PrefixSchema + strconv.FormatInt(botId, 10)
 
@@ -73,7 +78,5 @@ func (db *Db) CreateBotSchema(botId int64) error {
 		return err
 	}
 
-	tx.Commit(ctx)
-
-	return nil
+	return tx.Commit(ctx)
 }
