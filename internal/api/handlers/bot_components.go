@@ -622,3 +622,85 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
+
+func DelCommand(db *pgsql.Db) reqHandler {
+	return func(ctx *fh.RequestCtx) {
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: DelCommand] - botId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: DelCommand] - compId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: DelCommand] - commandId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: DelCommand] - get userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: DelCommand] - bot not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
+			return
+		}
+
+		// check bot component exists
+		existComp, err := db.CheckBotComponentExist(botId, compId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existComp {
+			log.Debug("[API: DelCommand] - component not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
+			return
+		}
+
+		// Check command exists
+		existCommand, err := db.CheckBotCommandExist(botId, compId, commandId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existCommand {
+			log.Debug("[API: DelCommand] - command not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrCommandNotFound))
+			return
+		}
+
+		if err = db.DelCommand(botId, commandId); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+	}
+}

@@ -97,7 +97,7 @@ func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
 	query := `SELECT id, data, keyboard, ARRAY(
 				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
 				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
-				WHERE component_id = t.id AND status = $1
+				WHERE component_id = t.id AND status = $1 ORDER BY id
 			), next_step_id, is_start, position, status
 			FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
 			WHERE status = $2 ORDER BY id;`
@@ -153,5 +153,13 @@ func (db *Db) DelCommandsByCompId(botId int64, compId int64) error {
 			SET status = $1 WHERE component_id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, compId)
+	return err
+}
+
+func (db *Db) DelCommand(botId int64, commandId int64) error {
+	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET status = $1 WHERE id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, commandId)
 	return err
 }
