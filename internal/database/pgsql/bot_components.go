@@ -33,7 +33,7 @@ func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 	return id, nil
 }
 
-func (db *Db) AddBotCommand(botId int64, m *model.Command) (int64, error) {
+func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 			("type", "data", component_id, next_step_id, status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
@@ -47,7 +47,7 @@ func (db *Db) AddBotCommand(botId int64, m *model.Command) (int64, error) {
 	return id, nil
 }
 
-func (db *Db) CheckBotComponentExist(botId int64, compId int64) (bool, error) {
+func (db *Db) CheckComponentExist(botId int64, compId int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
 			WHERE id = $1 AND status = $2) AS "exists";`
@@ -77,13 +77,13 @@ func (db *Db) SetNextStepCommand(botId int64, commandId int64, nextStepId int64)
 	return err
 }
 
-func (db *Db) CheckBotCommandExist(botId int64, compId int64, commandId int64) (bool, error) {
+func (db *Db) CheckCommandExist(botId int64, commandId int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
-			WHERE id = $1 AND component_id = $2 AND status = $3) AS "exists";`
+			WHERE id = $1 AND status = $2) AS "exists";`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, commandId, compId, StatusCommandActive,
+		context.Background(), query, commandId, StatusCommandActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}

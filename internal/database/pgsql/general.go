@@ -7,17 +7,24 @@ import (
 	"github.com/botscubes/bot-service/internal/config"
 )
 
-func (db *Db) CreateSchema(botId int64) error {
-	query := `CREATE SCHEMA IF NOT EXISTS ` + config.PrefixSchema + strconv.FormatInt(botId, 10)
-	if _, err := db.Pool.Exec(context.Background(), query); err != nil {
+func (db *Db) CreateBotSchema(botId int64) error {
+	ctx := context.Background()
+
+	tx, err := db.Pool.Begin(ctx)
+	if err != nil {
 		return err
 	}
 
-	return nil
-}
+	defer tx.Rollback(ctx)
 
-func (db *Db) CreateBotUserTable(botId int64) error {
-	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.user
+	newSchemaQ := `CREATE SCHEMA IF NOT EXISTS ` + config.PrefixSchema + strconv.FormatInt(botId, 10)
+
+	_, err = tx.Exec(ctx, newSchemaQ)
+	if err != nil {
+		return err
+	}
+
+	userTableQ := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.user
 	(
 		id bigserial NOT NULL,
 		tg_id bigint NOT NULL,
@@ -28,15 +35,12 @@ func (db *Db) CreateBotUserTable(botId int64) error {
 		PRIMARY KEY (id)
 	)`
 
-	if _, err := db.Pool.Exec(context.Background(), query); err != nil {
+	_, err = tx.Exec(ctx, userTableQ)
+	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (db *Db) CreateBotComponentTable(botId int64) error {
-	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+	componentQ := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
 	(
 		id bigserial NOT NULL,
 		data jsonb,
@@ -48,15 +52,12 @@ func (db *Db) CreateBotComponentTable(botId int64) error {
 		PRIMARY KEY (id)
 	)`
 
-	if _, err := db.Pool.Exec(context.Background(), query); err != nil {
+	_, err = tx.Exec(ctx, componentQ)
+	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (db *Db) CreateBotCommandTable(botId int64) error {
-	query := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+	commandQ := `CREATE TABLE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 	(
 		id bigserial NOT NULL,
 		type character varying(20) NOT NULL,
@@ -67,9 +68,12 @@ func (db *Db) CreateBotCommandTable(botId int64) error {
 		PRIMARY KEY (id)
 	)`
 
-	if _, err := db.Pool.Exec(context.Background(), query); err != nil {
+	_, err = tx.Exec(ctx, commandQ)
+	if err != nil {
 		return err
 	}
+
+	tx.Commit(ctx)
 
 	return nil
 }

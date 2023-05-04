@@ -52,28 +52,28 @@ type keyboard struct {
 
 // all field reqired
 // comands: [] | []command
-type addBotComponentReq struct {
+type addComponentReq struct {
 	Data     *componentData `json:"data"`
 	Commands []*command     `json:"commands"`
 	Position *point         `json:"position"`
 }
 
-type addBotComponentRes struct {
+type addComponentRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddBotComponent(db *pgsql.Db) reqHandler {
+func AddComponent(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: AddBotComponent] - botId param error;\n", err)
+			log.Debug("[API: AddComponent] - botId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
-		var reqData addBotComponentReq
+		var reqData addComponentReq
 		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
-			log.Debug("[API: AddBotComponent] - Serialization error;\n", err)
+			log.Debug("[API: AddComponent] - Serialization error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
@@ -92,7 +92,7 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: AddBotComponent] - get userId convertation to int64 error;")
+			log.Debug("[API: AddComponent] - get userId convertation to int64 error;")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
@@ -106,7 +106,7 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 		}
 
 		if !existBot {
-			log.Debug("[API: AddBotComponent] - bot not found")
+			log.Debug("[API: AddComponent] - bot not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
 			return
 		}
@@ -146,7 +146,7 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 					Status:      pgsql.StatusCommandActive,
 				}
 
-				_, err := db.AddBotCommand(botId, mc)
+				_, err := db.AddCommand(botId, mc)
 				if err != nil {
 					log.Error(err)
 					doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -155,7 +155,7 @@ func AddBotComponent(db *pgsql.Db) reqHandler {
 			}
 		}
 
-		dataRes := &addBotComponentRes{
+		dataRes := &addComponentRes{
 			Id: compId,
 		}
 
@@ -219,7 +219,7 @@ func SetNextStepComponent(db *pgsql.Db) reqHandler {
 		}
 
 		// check bot component exists
-		existInitialComp, err := db.CheckBotComponentExist(botId, compId)
+		existInitialComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -233,7 +233,7 @@ func SetNextStepComponent(db *pgsql.Db) reqHandler {
 		}
 
 		// check bot next component exists
-		existNextComp, err := db.CheckBotComponentExist(botId, *nextComponentId)
+		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -265,13 +265,6 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: SetNextStepCommand] - botId param error;\n", err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
-		if err != nil {
-			log.Debug("[API: SetNextStepCommand] - compId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
@@ -318,22 +311,8 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		// Check initial component exists
-		existInitialComp, err := db.CheckBotComponentExist(botId, compId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if !existInitialComp {
-			log.Debug("[API: SetNextStepCommand] - initial component not found")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
-		}
-
 		// Check next component exists
-		existNextComp, err := db.CheckBotComponentExist(botId, *nextComponentId)
+		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -347,7 +326,7 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 		}
 
 		// Check command exists
-		existCommand, err := db.CheckBotCommandExist(botId, compId, commandId)
+		existCommand, err := db.CheckCommandExist(botId, commandId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -360,7 +339,7 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		if err = db.SetNextStepCommand(botId, compId, *nextComponentId); err != nil {
+		if err = db.SetNextStepCommand(botId, commandId, *nextComponentId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
@@ -451,7 +430,7 @@ func DelNextStepComponent(db *pgsql.Db) reqHandler {
 		}
 
 		// check bot component exists
-		existComp, err := db.CheckBotComponentExist(botId, compId)
+		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -479,13 +458,6 @@ func DelNextStepCommand(db *pgsql.Db) reqHandler {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: DelNextStepCommand] - botId param error;\n", err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
-		if err != nil {
-			log.Debug("[API: DelNextStepCommand] - compId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
@@ -518,22 +490,8 @@ func DelNextStepCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		// check bot component exists
-		existComp, err := db.CheckBotComponentExist(botId, compId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if !existComp {
-			log.Debug("[API: DelNextStepCommand] - component not found")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
-		}
-
 		// Check command exists
-		existCommand, err := db.CheckBotCommandExist(botId, compId, commandId)
+		existCommand, err := db.CheckCommandExist(botId, commandId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -546,7 +504,7 @@ func DelNextStepCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		if err = db.DelNextStepCommand(botId, compId); err != nil {
+		if err = db.DelNextStepCommand(botId, commandId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
@@ -594,7 +552,7 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 		}
 
 		// check bot component exists
-		existComp, err := db.CheckBotComponentExist(botId, compId)
+		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
@@ -632,13 +590,6 @@ func DelCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
-		if err != nil {
-			log.Debug("[API: DelCommand] - compId param error;\n", err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
 		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
 		if err != nil {
 			log.Debug("[API: DelCommand] - commandId param error;\n", err)
@@ -667,22 +618,8 @@ func DelCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		// check bot component exists
-		existComp, err := db.CheckBotComponentExist(botId, compId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if !existComp {
-			log.Debug("[API: DelCommand] - component not found")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
-		}
-
 		// Check command exists
-		existCommand, err := db.CheckBotCommandExist(botId, compId, commandId)
+		existCommand, err := db.CheckCommandExist(botId, commandId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))

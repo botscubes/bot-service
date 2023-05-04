@@ -60,8 +60,6 @@ func NewBot(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		// TODO: Mb combine into one query (for rollback all on error)
-
 		m := &model.Bot{
 			UserId: userId,
 			Token:  &token,
@@ -76,25 +74,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		if err := db.CreateSchema(botId); err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if err := db.CreateBotUserTable(botId); err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if err := db.CreateBotComponentTable(botId); err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if err := db.CreateBotCommandTable(botId); err != nil {
+		if err := db.CreateBotSchema(botId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return

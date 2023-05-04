@@ -15,7 +15,7 @@ func validateToken(token string) bool {
 }
 
 // Check bot component request struct required fields
-func validateAddBotComponent(c *addBotComponentReq) error {
+func validateAddBotComponent(c *addComponentReq) error {
 	if c.Data == nil {
 		return errors.New("data.data not found")
 	}
