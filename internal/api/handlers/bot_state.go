@@ -100,7 +100,6 @@ func NewBot(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		status = 0
 		dataType := "start"
 		px := 50
 		py := 50
@@ -119,7 +118,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 				P:      pgtype.Vec2{X: float64(px), Y: float64(py)},
 				Status: pgtype.Present,
 			},
-			Status: status,
+			Status: pgsql.StatusComponentActive,
 		}
 
 		compId, err := db.AddBotComponent(botId, mc)

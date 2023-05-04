@@ -53,4 +53,8 @@ func (app *App) addHandlers() {
 	// Delete next step command
 	app.Router.DELETE("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
 		h.Auth(h.DelNextStepCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+
+	// Delete bot component
+	app.Router.DELETE("/api/bots/{botId}/components/{compId}",
+		h.Auth(h.DelBotComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 }

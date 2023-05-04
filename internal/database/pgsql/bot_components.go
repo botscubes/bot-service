@@ -8,13 +8,16 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-// Statuses:
-// * .component
-// 0 - Active
-//
-// * .command
-// 0 - Active
-//
+// Statuses
+var (
+	StatusComponentActive = 0
+	StatusComponentDel    = 1
+)
+
+var (
+	StatusCommandActive = 0
+	StatusCommandDel    = 1
+)
 
 func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 	var id int64
@@ -47,10 +50,10 @@ func (db *Db) AddBotCommand(botId int64, m *model.Command) (int64, error) {
 func (db *Db) CheckBotComponentExist(botId int64, compId int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
-			WHERE id = $1) AS "exists";`
+			WHERE id = $1 AND status = $2) AS "exists";`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, compId,
+		context.Background(), query, compId, StatusComponentActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}
@@ -66,20 +69,6 @@ func (db *Db) SetNextStepComponent(botId int64, compId int64, nextStepId int64) 
 	return err
 }
 
-func (db *Db) CheckBotCommandExist(botId int64, compId int64, commandId int64) (bool, error) {
-	var c bool
-	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
-			WHERE id = $1 AND component_id = $2) AS "exists";`
-
-	if err := db.Pool.QueryRow(
-		context.Background(), query, commandId, compId,
-	).Scan(&c); err != nil {
-		return false, err
-	}
-
-	return c, nil
-}
-
 func (db *Db) SetNextStepCommand(botId int64, commandId int64, nextStepId int64) error {
 	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET next_step_id = $1 WHERE id = $2;`
@@ -88,17 +77,32 @@ func (db *Db) SetNextStepCommand(botId int64, commandId int64, nextStepId int64)
 	return err
 }
 
+func (db *Db) CheckBotCommandExist(botId int64, compId int64, commandId int64) (bool, error) {
+	var c bool
+	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+			WHERE id = $1 AND component_id = $2 AND status = $3) AS "exists";`
+
+	if err := db.Pool.QueryRow(
+		context.Background(), query, commandId, compId, StatusCommandActive,
+	).Scan(&c); err != nil {
+		return false, err
+	}
+
+	return c, nil
+}
+
 func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
 	var data []*model.Component
-	status := 0
 
 	query := `SELECT id, data, keyboard, ARRAY(
 				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
-				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command where component_id = t.id
-			), next_step_id, is_start, position, status FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
-			WHERE status = $1 ORDER BY id;`
+				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+				WHERE component_id = t.id AND status = $1
+			), next_step_id, is_start, position, status
+			FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
+			WHERE status = $2 ORDER BY id;`
 
-	rows, err := db.Pool.Query(context.Background(), query, status)
+	rows, err := db.Pool.Query(context.Background(), query, StatusCommandActive, StatusComponentActive)
 	if err != nil {
 		return nil, err
 	}
@@ -133,5 +137,21 @@ func (db *Db) DelNextStepCommand(botId int64, commandId int64) error {
 			SET next_step_id = null WHERE id = $1;`
 
 	_, err := db.Pool.Exec(context.Background(), query, commandId)
+	return err
+}
+
+func (db *Db) DelBotComponent(botId int64, compId int64) error {
+	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET status = $1 WHERE id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, StatusComponentDel, compId)
+	return err
+}
+
+func (db *Db) DelCommandsByCompId(botId int64, compId int64) error {
+	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET status = $1 WHERE component_id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, compId)
 	return err
 }
