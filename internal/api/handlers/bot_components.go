@@ -641,3 +641,87 @@ func DelCommand(db *pgsql.Db) reqHandler {
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
+
+type addCommandReq struct {
+	Type *string `json:"type"`
+	Data *string `json:"data"`
+}
+
+type addCommandRes struct {
+	Id int64 `json:"id"`
+}
+
+func AddCommand(db *pgsql.Db) reqHandler {
+	return func(ctx *fh.RequestCtx) {
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: AddCommand] - botId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: AddCommand] - compId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		var reqData addCommandReq
+		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
+			log.Debug("[API: AddCommand] - Serialization error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		if err := validateAddCommand(&reqData); err != nil {
+			log.Debug(err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
+			return
+		}
+
+		// TODO: check coomand type & data valid
+
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: AddCommand] - get userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: AddCommand] - bot not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
+			return
+		}
+
+		m := &model.Command{
+			Type:        reqData.Type,
+			Data:        reqData.Data,
+			ComponentId: &compId,
+			NextStepId:  nil,
+			Status:      pgsql.StatusCommandActive,
+		}
+
+		commandId, err := db.AddCommand(botId, m)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		dataRes := &addCommandRes{
+			Id: commandId,
+		}
+
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, dataRes, nil))
+	}
+}

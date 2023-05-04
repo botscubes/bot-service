@@ -61,4 +61,8 @@ func (app *App) addHandlers() {
 	// Delete component command
 	app.Router.DELETE("/api/bots/{botId}/commands/{commandId}",
 		h.Auth(h.DelCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+
+	// Add component command
+	app.Router.POST("/api/bots/{botId}/components/{compId}/commands",
+		h.Auth(h.AddCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 }

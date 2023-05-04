@@ -56,3 +56,19 @@ func validateAddBotComponent(c *addComponentReq) error {
 
 	return nil
 }
+
+func validateAddCommand(c *addCommandReq) error {
+	if c.Type == nil {
+		return errors.New("type not found")
+	}
+
+	if c.Data == nil {
+		return errors.New("data not found")
+	}
+
+	if *c.Data == "" {
+		return errors.New("data not found")
+	}
+
+	return nil
+}
