@@ -18,7 +18,9 @@ func (db *Db) CreateBotSchema(botId int64) error {
 
 	defer func() {
 		if err := tx.Rollback(ctx); err != nil {
-			log.Error(err)
+			if err.Error() != "tx is closed" {
+				log.Error(err)
+			}
 		}
 	}()
 

@@ -9,7 +9,7 @@ func (app *App) addHandlers() {
 		h.Auth(h.Health, &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Create new bot
-	app.Router.POST("/api/bots/new",
+	app.Router.POST("/api/bots",
 		h.Auth(h.NewBot(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Set bot token
@@ -31,7 +31,7 @@ func (app *App) addHandlers() {
 	// Bot components
 
 	// Adds a component to the bot structure
-	app.Router.POST("/api/bots/{botId}/components/add",
+	app.Router.POST("/api/bots/{botId}/components",
 		h.Auth(h.AddComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Set next step component
