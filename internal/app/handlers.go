@@ -34,11 +34,11 @@ func (app *App) addHandlers() {
 	app.Router.POST("/api/bots/{botId}/components/add",
 		h.Auth(h.AddBotComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
-	// Set next step from the component
+	// Set next step component
 	app.Router.POST("/api/bots/{botId}/components/{compId}/next",
 		h.Auth(h.SetNextStepComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
-	// Set next step from the component command
+	// Set next step component command
 	app.Router.POST("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
 		h.Auth(h.SetNextStepCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
@@ -46,7 +46,11 @@ func (app *App) addHandlers() {
 	app.Router.GET("/api/bots/{botId}/components",
 		h.Auth(h.GetBotComponents(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
-	// Delete next step from the component
+	// Delete next step component
 	app.Router.DELETE("/api/bots/{botId}/components/{compId}/next",
 		h.Auth(h.DelNextStepComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+
+	// Delete next step command
+	app.Router.DELETE("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
+		h.Auth(h.DelNextStepCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 }

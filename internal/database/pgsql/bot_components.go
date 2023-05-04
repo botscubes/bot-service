@@ -127,3 +127,11 @@ func (db *Db) DelNextStepComponent(botId int64, compId int64) error {
 	_, err := db.Pool.Exec(context.Background(), query, compId)
 	return err
 }
+
+func (db *Db) DelNextStepCommand(botId int64, commandId int64) error {
+	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET next_step_id = null WHERE id = $1;`
+
+	_, err := db.Pool.Exec(context.Background(), query, commandId)
+	return err
+}

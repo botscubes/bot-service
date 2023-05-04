@@ -476,3 +476,85 @@ func DelNextStepComponent(db *pgsql.Db) reqHandler {
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
+
+func DelNextStepCommand(db *pgsql.Db) reqHandler {
+	return func(ctx *fh.RequestCtx) {
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: DelNextStepCommand] - botId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: DelNextStepCommand] - compId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: DelNextStepCommand] - commandId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: DelNextStepCommand] - get userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: DelNextStepCommand] - bot not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
+			return
+		}
+
+		// check bot component exists
+		existComp, err := db.CheckBotComponentExist(botId, compId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existComp {
+			log.Debug("[API: DelNextStepCommand] - component not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
+			return
+		}
+
+		// Check command exists
+		existCommand, err := db.CheckBotCommandExist(botId, compId, commandId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existCommand {
+			log.Debug("[API: DelNextStepCommand] - command not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrCommandNotFound))
+			return
+		}
+
+		if err = db.DelNextStepCommand(botId, compId); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+	}
+}
