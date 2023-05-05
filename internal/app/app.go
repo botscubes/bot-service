@@ -11,7 +11,6 @@ import (
 	fastRouter "github.com/fasthttp/router"
 
 	"github.com/botscubes/bot-service/internal/bot"
-	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	bcRedis "github.com/botscubes/bot-service/internal/database/redis"
@@ -29,7 +28,6 @@ type App struct {
 	Db             *pgsql.Db
 	SessionStorage token_storage.TokenStorage
 	RedisAuth      *redis.Client
-	Ct             *ct.Components
 }
 
 func (app *App) Run() error {
@@ -68,8 +66,6 @@ func (app *App) Run() error {
 	defer app.Db.CloseConnection()
 
 	app.addHandlers()
-
-	app.Ct = ct.New()
 
 	go func() {
 		if err = app.Server.Start(app.Conf.Bot.ListenAddress); err != nil {

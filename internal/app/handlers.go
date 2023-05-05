@@ -32,7 +32,7 @@ func (app *App) addHandlers() {
 
 	// Adds a component to the bot structure
 	app.Router.POST("/api/bots/{botId}/components",
-		h.Auth(h.AddComponent(app.Db, app.Ct), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.AddComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Set next step component
 	app.Router.POST("/api/bots/{botId}/components/{compId}/next",
@@ -64,5 +64,5 @@ func (app *App) addHandlers() {
 
 	// Add component command
 	app.Router.POST("/api/bots/{botId}/components/{compId}/commands",
-		h.Auth(h.AddCommand(app.Db, app.Ct), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.AddCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 }

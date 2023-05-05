@@ -25,7 +25,7 @@ type addComponentRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddComponent(db *pgsql.Db, c *ct.Components) reqHandler {
+func AddComponent(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -43,21 +43,8 @@ func AddComponent(db *pgsql.Db, c *ct.Components) reqHandler {
 
 		// TODO: check fields limits:
 		// eg. data.commands._.data max size
-
-		if err := c.ValidateData(reqData.Data); err != nil {
-			log.Debug("[API: AddComponent] - [ValidateData];\n", err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
-			return
-		}
-
-		if err := c.ValidateCommands(&reqData.Commands); err != nil {
-			log.Debug("[API: AddComponent] - [ValidateCommands];\n", err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
-			return
-		}
-
-		if err := ct.ValidatePosition(reqData.Position); err != nil {
-			log.Debug("[API: AddComponent] - [ValidatePosition];\n", err)
+		if err := ct.ValidateComponent(reqData.Data, &reqData.Commands, reqData.Position); err != nil {
+			log.Debug("[API: AddComponent] - [ValidateComponent];\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return
 		}
@@ -633,7 +620,7 @@ type addCommandRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddCommand(db *pgsql.Db, c *ct.Components) reqHandler {
+func AddCommand(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -656,7 +643,7 @@ func AddCommand(db *pgsql.Db, c *ct.Components) reqHandler {
 			return
 		}
 
-		if err := c.ValidateCommand(reqData.Type, reqData.Data); err != nil {
+		if err := ct.ValidateCommand(reqData.Type, reqData.Data); err != nil {
 			log.Debug("[API: AddCommand] - [ValidateCommand];\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return

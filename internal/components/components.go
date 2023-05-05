@@ -39,16 +39,3 @@ type Content struct {
 type Keyboard struct {
 	Buttons [][]*int64 `json:"buttons"`
 }
-
-func New() *Components {
-	ct := &Components{}
-	ct.list = make(map[string]*Component)
-
-	// Start component
-	ct.list["start"] = &Component{}
-
-	// Send text message
-	ct.list["text"] = &Component{}
-
-	return ct
-}

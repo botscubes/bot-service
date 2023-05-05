@@ -3,14 +3,30 @@ package components
 import (
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/config"
-	err "github.com/botscubes/user-service/pkg/service_error"
+	se "github.com/botscubes/user-service/pkg/service_error"
 )
 
 func CheckIsMain(id int64) bool {
 	return id == config.MainComponentId
 }
 
-func (ct *Components) ValidateData(d *Data) *err.ServiceError {
+func ValidateComponent(d *Data, c *[]*Command, p *Point) *se.ServiceError {
+	if err := ValidateData(d); err != nil {
+		return err
+	}
+
+	if err := ValidateCommands(c); err != nil {
+		return err
+	}
+
+	if err := ValidatePosition(p); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ValidateData(d *Data) *se.ServiceError {
 	if d == nil {
 		return e.InvalidParam("data")
 	}
@@ -33,13 +49,13 @@ func (ct *Components) ValidateData(d *Data) *err.ServiceError {
 	}
 }
 
-func (ct *Components) ValidateCommands(c *[]*Command) *err.ServiceError {
+func ValidateCommands(c *[]*Command) *se.ServiceError {
 	if c == nil {
 		return e.InvalidParam("commands")
 	}
 
 	for _, v := range *c {
-		if err := ct.ValidateCommand(v.Type, v.Data); err != nil {
+		if err := ValidateCommand(v.Type, v.Data); err != nil {
 			return err
 		}
 	}
@@ -47,8 +63,7 @@ func (ct *Components) ValidateCommands(c *[]*Command) *err.ServiceError {
 	return nil
 }
 
-func (ct *Components) ValidateCommand(t, d *string) *err.ServiceError {
-
+func ValidateCommand(t, d *string) *se.ServiceError {
 	if t == nil {
 		return e.InvalidParam("command.type")
 	}
@@ -61,7 +76,7 @@ func (ct *Components) ValidateCommand(t, d *string) *err.ServiceError {
 	}
 }
 
-func ValidatePosition(p *Point) *err.ServiceError {
+func ValidatePosition(p *Point) *se.ServiceError {
 	if p == nil {
 		return e.InvalidParam("position")
 	}
@@ -85,13 +100,13 @@ func ValidatePosition(p *Point) *err.ServiceError {
 	return nil
 }
 
-func vStart() *err.ServiceError {
+func vStart() *se.ServiceError {
 	return e.ErrMainComponent
 }
 
-func vContentText(c *[]*Content) *err.ServiceError {
+func vContentText(c *[]*Content) *se.ServiceError {
 	if len(*c) != 1 {
-		return e.IncorrectVal("data.content len")
+		return e.IncorrectVal("data.content")
 	}
 
 	if (*c)[0].Text == nil {
@@ -105,7 +120,7 @@ func vContentText(c *[]*Content) *err.ServiceError {
 	return nil
 }
 
-func vCommandText(t *string) *err.ServiceError {
+func vCommandText(t *string) *se.ServiceError {
 	if t == nil {
 		return e.InvalidParam("command.data")
 	}
