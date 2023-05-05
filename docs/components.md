@@ -45,7 +45,10 @@ POST /api/bots/{botId}/components
         ]
     },
     "commands": [
-        "command"
+        {
+            "type": "string",
+            "data": "string"
+        },
     ],
     "position": {
         "x": "integer",
@@ -54,15 +57,17 @@ POST /api/bots/{botId}/components
 }
 ```
 
-Поле           | Тип                       | Описание
----------------|---------------------------|-----------------------------------------------------------
-`data`         | object                    | Данные компонента
-`data.type`    | string                    | Тип компонента
-`data.content` | [content][type_content][] | Список c данными, спецефичными для каждого типа компонента
-`commands`     | [command][type_command][] | Список команд
-`position`     | object                    | Координаты компонента на поле редактора
-`position.x`   | integer                   | Координата X
-`position.y`   | integer                   | Координата Y
+Поле              | Тип                       | Описание
+------------------|---------------------------|-----------------------------------------------------------
+`data`            | object                    | Данные компонента
+`data.type`       | string                    | Тип компонента
+`data.content`    | [content][type_content][] | Список c данными, спецефичными для каждого типа компонента
+`commands`        | [command][type_command][] | Список команд
+`commands[].type` | string                    | Тип команды
+`commands[].data` | string                    | Текст команды
+`position`        | object                    | Координаты компонента на поле редактора
+`position.x`      | integer                   | Координата X
+`position.y`      | integer                   | Координата Y
 
 #### Ответ
 
@@ -241,7 +246,7 @@ GET /api/bots/67/components
             },
             "commands": [],
             "nextStepId": null,
-            "isStart": true,
+            "isMain": true,
             "position": {
                 "x": 50,
                 "y": 50
@@ -277,7 +282,7 @@ GET /api/bots/67/components
                 }
             ],
             "nextStepId": null,
-            "isStart": false,
+            "isMain": false,
             "position": {
                 "x": 141,
                 "y": 112
@@ -461,7 +466,7 @@ DELETE /api/bots/{botId}/commands/{commandId}/next
 
 [Наверх][toup]
 
-Добавление команды в компоненте
+Добавление [команды][type_command] в компоненте
 
 ```plaintext
 POST /api/bots/{botId}/components/{compId}/commands

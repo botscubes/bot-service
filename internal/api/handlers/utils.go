@@ -46,7 +46,7 @@ func componentRes(v *model.Component) *component {
 		},
 		Commands:   componentCommands(&v.Commands),
 		NextStepId: v.NextStepId,
-		IsStart:    v.IsStart,
+		IsMain:     v.IsMain,
 		Position: &point{
 			X: &v.Position.P.X,
 			Y: &v.Position.P.Y,

@@ -97,7 +97,7 @@ POST /api/bots
             },
             "commands": [],
             "nextStepId": null,
-            "isStart": true,
+            "isMain": true,
             "position": {
                 "x": 50,
                 "y": 50

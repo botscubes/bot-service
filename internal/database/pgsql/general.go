@@ -53,7 +53,7 @@ func (db *Db) CreateBotSchema(botId int64) error {
 		data jsonb,
 		keyboard jsonb,
 		next_step_id bigint,
-		is_start boolean DEFAULT false,
+		is_main boolean DEFAULT false,
 		position point,
 		status integer NOT NULL,
 		PRIMARY KEY (id)

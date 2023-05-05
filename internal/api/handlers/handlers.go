@@ -23,6 +23,8 @@ var (
 	strApplicationJSON = []byte("application/json")
 )
 
+var mainComponentId int64 = 1
+
 type reqHandler = fh.RequestHandler
 
 func doJsonRes(ctx *fh.RequestCtx, code int, obj any) {

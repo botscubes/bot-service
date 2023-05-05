@@ -22,10 +22,10 @@ var (
 func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
-			("data", keyboard, next_step_id, is_start,"position", status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
+			("data", keyboard, next_step_id, is_main,"position", status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, m.Data, m.Keyboard, m.NextStepId, m.IsStart, m.Position, m.Status,
+		context.Background(), query, m.Data, m.Keyboard, m.NextStepId, m.IsMain, m.Position, m.Status,
 	).Scan(&id); err != nil {
 		return 0, err
 	}
@@ -98,7 +98,7 @@ func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
 				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
 				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 				WHERE component_id = t.id AND status = $1 ORDER BY id
-			), next_step_id, is_start, position, status
+			), next_step_id, is_main, position, status
 			FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
 			WHERE status = $2 ORDER BY id;`
 
@@ -110,7 +110,7 @@ func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
 	// WARN: status not used
 	for rows.Next() {
 		var r model.Component
-		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.IsStart, &r.Position, &r.Status); err != nil {
+		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
 			return nil, err
 		}
 

@@ -33,7 +33,7 @@
         "command"
     ],
     "nextStepId": "integer",
-    "isStart": "bool",
+    "isMain": "bool",
     "position": {
         "x": "integer",
         "y": "integer"
@@ -43,13 +43,14 @@
 
 Поле           | Тип                   | Описание
 ---------------|-----------------------|-----------------------------------------------------------
+`id`           | integer               | id компонента
 `data`         | object                | Данные компонента
 `data.type`    | string                | [Тип][types_of_components] компонента
 `data.content` | [content](#content)[] | Список c данными, спецефичными для каждого типа компонента
 `keyboard`     | keyboard              | Структура клавиатуры (НЕ ИСПОЛЬЗУЕТСЯ)
 `commands`     | [command](#command)[] | Список команд
 `nextStepId`   | integer               | id следующего шага (компонента)
-`isStart`      | bool                  | Определяет, является ли компонент начальным
+`isMain`       | bool                  | Определяет, является ли компонент начальным
 `position`     | object                | Координаты компонента на поле редактора
 `position.x`   | integer               | Координата X
 `position.y`   | integer               | Координата Y
@@ -69,7 +70,7 @@
     },
     "commands": [],
     "nextStepId": null,
-    "isStart": true,
+    "isMain": true,
     "position": {
         "x": 50,
         "y": 50
@@ -115,7 +116,7 @@
         }
     ],
     "nextStepId": null,
-    "isStart": false,
+    "isMain": false,
     "position": {
         "x": 141,
         "y": 112
@@ -158,7 +159,7 @@
 |---------------|---------|---------------------------------|
 | `id`          | integer | id команды                      |
 | `type`        | string  | Тип команды                     |
-| `data`        | string  | Текст текст команды             |
+| `data`        | string  | Текст команды             |
 | `componentId` | integer | id компонента ?!?!              |
 | `nextStepId`  | integer | id следующего шага (компонента) |
 

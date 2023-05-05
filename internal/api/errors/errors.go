@@ -25,4 +25,5 @@ var (
 	ErrComponentNotFound     = err.New(110, "Component not found")
 	ErrNextComponentNotFound = err.New(111, "Next component not found")
 	ErrCommandNotFound       = err.New(112, "Command not found")
+	ErrMainComponent         = err.New(113, "The action is not available for the main component")
 )

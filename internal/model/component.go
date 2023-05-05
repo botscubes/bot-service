@@ -10,7 +10,7 @@ type Component struct {
 	Keyboard   *Keyboard     `json:"keyboard,omitempty"`
 	Commands   []*Command    `json:"commands,omitempty"`
 	NextStepId *int64        `json:"next_step_id,omitempty"`
-	IsStart    bool          `json:"is_start"`
+	IsMain     bool          `json:"is_main"`
 	Position   *pgtype.Point `json:"position"`
 	Status     int           `json:"status"`
 }

@@ -93,7 +93,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 				Buttons: [][]*int64{},
 			},
 			NextStepId: nil,
-			IsStart:    true,
+			IsMain:     true,
 			Position: &pgtype.Point{
 				P:      pgtype.Vec2{X: float64(px), Y: float64(py)},
 				Status: pgtype.Present,

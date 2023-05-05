@@ -20,7 +20,7 @@ type component struct {
 	Keyboard   *keyboard      `json:"keyboard"`
 	Commands   *[]*command    `json:"commands"`
 	NextStepId *int64         `json:"nextStepId"`
-	IsStart    bool           `json:"isStart"`
+	IsMain     bool           `json:"isMain"`
 	Position   *point         `json:"position"`
 }
 
@@ -50,8 +50,6 @@ type keyboard struct {
 	Buttons [][]*int64 `json:"buttons"`
 }
 
-// all field reqired
-// comands: [] | []command
 type addComponentReq struct {
 	Data     *componentData `json:"data"`
 	Commands []*command     `json:"commands"`
@@ -120,7 +118,7 @@ func AddComponent(db *pgsql.Db) reqHandler {
 				Buttons: [][]*int64{},
 			},
 			NextStepId: nil,
-			IsStart:    false,
+			IsMain:     false,
 			Position: &pgtype.Point{
 				P:      pgtype.Vec2{X: *px, Y: *py},
 				Status: pgtype.Present,
@@ -530,6 +528,13 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// check component is not main
+		if compId == mainComponentId {
+			log.Debug("[API: DelBotComponent] - component is main;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrMainComponent))
+			return
+		}
+
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
 			log.Debug("[API: DelBotComponent] - get userId convertation to int64 error;")
@@ -700,6 +705,20 @@ func AddCommand(db *pgsql.Db) reqHandler {
 		if !existBot {
 			log.Debug("[API: AddCommand] - bot not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
+			return
+		}
+
+		// check bot component exists
+		existComp, err := db.CheckComponentExist(botId, compId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existComp {
+			log.Debug("[API: DelBotComponent] - component not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
 			return
 		}
 
