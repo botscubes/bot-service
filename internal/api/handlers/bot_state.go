@@ -41,8 +41,8 @@ func NewBot(db *pgsql.Db) reqHandler {
 		title := data.Title
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: newBot] - get userId convertation to int64 error")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: newBot] - userId convertation to int64 error")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -51,7 +51,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 
 		if title == nil || *title == "" {
 			log.Debug("[API: newBot] - title is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("title")))
 			return
 		}
 
@@ -133,8 +133,8 @@ func StartBot(db *pgsql.Db, bots *map[string]*bot.TBot, s *telego.MultiBotWebhoo
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: StartBot] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: StartBot] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -200,8 +200,8 @@ func StopBot(db *pgsql.Db, bots *map[string]*bot.TBot) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: StopBot] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: StopBot] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 

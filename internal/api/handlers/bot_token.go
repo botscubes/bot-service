@@ -36,8 +36,8 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: SetToken] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: SetToken] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -45,7 +45,7 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 		token := data.Token
 		if token == nil {
 			log.Debug("[API: SetBotToken] - token is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("token")))
 			return
 		}
 
@@ -119,8 +119,8 @@ func DeleteBotToken(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: DeleteBotToken] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: DeleteBotToken] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 

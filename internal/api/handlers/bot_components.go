@@ -45,20 +45,20 @@ func AddComponent(db *pgsql.Db, c *ct.Components) reqHandler {
 		// eg. data.commands._.data max size
 
 		if err := c.ValidateData(reqData.Data); err != nil {
-			log.Debug(err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.New(5000, err.Error())))
+			log.Debug("[API: AddComponent] - [ValidateData];\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return
 		}
 
 		if err := c.ValidateCommands(&reqData.Commands); err != nil {
-			log.Debug(err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.New(5000, err.Error())))
+			log.Debug("[API: AddComponent] - [ValidateCommands];\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return
 		}
 
 		if err := ct.ValidatePosition(reqData.Position); err != nil {
-			log.Debug(err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.New(5001, err.Error())))
+			log.Debug("[API: AddComponent] - [ValidatePosition];\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return
 		}
 
@@ -67,8 +67,8 @@ func AddComponent(db *pgsql.Db, c *ct.Components) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: AddComponent] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: AddComponent] - userId convertation to int64 error")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -167,15 +167,15 @@ func SetNextStepComponent(db *pgsql.Db) reqHandler {
 
 		if reqData.NextStepId == nil {
 			log.Debug("[API: SetNextStepComponent] nextStepId is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("nextStepId")))
 			return
 		}
 
 		nextComponentId := reqData.NextStepId
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: SetNextStepComponent] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: SetNextStepComponent] - userId convertation to int64 error")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -260,15 +260,15 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 
 		if reqData.NextStepId == nil {
 			log.Debug("[API: SetNextStepCommand] nextStepId is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("nextStepId")))
 			return
 		}
 
 		nextComponentId := reqData.NextStepId
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: SetNextStepCommand] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: SetNextStepCommand] - userId convertation to int64 error")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -337,8 +337,8 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: GetBotComponents] - get userId convertation to int64 error;\n")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: GetBotComponents] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -385,8 +385,8 @@ func DelNextStepComponent(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: DelNextStepComponent] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: DelNextStepComponent] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -446,8 +446,8 @@ func DelNextStepCommand(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: DelNextStepCommand] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: DelNextStepCommand] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -514,8 +514,8 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: DelBotComponent] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: DelBotComponent] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -581,8 +581,8 @@ func DelCommand(db *pgsql.Db) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: DelCommand] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: DelCommand] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -657,8 +657,8 @@ func AddCommand(db *pgsql.Db, c *ct.Components) reqHandler {
 		}
 
 		if err := c.ValidateCommand(reqData.Type, reqData.Data); err != nil {
-			log.Debug(err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
+			log.Debug("[API: AddCommand] - [ValidateCommand];\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return
 		}
 
@@ -666,8 +666,8 @@ func AddCommand(db *pgsql.Db, c *ct.Components) reqHandler {
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: AddCommand] - get userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			log.Debug("[API: AddCommand] - userId convertation to int64 error;")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 

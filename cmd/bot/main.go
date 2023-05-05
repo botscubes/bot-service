@@ -11,4 +11,6 @@ func main() {
 	if err := app.Run(); err != nil {
 		log.Fatal("App run:\n", err)
 	}
+
+	log.Info("App Done")
 }

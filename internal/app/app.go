@@ -93,6 +93,6 @@ func (app *App) Run() error {
 	log.Info("App Started")
 
 	<-done
-	log.Info("App Done")
+
 	return nil
 }

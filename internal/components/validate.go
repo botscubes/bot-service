@@ -1,45 +1,41 @@
 package components
 
 import (
-	"errors"
-)
-
-var (
-	mainComponentId int64 = 1
-	maxPositionX    int64 = 10000
-	maxPositionY    int64 = 10000
+	e "github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/config"
+	err "github.com/botscubes/user-service/pkg/service_error"
 )
 
 func CheckIsMain(id int64) bool {
-	return id == mainComponentId
+	return id == config.MainComponentId
 }
 
-func (ct *Components) ValidateData(d *Data) error {
+func (ct *Components) ValidateData(d *Data) *err.ServiceError {
 	if d == nil {
-		return errors.New("data not found")
+		return e.InvalidParam("data")
 	}
 
 	if d.Type == nil {
-		return errors.New("data.type not found")
+		return e.InvalidParam("data.type")
 	}
 
 	if d.Content == nil {
-		return errors.New("data.content not found")
+		return e.InvalidParam("data.content")
 	}
 
 	switch *d.Type {
 	case "start":
-		return vStart(d.Content)
+		return vStart()
 	case "text":
-		return vText(d.Content)
+		return vContentText(d.Content)
 	default:
-		return errors.New("unknown data.type")
+		return e.ErrUnknownComponent
 	}
 }
 
-func (ct *Components) ValidateCommands(c *[]*Command) error {
+func (ct *Components) ValidateCommands(c *[]*Command) *err.ServiceError {
 	if c == nil {
-		return errors.New("commands not found")
+		return e.InvalidParam("commands")
 	}
 
 	for _, v := range *c {
@@ -51,49 +47,71 @@ func (ct *Components) ValidateCommands(c *[]*Command) error {
 	return nil
 }
 
-func (ct *Components) ValidateCommand(t, d *string) error {
+func (ct *Components) ValidateCommand(t, d *string) *err.ServiceError {
+
 	if t == nil {
-		return errors.New("type not found")
+		return e.InvalidParam("command.type")
 	}
 
-	if d == nil {
-		return errors.New("data not found")
+	switch *t {
+	case "text":
+		return vCommandText(d)
+	default:
+		return e.ErrUnknownCommand
 	}
-
-	if *d == "" {
-		return errors.New("data not found")
-	}
-
-	return nil
 }
 
-func ValidatePosition(p *Point) error {
+func ValidatePosition(p *Point) *err.ServiceError {
 	if p == nil {
-		return errors.New("Position not found")
+		return e.InvalidParam("position")
 	}
 
-	if p.X == nil || p.Y == nil {
-		return errors.New("Position: x or y param not found")
+	if p.X == nil {
+		return e.InvalidParam("position.x")
 	}
 
-	if int64(*p.X) < 0 || int64(*p.X) > maxPositionX {
-		return errors.New("Position: x param has an incorrect value")
+	if p.Y == nil {
+		return e.InvalidParam("position.y")
 	}
 
-	if int64(*p.Y) < 0 || int64(*p.Y) > maxPositionY {
-		return errors.New("Position: x param has an incorrect value")
+	if int64(*p.X) < 0 || int64(*p.X) > config.MaxPositionX {
+		return e.IncorrectVal("position.x")
+	}
+
+	if int64(*p.Y) < 0 || int64(*p.Y) > config.MaxPositionY {
+		return e.IncorrectVal("position.y")
 	}
 
 	return nil
 }
 
-func vStart(c *[]*Content) error {
-	return errors.New("its start component")
+func vStart() *err.ServiceError {
+	return e.ErrMainComponent
 }
 
-func vText(c *[]*Content) error {
+func vContentText(c *[]*Content) *err.ServiceError {
 	if len(*c) != 1 {
-		return errors.New("invalid content len")
+		return e.IncorrectVal("data.content len")
+	}
+
+	if (*c)[0].Text == nil {
+		return e.InvalidParam("data.content.text")
+	}
+
+	if *(*c)[0].Text == "" {
+		return e.IncorrectVal("data.content.text is empty")
+	}
+
+	return nil
+}
+
+func vCommandText(t *string) *err.ServiceError {
+	if t == nil {
+		return e.InvalidParam("command.data")
+	}
+
+	if *t == "" {
+		return e.IncorrectVal("command.data is empty")
 	}
 
 	return nil

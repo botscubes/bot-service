@@ -5,10 +5,19 @@ import (
 )
 
 var (
-	ErrInvalidRequest = err.New(1400, "Invalid request")
-	ErrInvalidParams  = err.New(1411, "Required parameters are missing")
-	ErrInternalServer = err.New(1500, "Internal server error")
-	ErrUnauthorized   = err.New(1401, "Unauthorized")
+	InvalidRequestCode = 1400
+	InvalidParamCode   = 1411
+	InternalServerCode = 1500
+	UnauthorizedCode   = 1401
+	IncorrectValCode   = 1402
+)
+
+var (
+	ErrInvalidRequest = err.New(InvalidRequestCode, "Invalid request")
+	ErrInvalidParam   = err.New(InvalidParamCode, "Required parameter is missing")
+	ErrInternalServer = err.New(InternalServerCode, "Internal server error")
+	ErrUnauthorized   = err.New(UnauthorizedCode, "Unauthorized")
+	ErrIncorrectVal   = err.New(IncorrectValCode, "Incorrect value")
 )
 
 var (
@@ -26,8 +35,14 @@ var (
 	ErrNextComponentNotFound = err.New(111, "Next component not found")
 	ErrCommandNotFound       = err.New(112, "Command not found")
 	ErrMainComponent         = err.New(113, "The action is not available for the main component")
+	ErrUnknownComponent      = err.New(114, "Unknown component")
+	ErrUnknownCommand        = err.New(115, "Unknown command")
 )
 
-func New(code int, mes string) *err.ServiceError {
-	return err.New(code, mes)
+func InvalidParam(mes string) *err.ServiceError {
+	return err.New(InvalidParamCode, "Required parameter is missing: "+mes)
+}
+
+func IncorrectVal(mes string) *err.ServiceError {
+	return err.New(IncorrectValCode, "Incorrect value: "+mes)
 }
