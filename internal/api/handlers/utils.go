@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-func componentCommands(commands *[]*model.Command) *[]*command {
-	var result = make([]*command, len(*commands))
+func componentCommands(commands *[]*model.Command) *[]*ct.Command {
+	var result = make([]*ct.Command, len(*commands))
 
 	for i, c := range *commands {
-		cmd := &command{
+		cmd := &ct.Command{
 			Id:          c.Id,
 			Type:        c.Type,
 			Data:        c.Data,
@@ -21,11 +22,11 @@ func componentCommands(commands *[]*model.Command) *[]*command {
 	return &result
 }
 
-func dataContentsRes(contents *[]*model.CompContent) *[]*dataContent {
-	var result = make([]*dataContent, len(*contents))
+func dataContentsRes(contents *[]*model.CompContent) *[]*ct.Content {
+	var result = make([]*ct.Content, len(*contents))
 
 	for i, c := range *contents {
-		cnt := &dataContent{
+		cnt := &ct.Content{
 			Text: c.Text,
 		}
 		result[i] = cnt
@@ -34,20 +35,20 @@ func dataContentsRes(contents *[]*model.CompContent) *[]*dataContent {
 	return &result
 }
 
-func componentRes(v *model.Component) *component {
-	return &component{
-		Id: v.Id,
-		Data: &componentData{
+func componentRes(v *model.Component) *ct.Component {
+	return &ct.Component{
+		Id: &v.Id,
+		Data: &ct.Data{
 			Type:    v.Data.Type,
 			Content: dataContentsRes(&v.Data.Content),
 		},
-		Keyboard: &keyboard{
+		Keyboard: &ct.Keyboard{
 			Buttons: v.Keyboard.Buttons,
 		},
 		Commands:   componentCommands(&v.Commands),
 		NextStepId: v.NextStepId,
 		IsMain:     v.IsMain,
-		Position: &point{
+		Position: &ct.Point{
 			X: &v.Position.P.X,
 			Y: &v.Position.P.Y,
 		},
@@ -64,7 +65,7 @@ func componentsRes(components *[]*model.Component) *getBotCompsRes {
 	return &result
 }
 
-func dataContentsMod(contents *[]*dataContent) *[]*model.CompContent {
+func dataContentsMod(contents *[]*ct.Content) *[]*model.CompContent {
 	var result = make([]*model.CompContent, len(*contents))
 
 	for i, c := range *contents {

@@ -27,3 +27,7 @@ var (
 	ErrCommandNotFound       = err.New(112, "Command not found")
 	ErrMainComponent         = err.New(113, "The action is not available for the main component")
 )
+
+func New(code int, mes string) *err.ServiceError {
+	return err.New(code, mes)
+}

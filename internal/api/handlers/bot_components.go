@@ -8,59 +8,24 @@ import (
 	fh "github.com/valyala/fasthttp"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
+	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
 )
 
-type component struct {
-	Id         int64          `json:"id"`
-	Data       *componentData `json:"data"`
-	Keyboard   *keyboard      `json:"keyboard"`
-	Commands   *[]*command    `json:"commands"`
-	NextStepId *int64         `json:"nextStepId"`
-	IsMain     bool           `json:"isMain"`
-	Position   *point         `json:"position"`
-}
-
-type command struct {
-	Id          *int64  `json:"id,omitempty"`
-	Type        *string `json:"type"`
-	Data        *string `json:"data"`
-	ComponentId *int64  `json:"componentId"`
-	NextStepId  *int64  `json:"nextStepId"`
-}
-
-type point struct {
-	X *float64 `json:"x"`
-	Y *float64 `json:"y"`
-}
-
-type componentData struct {
-	Type    *string         `json:"type"`
-	Content *[]*dataContent `json:"content"`
-}
-
-type dataContent struct {
-	Text *string `json:"text,omitempty"`
-}
-
-type keyboard struct {
-	Buttons [][]*int64 `json:"buttons"`
-}
-
 type addComponentReq struct {
-	Data     *componentData `json:"data"`
-	Commands []*command     `json:"commands"`
-	Position *point         `json:"position"`
+	Data     *ct.Data      `json:"data"`
+	Commands []*ct.Command `json:"commands"`
+	Position *ct.Point     `json:"position"`
 }
 
 type addComponentRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddComponent(db *pgsql.Db) reqHandler {
+func AddComponent(db *pgsql.Db, c *ct.Components) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -79,9 +44,21 @@ func AddComponent(db *pgsql.Db) reqHandler {
 		// TODO: check fields limits:
 		// eg. data.commands._.data max size
 
-		if err := validateAddBotComponent(&reqData); err != nil {
+		if err := c.ValidateData(reqData.Data); err != nil {
 			log.Debug(err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.New(5000, err.Error())))
+			return
+		}
+
+		if err := c.ValidateCommands(&reqData.Commands); err != nil {
+			log.Debug(err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.New(5000, err.Error())))
+			return
+		}
+
+		if err := ct.ValidatePosition(reqData.Position); err != nil {
+			log.Debug(err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.New(5001, err.Error())))
 			return
 		}
 
@@ -347,7 +324,7 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 	}
 }
 
-type getBotCompsRes []*component
+type getBotCompsRes []*ct.Component
 
 func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
@@ -529,7 +506,7 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 		}
 
 		// check component is not main
-		if compId == mainComponentId {
+		if ct.CheckIsMain(compId) {
 			log.Debug("[API: DelBotComponent] - component is main;")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrMainComponent))
 			return
@@ -656,7 +633,7 @@ type addCommandRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddCommand(db *pgsql.Db) reqHandler {
+func AddCommand(db *pgsql.Db, c *ct.Components) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -679,7 +656,7 @@ func AddCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		if err := validateAddCommand(&reqData); err != nil {
+		if err := c.ValidateCommand(reqData.Type, reqData.Data); err != nil {
 			log.Debug(err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParams))
 			return

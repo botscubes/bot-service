@@ -9,6 +9,7 @@ import (
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
+	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/model"
@@ -23,8 +24,8 @@ type newBotReq struct {
 }
 
 type newBotRes struct {
-	BotId     int64      `json:"botId"`
-	Component *component `json:"conponent"`
+	BotId     int64         `json:"botId"`
+	Component *ct.Component `json:"conponent"`
 }
 
 func NewBot(db *pgsql.Db) reqHandler {
