@@ -1,9 +1,5 @@
 package components
 
-type Components struct {
-	list map[string]*Component
-}
-
 type Component struct {
 	Id         *int64      `json:"id"`
 	Data       *Data       `json:"data"`

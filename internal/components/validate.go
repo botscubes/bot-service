@@ -19,11 +19,7 @@ func ValidateComponent(d *Data, c *[]*Command, p *Point) *se.ServiceError {
 		return err
 	}
 
-	if err := ValidatePosition(p); err != nil {
-		return err
-	}
-
-	return nil
+	return ValidatePosition(p)
 }
 
 func ValidateData(d *Data) *se.ServiceError {
