@@ -33,8 +33,8 @@ github.com/klauspost/compress v1.16.5 h1:IFV2oUNUzZaz+XyusxpLzpzS8Pt5rh0Z16For/d
 github.com/klauspost/compress v1.16.5/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
-github.com/mymmrac/telego v0.23.0 h1:jqonexzrSQFLL9CSp5LoQhHyTVPwzf3HLo0LSxxOK2E=
-github.com/mymmrac/telego v0.23.0/go.mod h1:GHmQP995TtCVmKWQkCiStulhFmS/XLrB1o8Ttv8B6o0=
+github.com/mymmrac/telego v0.24.0 h1:0fd+v2/dToL6/DtsnWr+2saK7ZxIgLY+LI9kqJQbPEo=
+github.com/mymmrac/telego v0.24.0/go.mod h1:y557P/iMHSaOVDi5Nmy1gNelqrw+jaBMvP9guPaNJsQ=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
