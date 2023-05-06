@@ -1,5 +1,7 @@
 package handlers
 
+// TODO: create pkg
+
 import (
 	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/internal/model"
@@ -55,8 +57,10 @@ func componentRes(v *model.Component) *ct.Component {
 	}
 }
 
-func componentsRes(components *[]*model.Component) *getBotCompsRes {
-	var result = make(getBotCompsRes, len(*components))
+// TODO: Add converts diffrent funcs for Editor and Bot
+
+func componentsRes(components *[]*model.Component) *[]*ct.Component {
+	var result = make([]*ct.Component, len(*components))
 
 	for i, v := range *components {
 		result[i] = componentRes(v)

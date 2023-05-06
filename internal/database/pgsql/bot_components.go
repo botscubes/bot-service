@@ -91,7 +91,7 @@ func (db *Db) CheckCommandExist(botId int64, commandId int64) (bool, error) {
 	return c, nil
 }
 
-func (db *Db) GetBotComponents(botId int64) (*[]*model.Component, error) {
+func (db *Db) BotComponentsForEd(botId int64) (*[]*model.Component, error) {
 	var data []*model.Component
 
 	query := `SELECT id, data, keyboard, ARRAY(
@@ -162,4 +162,40 @@ func (db *Db) DelCommand(botId int64, commandId int64) error {
 
 	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, commandId)
 	return err
+}
+
+func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
+	// TODO: REMOVE POSITION !
+	// Change return value to *map[int64]*ct.Component
+
+	var data []*model.Component
+
+	query := `SELECT id, data, keyboard, ARRAY(
+				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
+				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+				WHERE component_id = t.id AND status = $1 ORDER BY id
+			), next_step_id, is_main, position, status
+			FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
+			WHERE status = $2 ORDER BY id;`
+
+	rows, err := db.Pool.Query(context.Background(), query, StatusCommandActive, StatusComponentActive)
+	if err != nil {
+		return nil, err
+	}
+
+	// WARN: status not used
+	for rows.Next() {
+		var r model.Component
+		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
+			return nil, err
+		}
+
+		data = append(data, &r)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return &data, nil
 }

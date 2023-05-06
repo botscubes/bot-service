@@ -1,5 +1,8 @@
 package app
 
+// TODO: handle the panic
+// WARN: bot not receive updates on app stop by panic
+
 import (
 	"os"
 	"os/signal"
@@ -23,7 +26,7 @@ import (
 type App struct {
 	Router         *fastRouter.Router
 	Server         *telego.MultiBotWebhookServer
-	Bots           map[string]*bot.TBot
+	Bots           map[int64]*bot.TBot
 	Conf           *config.ServiceConfig
 	Db             *pgsql.Db
 	SessionStorage token_storage.TokenStorage
@@ -53,7 +56,7 @@ func (app *App) Run() error {
 		},
 	}
 
-	app.Bots = make(map[string]*bot.TBot)
+	app.Bots = make(map[int64]*bot.TBot)
 
 	app.RedisAuth = bcRedis.NewClient(&app.Conf.RedisAuth)
 	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)

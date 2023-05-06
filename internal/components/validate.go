@@ -22,6 +22,7 @@ func ValidateComponent(d *Data, c *[]*Command, p *Point) *se.ServiceError {
 	return ValidatePosition(p)
 }
 
+// TODO: Remane "..Data"
 func ValidateData(d *Data) *se.ServiceError {
 	if d == nil {
 		return e.InvalidParam("data")

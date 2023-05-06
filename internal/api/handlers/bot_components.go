@@ -311,7 +311,7 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 	}
 }
 
-type getBotCompsRes []*ct.Component
+type getBotCompsRes = *[]*ct.Component
 
 func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
@@ -343,7 +343,7 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		components, err := db.GetBotComponents(botId)
+		components, err := db.BotComponentsForEd(botId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))

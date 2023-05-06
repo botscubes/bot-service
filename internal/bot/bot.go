@@ -3,17 +3,22 @@ package bot
 import (
 	"time"
 
+	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 )
 
 type TBot struct {
-	Bot     *telego.Bot
-	Updates <-chan telego.Update
-	Handler *th.BotHandler
+	Bot        *telego.Bot
+	Updates    <-chan telego.Update
+	Handler    *th.BotHandler
+	Components map[int64]*ct.Component    // prototype, will move to redis
+	Users      map[telego.ChatID]*ct.User // prototype, will move to redis
 }
+
+// TODO: create objects pkg
+// with components, users, etc
 
 const handlerTimeout = 10 // sec
 
@@ -21,17 +26,8 @@ func NewBot(token *string) (*telego.Bot, error) {
 	return telego.NewBot(*token, telego.WithHealthCheck(), telego.WithDefaultDebugLogger())
 }
 
-func (btx *TBot) setBotHandler() {
-	btx.Handler.HandleMessage(func(bot *telego.Bot, message telego.Message) {
-		var err error
-		chatID := tu.ID(message.Chat.ID)
-		_, err = bot.CopyMessage(tu.CopyMessage(chatID, chatID, message.MessageID))
-		if err != nil {
-			bot.Logger().Errorf("Failed to copy message: %s", err)
-		}
-
-		bot.Logger().Debugf("Copied message with ID %d in chat %d", message.MessageID, chatID.ID)
-	})
+func (btx *TBot) setBotHandlers() {
+	btx.Handler.Handle(btx.mainHandler())
 }
 
 func (btx *TBot) startBotHandler() {
@@ -59,8 +55,10 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 			return err
 		}
 
-		btx.setBotHandler()
+		btx.setBotHandlers()
 	}
+
+	btx.Users = make(map[telego.ChatID]*ct.User)
 
 	btx.startBotHandler()
 
@@ -95,4 +93,13 @@ func (btx *TBot) StopBot(stopWebhookServer bool) error {
 	}
 
 	return btx.Bot.DeleteWebhook(nil)
+}
+
+func (btx *TBot) SetComponents(comps *[]*ct.Component) {
+	// TODO: refactor
+
+	btx.Components = make(map[int64]*ct.Component)
+	for _, v := range *comps {
+		btx.Components[*v.Id] = v
+	}
 }

@@ -1,6 +1,27 @@
 package components
 
+// TODO: create wrapper
+// component
+// 	+ type
+// 	+ content
+// 	.. etc
+//
+// ComponentWrapEd
+// 	- component
+// 		+ type
+// 		+ content
+// 		 .. etc
+//  - position
+//
+// 	ComponentWrapBot
+//  - component
+//
+
 type Component struct {
+	// *int64 may be worse than int64
+	// BUT
+	// ! *int64 used for optional fields !
+
 	Id         *int64      `json:"id"`
 	Data       *Data       `json:"data"`
 	Keyboard   *Keyboard   `json:"keyboard"`
