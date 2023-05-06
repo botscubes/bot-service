@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/goccy/go-json"
-	"github.com/jackc/pgx/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
@@ -96,8 +96,8 @@ func NewBot(db *pgsql.Db) reqHandler {
 			NextStepId: nil,
 			IsMain:     true,
 			Position: &pgtype.Point{
-				P:      pgtype.Vec2{X: float64(px), Y: float64(py)},
-				Status: pgtype.Present,
+				P:     pgtype.Vec2{X: float64(px), Y: float64(py)},
+				Valid: true,
 			},
 			Status: pgsql.StatusComponentActive,
 		}

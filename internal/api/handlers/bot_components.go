@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/goccy/go-json"
-	"github.com/jackc/pgx/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	fh "github.com/valyala/fasthttp"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
@@ -84,8 +84,8 @@ func AddComponent(db *pgsql.Db) reqHandler {
 			NextStepId: nil,
 			IsMain:     false,
 			Position: &pgtype.Point{
-				P:      pgtype.Vec2{X: *px, Y: *py},
-				Status: pgtype.Present,
+				P:     pgtype.Vec2{X: *px, Y: *py},
+				Valid: true,
 			},
 			Status: pgsql.StatusComponentActive,
 		}

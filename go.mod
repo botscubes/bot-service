@@ -6,7 +6,6 @@ require (
 	github.com/botscubes/user-service v0.0.0-20230427145246-bf89bbd8212f
 	github.com/fasthttp/router v1.4.19
 	github.com/goccy/go-json v0.10.2
-	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/mymmrac/telego v0.24.0
 	github.com/redis/go-redis/v9 v9.0.4
@@ -24,8 +23,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.0 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
-	github.com/lib/pq v1.10.9 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
