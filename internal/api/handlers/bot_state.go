@@ -5,11 +5,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/goccy/go-json"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
-	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/model"
@@ -24,8 +22,8 @@ type newBotReq struct {
 }
 
 type newBotRes struct {
-	BotId     int64         `json:"botId"`
-	Component *ct.Component `json:"conponent"`
+	BotId     int64            `json:"botId"`
+	Component *model.Component `json:"conponent"`
 }
 
 func NewBot(db *pgsql.Db) reqHandler {
@@ -88,15 +86,15 @@ func NewBot(db *pgsql.Db) reqHandler {
 		mc := &model.Component{
 			Data: &model.Data{
 				Type:    &dataType,
-				Content: nil,
+				Content: &[]*model.Content{},
 			},
 			Keyboard: &model.Keyboard{
 				Buttons: [][]*int64{},
 			},
 			NextStepId: nil,
 			IsMain:     true,
-			Position: &pgtype.Point{
-				P:     pgtype.Vec2{X: float64(px), Y: float64(py)},
+			Position: &model.Point{
+				X: float64(px), Y: float64(py),
 				Valid: true,
 			},
 			Status: pgsql.StatusComponentActive,
@@ -110,11 +108,11 @@ func NewBot(db *pgsql.Db) reqHandler {
 		}
 
 		mc.Id = compId
-		mc.Commands = []*model.Command{}
+		mc.Commands = new(model.Commands)
 
 		dataRes := &newBotRes{
 			BotId:     botId,
-			Component: componentRes(mc),
+			Component: mc,
 		}
 
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, dataRes, nil))
@@ -185,7 +183,7 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 			return
 		}
 
-		(*bots)[botId].SetComponents(componentsRes(components))
+		(*bots)[botId].SetComponents(components)
 
 		if err = (*bots)[botId].StartBot(c.WebhookBase, c.ListenAddress, s); err != nil {
 			log.Error(err)

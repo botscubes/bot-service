@@ -1,7 +1,7 @@
 package bot
 
 import (
-	ct "github.com/botscubes/bot-service/internal/components"
+	"github.com/botscubes/bot-service/internal/model"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -15,7 +15,7 @@ func (btx *TBot) mainHandler() th.Handler {
 		chatID := tu.ID(update.Message.Chat.ID)
 
 		if _, ok := btx.Users[chatID]; !ok {
-			btx.Users[chatID] = &ct.User{
+			btx.Users[chatID] = &model.User{
 				StepId: 1,
 			}
 		}
@@ -40,7 +40,7 @@ func (btx *TBot) mainHandler() th.Handler {
 	}
 }
 
-func execMethod(bot *telego.Bot, update *telego.Update, data *ct.Data) {
+func execMethod(bot *telego.Bot, update *telego.Update, data *model.Data) {
 	switch *data.Type {
 	case "text":
 		_, _ = bot.SendMessage(tu.Messagef(
@@ -50,7 +50,7 @@ func execMethod(bot *telego.Bot, update *telego.Update, data *ct.Data) {
 	}
 }
 
-func determineCommand(mes *string, commands *[]*ct.Command) *ct.Command {
+func determineCommand(mes *string, commands *model.Commands) *model.Command {
 	// work with command type - text
 
 	for _, command := range *commands {

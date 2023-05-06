@@ -3,7 +3,7 @@ package bot
 import (
 	"time"
 
-	ct "github.com/botscubes/bot-service/internal/components"
+	"github.com/botscubes/bot-service/internal/model"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -13,8 +13,8 @@ type TBot struct {
 	Bot        *telego.Bot
 	Updates    <-chan telego.Update
 	Handler    *th.BotHandler
-	Components map[int64]*ct.Component    // prototype, will move to redis
-	Users      map[telego.ChatID]*ct.User // prototype, will move to redis
+	Components map[int64]*model.Component    // prototype, will move to redis
+	Users      map[telego.ChatID]*model.User // prototype, will move to redis
 }
 
 // TODO: create objects pkg
@@ -58,7 +58,7 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 		btx.setBotHandlers()
 	}
 
-	btx.Users = make(map[telego.ChatID]*ct.User)
+	btx.Users = make(map[telego.ChatID]*model.User)
 
 	btx.startBotHandler()
 
@@ -95,11 +95,11 @@ func (btx *TBot) StopBot(stopWebhookServer bool) error {
 	return btx.Bot.DeleteWebhook(nil)
 }
 
-func (btx *TBot) SetComponents(comps *[]*ct.Component) {
+func (btx *TBot) SetComponents(comps *[]*model.Component) {
 	// TODO: refactor
 
-	btx.Components = make(map[int64]*ct.Component)
+	btx.Components = make(map[int64]*model.Component)
 	for _, v := range *comps {
-		btx.Components[*v.Id] = v
+		btx.Components[v.Id] = v
 	}
 }

@@ -4,11 +4,9 @@ import (
 	"strconv"
 
 	"github.com/goccy/go-json"
-	"github.com/jackc/pgx/v5/pgtype"
 	fh "github.com/valyala/fasthttp"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
-	ct "github.com/botscubes/bot-service/internal/components"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
@@ -16,9 +14,9 @@ import (
 )
 
 type addComponentReq struct {
-	Data     *ct.Data      `json:"data"`
-	Commands []*ct.Command `json:"commands"`
-	Position *ct.Point     `json:"position"`
+	Data     *model.Data     `json:"data"`
+	Commands *model.Commands `json:"commands"`
+	Position *model.Point    `json:"position"`
 }
 
 type addComponentRes struct {
@@ -42,15 +40,12 @@ func AddComponent(db *pgsql.Db) reqHandler {
 		}
 
 		// TODO: check fields limits:
-		// eg. data.commands._.data max size
-		if err := ct.ValidateComponent(reqData.Data, &reqData.Commands, reqData.Position); err != nil {
+		// eg. data.commands._.data max size, check commands max count
+		if err := model.ValidateComponent(reqData.Data, reqData.Commands, reqData.Position); err != nil {
 			log.Debug("[API: AddComponent] - [ValidateComponent];\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return
 		}
-
-		px := reqData.Position.X
-		py := reqData.Position.Y
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
@@ -73,47 +68,38 @@ func AddComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		m := &model.Component{
-			Data: &model.Data{
-				Type:    reqData.Data.Type,
-				Content: *dataContentsMod(reqData.Data.Content),
-			},
+		component := &model.Component{
+			Data: reqData.Data,
 			Keyboard: &model.Keyboard{
 				Buttons: [][]*int64{},
 			},
 			NextStepId: nil,
 			IsMain:     false,
-			Position: &pgtype.Point{
-				P:     pgtype.Vec2{X: *px, Y: *py},
-				Valid: true,
-			},
-			Status: pgsql.StatusComponentActive,
+			Position:   reqData.Position,
+			Status:     pgsql.StatusComponentActive,
 		}
 
-		compId, err := db.AddBotComponent(botId, m)
+		compId, err := db.AddBotComponent(botId, component)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
-		// TODO: check commands max count
-		if reqData.Commands != nil {
-			for _, v := range reqData.Commands {
-				mc := &model.Command{
-					Type:        v.Type,
-					Data:        v.Data,
-					ComponentId: &compId,
-					NextStepId:  nil,
-					Status:      pgsql.StatusCommandActive,
-				}
+		for _, v := range *reqData.Commands {
+			mc := &model.Command{
+				Type:        v.Type,
+				Data:        v.Data,
+				ComponentId: &compId,
+				NextStepId:  nil,
+				Status:      pgsql.StatusCommandActive,
+			}
 
-				_, err := db.AddCommand(botId, mc)
-				if err != nil {
-					log.Error(err)
-					doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-					return
-				}
+			_, err := db.AddCommand(botId, mc)
+			if err != nil {
+				log.Error(err)
+				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+				return
 			}
 		}
 
@@ -311,7 +297,7 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 	}
 }
 
-type getBotCompsRes = *[]*ct.Component
+type getBotCompsRes = *[]*model.Component
 
 func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
@@ -350,7 +336,7 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, componentsRes(components), nil))
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, components, nil))
 	}
 }
 
@@ -493,7 +479,7 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 		}
 
 		// check component is not main
-		if ct.CheckIsMain(compId) {
+		if CheckIsMain(compId) {
 			log.Debug("[API: DelBotComponent] - component is main;")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrMainComponent))
 			return
@@ -643,7 +629,7 @@ func AddCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		if err := ct.ValidateCommand(reqData.Type, reqData.Data); err != nil {
+		if err := model.ValidateCommand(reqData.Type, reqData.Data); err != nil {
 			log.Debug("[API: AddCommand] - [ValidateCommand];\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
 			return

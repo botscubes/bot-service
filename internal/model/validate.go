@@ -1,4 +1,4 @@
-package components
+package model
 
 import (
 	e "github.com/botscubes/bot-service/internal/api/errors"
@@ -6,24 +6,24 @@ import (
 	se "github.com/botscubes/user-service/pkg/service_error"
 )
 
-func CheckIsMain(id int64) bool {
-	return id == config.MainComponentId
-}
-
-func ValidateComponent(d *Data, c *[]*Command, p *Point) *se.ServiceError {
-	if err := ValidateData(d); err != nil {
+// Validation of component
+func ValidateComponent(d *Data, c *Commands, p *Point) *se.ServiceError {
+	// validate data
+	if err := d.Validate(); err != nil {
 		return err
 	}
 
-	if err := ValidateCommands(c); err != nil {
+	// Validate commands
+	if err := c.Validate(); err != nil {
 		return err
 	}
 
-	return ValidatePosition(p)
+	// Validate position
+	return p.Validate()
 }
 
-// TODO: Remane "..Data"
-func ValidateData(d *Data) *se.ServiceError {
+// Validation of component type and data value by type
+func (d *Data) Validate() *se.ServiceError {
 	if d == nil {
 		return e.InvalidParam("data")
 	}
@@ -46,7 +46,8 @@ func ValidateData(d *Data) *se.ServiceError {
 	}
 }
 
-func ValidateCommands(c *[]*Command) *se.ServiceError {
+// Validation of component commands list
+func (c *Commands) Validate() *se.ServiceError {
 	if c == nil {
 		return e.InvalidParam("commands")
 	}
@@ -60,6 +61,7 @@ func ValidateCommands(c *[]*Command) *se.ServiceError {
 	return nil
 }
 
+// Validation of component command
 func ValidateCommand(t, d *string) *se.ServiceError {
 	if t == nil {
 		return e.InvalidParam("command.type")
@@ -73,24 +75,17 @@ func ValidateCommand(t, d *string) *se.ServiceError {
 	}
 }
 
-func ValidatePosition(p *Point) *se.ServiceError {
+// Validation of component position
+func (p *Point) Validate() *se.ServiceError {
 	if p == nil {
 		return e.InvalidParam("position")
 	}
 
-	if p.X == nil {
-		return e.InvalidParam("position.x")
-	}
-
-	if p.Y == nil {
-		return e.InvalidParam("position.y")
-	}
-
-	if int64(*p.X) < 0 || int64(*p.X) > config.MaxPositionX {
+	if int64(p.X) < 0 || int64(p.X) > config.MaxPositionX {
 		return e.IncorrectVal("position.x")
 	}
 
-	if int64(*p.Y) < 0 || int64(*p.Y) > config.MaxPositionY {
+	if int64(p.Y) < 0 || int64(p.Y) > config.MaxPositionY {
 		return e.IncorrectVal("position.y")
 	}
 

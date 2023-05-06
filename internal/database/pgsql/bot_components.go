@@ -110,7 +110,9 @@ func (db *Db) BotComponentsForEd(botId int64) (*[]*model.Component, error) {
 	// WARN: status not used
 	for rows.Next() {
 		var r model.Component
-		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
+		r.Commands = &model.Commands{}
+
+		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
 			return nil, err
 		}
 
@@ -166,7 +168,7 @@ func (db *Db) DelCommand(botId int64, commandId int64) error {
 
 func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
 	// TODO: REMOVE POSITION !
-	// Change return value to *map[int64]*ct.Component
+	// Change return value to *map[int64]*model.Component
 
 	var data []*model.Component
 
@@ -186,7 +188,8 @@ func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
 	// WARN: status not used
 	for rows.Next() {
 		var r model.Component
-		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, &r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
+		r.Commands = &model.Commands{}
+		if err = rows.Scan(&r.Id, &r.Data, &r.Keyboard, r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
 			return nil, err
 		}
 
