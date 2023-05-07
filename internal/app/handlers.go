@@ -22,7 +22,7 @@ func (app *App) addHandlers() {
 
 	// Start bot
 	app.Router.PATCH("/api/bots/{botId}/start",
-		h.Auth(h.StartBot(app.Db, &app.Bots, app.Server, &app.Conf.Bot), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.StartBot(app.Db, &app.Bots, app.Server, &app.Conf.Bot, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Stop bot
 	app.Router.PATCH("/api/bots/{botId}/stop",

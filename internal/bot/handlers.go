@@ -24,19 +24,24 @@ func (btx *TBot) mainHandler() th.Handler {
 
 		log.Info(*stepID)
 
-		// check start component
-		if btx.Components[*stepID].IsMain {
-			btx.Users[chatID].StepId = *btx.Components[*stepID].NextStepId
+		component, err := btx.Rdb.GetComponet(btx.Id, *stepID)
+		if err != nil {
+			log.Error(err)
 		}
 
-		command := determineCommand(&update.Message.Text, btx.Components[*stepID].Commands)
+		// check start component
+		if component.IsMain {
+			btx.Users[chatID].StepId = *component.NextStepId
+		}
+
+		command := determineCommand(&update.Message.Text, component.Commands)
 		if command != nil {
 			btx.Users[chatID].StepId = *command.NextStepId
 		}
 
 		log.Info(*stepID)
 
-		execMethod(bot, &update, btx.Components[*stepID].Data)
+		execMethod(bot, &update, component.Data)
 	}
 }
 

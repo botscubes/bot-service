@@ -16,7 +16,8 @@ import (
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
-	bcRedis "github.com/botscubes/bot-service/internal/database/redis"
+	rdb "github.com/botscubes/bot-service/internal/database/redis"
+	"github.com/botscubes/bot-service/internal/database/redisauth"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/token_storage"
 
@@ -31,6 +32,7 @@ type App struct {
 	Db             *pgsql.Db
 	SessionStorage token_storage.TokenStorage
 	RedisAuth      *redis.Client
+	Redis          *rdb.Rdb
 }
 
 func (app *App) Run() error {
@@ -58,8 +60,10 @@ func (app *App) Run() error {
 
 	app.Bots = make(map[int64]*bot.TBot)
 
-	app.RedisAuth = bcRedis.NewClient(&app.Conf.RedisAuth)
+	app.RedisAuth = redisauth.NewClient(&app.Conf.RedisAuth)
 	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)
+
+	app.Redis = rdb.NewClient(&app.Conf.Redis)
 
 	pgsqlUrl := "postgres://" + app.Conf.Pg.User + ":" + app.Conf.Pg.Pass + "@" + app.Conf.Pg.Host + ":" + app.Conf.Pg.Port + "/" + app.Conf.Pg.Db
 	if app.Db, err = pgsql.OpenConnection(pgsqlUrl); err != nil {

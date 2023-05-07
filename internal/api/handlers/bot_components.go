@@ -297,8 +297,6 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 	}
 }
 
-type getBotCompsRes = *[]*model.Component
-
 func GetBotComponents(db *pgsql.Db) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)

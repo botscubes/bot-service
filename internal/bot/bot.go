@@ -3,6 +3,7 @@ package bot
 import (
 	"time"
 
+	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
@@ -10,6 +11,8 @@ import (
 )
 
 type TBot struct {
+	Id         int64
+	Rdb        *rdb.Rdb
 	Bot        *telego.Bot
 	Updates    <-chan telego.Update
 	Handler    *th.BotHandler

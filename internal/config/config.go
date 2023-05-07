@@ -21,6 +21,7 @@ type ServiceConfig struct {
 	Bot       BotConfig
 	Pg        PostgresConfig
 	RedisAuth RedisAuthConfig
+	Redis     RedisConfig
 	JWTKey    string `env:"JWT_SECRET_KEY,required"`
 }
 
@@ -42,6 +43,13 @@ type RedisAuthConfig struct {
 	Pass string `env:"REDIS_AUTH_PASS,required"`
 	Host string `env:"REDIS_AUTH_HOST,required"`
 	Port string `env:"REDIS_AUTH_PORT,required"`
+}
+
+type RedisConfig struct {
+	Db   int    `env:"REDIS_DB,required"`
+	Pass string `env:"REDIS_PASS,required"`
+	Host string `env:"REDIS_HOST,required"`
+	Port string `env:"REDIS_PORT,required"`
 }
 
 func GetConfig() (*ServiceConfig, error) {

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"github.com/goccy/go-json"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -45,18 +47,32 @@ type Point struct {
 	Valid bool    `json:"-"`
 }
 
+// Decode pgx point type to point struct
 func (p *Point) ScanPoint(v pgtype.Point) error {
 	*p = Point{
-		X:     float64(v.P.X),
-		Y:     float64(v.P.Y),
+		X:     v.P.X,
+		Y:     v.P.Y,
 		Valid: v.Valid,
 	}
 	return nil
 }
 
+// Encode point strcut to pgx point type
 func (p Point) PointValue() (pgtype.Point, error) {
 	return pgtype.Point{
-		P:     pgtype.Vec2{X: float64(p.X), Y: float64(p.Y)},
+		P:     pgtype.Vec2{X: p.X, Y: p.Y},
 		Valid: true,
 	}, nil
+}
+
+// Mb rewrite to https://github.com/nitishm/go-rejson
+
+// Encode component struct to binary format (for redis)
+func (c *Component) MarshalBinary() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+// Decode component from binary format to struct (fo redis)
+func (c *Component) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, &c)
 }

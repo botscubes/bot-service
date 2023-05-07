@@ -10,6 +10,7 @@ import (
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
@@ -119,7 +120,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 	}
 }
 
-func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig) reqHandler {
+func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig, rdb *rdb.Rdb) reqHandler {
 	// check bot already started
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
@@ -172,7 +173,10 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 				return
 			}
 
+			// TODO: move create bot logic to bot pkg
 			(*bots)[botId] = new(bot.TBot)
+			(*bots)[botId].Id = botId
+			(*bots)[botId].Rdb = rdb
 			(*bots)[botId].Bot = nbot
 		}
 
@@ -183,7 +187,13 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 			return
 		}
 
-		(*bots)[botId].SetComponents(components)
+		if err := rdb.SetComponents(botId, components); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// rdb.PrintAllComponents(botId)
 
 		if err = (*bots)[botId].StartBot(c.WebhookBase, c.ListenAddress, s); err != nil {
 			log.Error(err)
