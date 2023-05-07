@@ -168,7 +168,7 @@ func (db *Db) DelCommand(botId int64, commandId int64) error {
 
 func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
 	// TODO: REMOVE POSITION !
-	// Change return value to *map[int64]*model.Component
+	// Change return value to *map[int64]*model.Component???
 
 	var data []*model.Component
 
@@ -201,4 +201,29 @@ func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
 	}
 
 	return &data, nil
+}
+
+func (db *Db) ComponentForBot(botId int64, compID int64) (*model.Component, error) {
+	// TODO: REMOVE POSITION !
+
+	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
+
+	query := `SELECT id, data, keyboard, ARRAY(
+		SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
+		FROM ` + prefix + `.command
+		WHERE component_id = t.id AND status = $1 ORDER BY id
+	), next_step_id, is_main, position, status
+	FROM ` + prefix + `.component t
+	WHERE status = $2 AND id = $3 ORDER BY id;`
+
+	// WARN: status not used
+	var r model.Component
+	r.Commands = &model.Commands{}
+	if err := db.Pool.QueryRow(
+		context.Background(), query, StatusCommandActive, StatusComponentActive, compID,
+	).Scan(&r.Id, &r.Data, &r.Keyboard, r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
 }

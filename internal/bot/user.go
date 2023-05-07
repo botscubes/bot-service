@@ -18,7 +18,7 @@ func (btx *TBot) getUser(from *telego.User) (*model.User, error) {
 		return user, nil
 	}
 
-	// user not found in cache, get from db
+	// user not found in cache, try get from db
 
 	exist, err := btx.Db.CheckUserExistByTgId(btx.Id, from.ID)
 	if err != nil {
@@ -30,7 +30,7 @@ func (btx *TBot) getUser(from *telego.User) (*model.User, error) {
 		if err != nil {
 			return nil, err
 		}
-
+		// TODO: push user to cache
 		return user, nil
 	}
 
@@ -38,14 +38,13 @@ func (btx *TBot) getUser(from *telego.User) (*model.User, error) {
 }
 
 func (btx *TBot) addUser(from *telego.User) (*model.User, error) {
-
 	user := &model.User{
 		TgId:      from.ID,
 		FirstName: &from.FirstName,
 		LastName:  &from.LastName,
 		Username:  &from.Username,
 		StepId:    1,
-		Status:    pgsql.StatususerActive,
+		Status:    pgsql.StatusUserActive,
 	}
 
 	userID, err := btx.Db.AddUser(btx.Id, user)
@@ -60,4 +59,34 @@ func (btx *TBot) addUser(from *telego.User) (*model.User, error) {
 	}
 
 	return user, nil
+}
+
+func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
+	// try get component from cache
+	component, err := btx.Rdb.GetComponent(btx.Id, stepID)
+	if err != nil {
+		log.Error(err)
+	}
+
+	if component != nil {
+		return component, nil
+	}
+
+	// component not found in cache, try get from db
+
+	exist, err := btx.Db.CheckComponentExist(btx.Id, stepID)
+	if err != nil {
+		return nil, err
+	}
+
+	if exist {
+		component, err = btx.Db.ComponentForBot(btx.Id, btx.Id)
+		if err != nil {
+			return nil, err
+		}
+		// TODO: push to cache
+		return component, nil
+	}
+
+	return nil, nil
 }

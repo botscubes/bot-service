@@ -10,8 +10,10 @@ import (
 
 // Statuses
 var (
-	StatususerActive = 0
+	StatusUserActive = 0
 )
+
+// TODO: check status
 
 func (db *Db) AddUser(botId int64, m *model.User) (int64, error) {
 	var id int64
