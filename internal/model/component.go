@@ -65,8 +65,6 @@ func (p Point) PointValue() (pgtype.Point, error) {
 	}, nil
 }
 
-// Mb rewrite to https://github.com/nitishm/go-rejson
-
 // Encode component struct to binary format (for redis)
 func (c *Component) MarshalBinary() ([]byte, error) {
 	return json.Marshal(c)

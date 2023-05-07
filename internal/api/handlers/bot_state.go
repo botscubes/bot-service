@@ -120,7 +120,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 	}
 }
 
-func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig, rdb *rdb.Rdb) reqHandler {
+func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig, r *rdb.Rdb) reqHandler {
 	// check bot already started
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
@@ -176,7 +176,8 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 			// TODO: move create bot logic to bot pkg
 			(*bots)[botId] = new(bot.TBot)
 			(*bots)[botId].Id = botId
-			(*bots)[botId].Rdb = rdb
+			(*bots)[botId].Db = db
+			(*bots)[botId].Rdb = r
 			(*bots)[botId].Bot = nbot
 		}
 
@@ -187,13 +188,17 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 			return
 		}
 
-		if err := rdb.SetComponents(botId, components); err != nil {
+		log.Debug("Print DB ALL")
+		log.Debugf("%+v", *components)
+
+		if err := r.SetComponents(botId, components); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
-		// rdb.PrintAllComponents(botId)
+		log.Debug("Print ALL")
+		r.PrintAllComponents(botId)
 
 		if err = (*bots)[botId].StartBot(c.WebhookBase, c.ListenAddress, s); err != nil {
 			log.Error(err)

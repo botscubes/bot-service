@@ -3,25 +3,21 @@ package bot
 import (
 	"time"
 
+	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
-	"github.com/botscubes/bot-service/internal/model"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
 type TBot struct {
-	Id         int64
-	Rdb        *rdb.Rdb
-	Bot        *telego.Bot
-	Updates    <-chan telego.Update
-	Handler    *th.BotHandler
-	Components map[int64]*model.Component    // prototype, will move to redis
-	Users      map[telego.ChatID]*model.User // prototype, will move to redis
+	Id      int64
+	Rdb     *rdb.Rdb
+	Db      *pgsql.Db
+	Bot     *telego.Bot
+	Updates <-chan telego.Update
+	Handler *th.BotHandler
 }
-
-// TODO: create objects pkg
-// with components, users, etc
 
 const handlerTimeout = 10 // sec
 
@@ -61,8 +57,6 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 		btx.setBotHandlers()
 	}
 
-	btx.Users = make(map[telego.ChatID]*model.User)
-
 	btx.startBotHandler()
 
 	if !btx.Bot.IsRunningWebhook() {
@@ -96,13 +90,4 @@ func (btx *TBot) StopBot(stopWebhookServer bool) error {
 	}
 
 	return btx.Bot.DeleteWebhook(nil)
-}
-
-func (btx *TBot) SetComponents(comps *[]*model.Component) {
-	// TODO: refactor
-
-	btx.Components = make(map[int64]*model.Component)
-	for _, v := range *comps {
-		btx.Components[v.Id] = v
-	}
 }
