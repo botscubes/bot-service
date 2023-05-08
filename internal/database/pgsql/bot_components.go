@@ -95,7 +95,7 @@ func (db *Db) BotComponentsForEd(botId int64) (*[]*model.Component, error) {
 	var data []*model.Component
 
 	query := `SELECT id, data, keyboard, ARRAY(
-				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
+				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'componentId', component_id, 'nextStepId', next_step_id)
 				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 				WHERE component_id = t.id AND status = $1 ORDER BY id
 			), next_step_id, is_main, position, status
@@ -173,7 +173,7 @@ func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
 	var data []*model.Component
 
 	query := `SELECT id, data, keyboard, ARRAY(
-				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
+			SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'componentId', component_id, 'nextStepId', next_step_id)
 				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
 				WHERE component_id = t.id AND status = $1 ORDER BY id
 			), next_step_id, is_main, position, status
@@ -209,7 +209,7 @@ func (db *Db) ComponentForBot(botId int64, compID int64) (*model.Component, erro
 	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
 
 	query := `SELECT id, data, keyboard, ARRAY(
-		SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'component_id', component_id, 'next_step_id', next_step_id)
+		SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'componentId', component_id, 'nextStepId', next_step_id)
 		FROM ` + prefix + `.command
 		WHERE component_id = t.id AND status = $1 ORDER BY id
 	), next_step_id, is_main, position, status

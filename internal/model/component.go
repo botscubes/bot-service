@@ -11,8 +11,8 @@ type Component struct {
 	Data       *Data     `json:"data"`
 	Keyboard   *Keyboard `json:"keyboard"`
 	Commands   *Commands `json:"commands"`
-	NextStepId *int64    `json:"next_step_id"`
-	IsMain     bool      `json:"is_main"`
+	NextStepId *int64    `json:"nextStepId"`
+	IsMain     bool      `json:"isMain"`
 	Position   *Point    `json:"position"`
 	Status     int       `json:"-"`
 }
@@ -36,8 +36,8 @@ type Command struct {
 	Id          *int64  `json:"id"`
 	Type        *string `json:"type"`
 	Data        *string `json:"data"`
-	ComponentId *int64  `json:"component_id"`
-	NextStepId  *int64  `json:"next_step_id"`
+	ComponentId *int64  `json:"componentId"`
+	NextStepId  *int64  `json:"nextStepId"`
 	Status      int     `json:"status"`
 }
 
