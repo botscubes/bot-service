@@ -10,6 +10,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+func (rdb *Rdb) SetComponent(botId int64, comp *model.Component) error {
+	ctx := context.Background()
+
+	key := "bot" + strconv.FormatInt(botId, 10) + ":component"
+
+	if err := rdb.HSet(ctx, key, strconv.FormatInt(comp.Id, 10), comp).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (rdb *Rdb) SetComponents(botId int64, comps *[]*model.Component) error {
 	ctx := context.Background()
 

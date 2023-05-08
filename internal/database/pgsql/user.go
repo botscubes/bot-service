@@ -13,8 +13,6 @@ var (
 	StatusUserActive = 0
 )
 
-// TODO: check status
-
 func (db *Db) AddUser(botId int64, m *model.User) (int64, error) {
 	var id int64
 	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
@@ -35,9 +33,9 @@ func (db *Db) CheckUserExistByTgId(botId int64, tgId int64) (bool, error) {
 	var c bool
 	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
 
-	query := `SELECT EXISTS(SELECT 1 FROM ` + prefix + `.user WHERE tg_id = $1) AS "exists";`
+	query := `SELECT EXISTS(SELECT 1 FROM ` + prefix + `.user WHERE tg_id = $1 AND status = $2) AS "exists";`
 	if err := db.Pool.QueryRow(
-		context.Background(), query, tgId,
+		context.Background(), query, tgId, StatusUserActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}

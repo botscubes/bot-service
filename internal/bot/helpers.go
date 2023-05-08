@@ -3,6 +3,7 @@ package bot
 import (
 	"errors"
 
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
@@ -50,7 +51,7 @@ func (btx *TBot) addUser(from *telego.User) error {
 		LastName:  &from.LastName,
 		Username:  &from.Username,
 		StepID: model.StepID{
-			StepId: 1,
+			StepId: config.MainComponentId,
 		},
 		Status: pgsql.StatusUserActive,
 	}
@@ -70,12 +71,12 @@ func (btx *TBot) addUser(from *telego.User) error {
 func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 	// try get component from cache
 	component, err := btx.Rdb.GetComponent(btx.Id, stepID)
-	if err != nil && !errors.Is(err, rdb.ErrNotFound) {
-		log.Error(err)
+	if err == nil {
+		return component, nil
 	}
 
-	if component != nil {
-		return component, nil
+	if !errors.Is(err, rdb.ErrNotFound) {
+		log.Error(err)
 	}
 
 	// component not found in cache, try get from db
@@ -89,7 +90,11 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 		if err != nil {
 			return nil, err
 		}
-		// TODO: push to cache
+
+		if err = btx.Rdb.SetComponent(btx.Id, component); err != nil {
+			log.Error(err)
+		}
+
 		return component, nil
 	}
 

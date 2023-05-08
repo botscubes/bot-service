@@ -7,6 +7,7 @@ import (
 	fh "github.com/valyala/fasthttp"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
@@ -476,8 +477,8 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
-		// check component is not main
-		if CheckIsMain(compId) {
+		// check component is main
+		if compId == config.MainComponentId {
 			log.Debug("[API: DelBotComponent] - component is main;")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrMainComponent))
 			return

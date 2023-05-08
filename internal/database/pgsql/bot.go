@@ -6,10 +6,10 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-// Statuses:
-// * bot
-// 0 - Active
-//
+// Statuses
+var (
+	StatusBotActive = 0
+)
 
 func (db *Db) AddBot(m *model.Bot) (int64, error) {
 	var id int64
@@ -25,9 +25,9 @@ func (db *Db) AddBot(m *model.Bot) (int64, error) {
 
 func (db *Db) CheckBotExist(userId int64, botId int64) (bool, error) {
 	var c bool
-	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2) AS "exists";`
+	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2 AND status = $3) AS "exists";`
 	if err := db.Pool.QueryRow(
-		context.Background(), query, botId, userId,
+		context.Background(), query, botId, userId, StatusBotActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}

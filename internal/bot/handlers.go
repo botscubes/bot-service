@@ -3,6 +3,7 @@ package bot
 import (
 	"errors"
 
+	"github.com/botscubes/bot-service/internal/config"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	"github.com/botscubes/bot-service/pkg/log"
@@ -15,18 +16,17 @@ func (btx *TBot) mainHandler() th.Handler {
 	return func(bot *telego.Bot, update telego.Update) {
 		stepID, err := btx.getUserStep(update.Message.From)
 		if err != nil {
-			if errors.Is(err, ErrNotFound) {
-				if err = btx.addUser(update.Message.From); err != nil {
-					log.Error(err)
-					return
-				}
-
-				// (start id)
-				stepID = 1
-			} else {
+			if !errors.Is(err, ErrNotFound) {
 				log.Error(err)
 				return
 			}
+
+			if err = btx.addUser(update.Message.From); err != nil {
+				log.Error(err)
+				return
+			}
+
+			stepID = config.MainComponentId
 		}
 
 		// find next component for execute
@@ -54,13 +54,12 @@ func (btx *TBot) mainHandler() th.Handler {
 			component, err = btx.getComponent(stepID)
 			if err != nil {
 				if errors.Is(err, rdb.ErrNotFound) {
-					// (start id)
-					stepID = 1
+					stepID = config.MainComponentId
 					continue
-				} else {
-					log.Error(err)
-					return
 				}
+
+				log.Error(err)
+				return
 			}
 
 			if origComponent == nil {

@@ -15,9 +15,6 @@ import (
 	fh "github.com/valyala/fasthttp"
 )
 
-// TODO: check user access
-// Add check all id's for > 0
-
 var (
 	strContentType     = []byte("Content-Type")
 	strApplicationJSON = []byte("application/json")
