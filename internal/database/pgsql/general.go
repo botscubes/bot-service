@@ -38,7 +38,7 @@ func (db *Db) CreateBotSchema(botId int64) error {
 		first_name text,
 		last_name text,
 		username text,
-		step_id bigint,
+		step_id bigint NOT NULL DEFAULT 1,
 		status integer NOT NULL,
 		PRIMARY KEY (id)
 	)`

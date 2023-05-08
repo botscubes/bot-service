@@ -2,40 +2,40 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
-	"github.com/botscubes/bot-service/internal/model"
 	"github.com/redis/go-redis/v9"
 )
 
-func (rdb *Rdb) SetUser(botId int64, user *model.User) error {
+func (rdb *Rdb) SetUserStep(botId int64, userID int64, stepID int64) error {
 	ctx := context.Background()
 
-	key := "bot" + strconv.FormatInt(botId, 10) + ":user"
+	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10) + ":step"
 
-	return rdb.HSet(ctx, key, strconv.FormatInt(user.TgId, 10), user).Err()
+	return rdb.Set(ctx, key, stepID, 0).Err()
 }
 
-func (rdb *Rdb) GetUser(botId int64, userID int64) (*model.User, error) {
+func (rdb *Rdb) GetUserStep(botId int64, userID int64) (int64, error) {
 	ctx := context.Background()
 
-	key := "bot" + strconv.FormatInt(botId, 10) + ":user"
+	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10) + ":step"
 
-	user := &model.User{}
+	val, err := rdb.Get(ctx, key).Result()
 
-	result, err := rdb.HGet(ctx, key, strconv.FormatInt(userID, 10)).Result()
-
-	if err != nil && err != redis.Nil {
-		return nil, err
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return 0, err
 	}
 
-	if result == "" {
-		return nil, nil
+	if errors.Is(err, redis.Nil) {
+		// todo: change errors
+		return 0, errors.New("not found")
 	}
 
-	if err := user.UnmarshalBinary([]byte(result)); err != nil {
-		return nil, err
+	stepID, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, err
 	}
 
-	return user, nil
+	return int64(stepID), nil
 }

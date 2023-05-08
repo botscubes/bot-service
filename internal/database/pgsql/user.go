@@ -31,13 +31,13 @@ func (db *Db) AddUser(botId int64, m *model.User) (int64, error) {
 	return id, nil
 }
 
-func (db *Db) CheckUserExistByTgId(botId int64, TgId int64) (bool, error) {
+func (db *Db) CheckUserExistByTgId(botId int64, tgId int64) (bool, error) {
 	var c bool
 	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
 
 	query := `SELECT EXISTS(SELECT 1 FROM ` + prefix + `.user WHERE tg_id = $1) AS "exists";`
 	if err := db.Pool.QueryRow(
-		context.Background(), query, TgId,
+		context.Background(), query, tgId,
 	).Scan(&c); err != nil {
 		return false, err
 	}
@@ -45,18 +45,33 @@ func (db *Db) CheckUserExistByTgId(botId int64, TgId int64) (bool, error) {
 	return c, nil
 }
 
-func (db *Db) UserByTgId(userId int64, botId int64) (*model.User, error) {
+// func (db *Db) UserByTgId(userId int64, botId int64) (*model.User, error) {
+// 	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
+
+// 	query := `SELECT id, tg_id, first_name, last_name, username, status
+// 			FROM ` + prefix + `.user WHERE tg_id = $1;`
+
+// 	var r model.User
+// 	if err := db.Pool.QueryRow(
+// 		context.Background(), query, botId, userId,
+// 	).Scan(&r.Id, &r.TgId, &r.FirstName, &r.LastName, &r.Username, &r.Status); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &r, nil
+// }
+
+func (db *Db) UserStepByTgId(botId int64, userId int64) (int64, error) {
 	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
 
-	query := `SELECT id, tg_id, first_name, last_name, username, status
-			FROM ` + prefix + `.user WHERE tg_id = $1;`
+	query := `SELECT step_id FROM ` + prefix + `.user WHERE tg_id = $1;`
 
-	var r model.User
+	var r int64
 	if err := db.Pool.QueryRow(
 		context.Background(), query, botId, userId,
-	).Scan(&r.Id, &r.TgId, &r.FirstName, &r.LastName, &r.Username, &r.Status); err != nil {
-		return nil, err
+	).Scan(r); err != nil {
+		return 0, err
 	}
 
-	return &r, nil
+	return r, nil
 }

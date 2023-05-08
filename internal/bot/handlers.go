@@ -10,32 +10,35 @@ import (
 
 func (btx *TBot) mainHandler() th.Handler {
 	return func(bot *telego.Bot, update telego.Update) {
-		user, err := btx.getUser(update.Message.From)
-		if err != nil {
+
+		stepID, err := btx.getUserStep(update.Message.From)
+		if err != nil && err.Error() != "user not found" {
 			log.Error(err)
 			return
 		}
 
-		// user not found
-		if user == nil {
-			user, err = btx.addUser(update.Message.From)
-			if err != nil {
+		if err != nil && err.Error() == "user not found" {
+			if err = btx.addUser(update.Message.From); err != nil {
 				log.Error(err)
 				return
 			}
+
+			// (start id)
+			stepID = 1
 		}
 
 		// find next component for execute
 
 		var origComponent *model.Component
 		var component *model.Component
+		origStepID := stepID
 
 		// for cycle detect
 		stepsPassed := make(map[int64]struct{})
-		stepID := user.StepId
-		firstCheck := true
+		isFound := false
+
 		for {
-			// This part of the loop (before the "firstCheck" condition) is used to automatically
+			// This part of the loop (before the "isFound" condition) is used to automatically
 			// skip the starting component and undefined components.
 			// Also, the next component is selected here by the id found in the second part of the cycle.
 
@@ -47,16 +50,15 @@ func (btx *TBot) mainHandler() th.Handler {
 			stepsPassed[stepID] = struct{}{}
 
 			component, err = btx.getComponent(stepID)
-			if err != nil {
+			if err != nil && err.Error() != "not found" {
 				log.Error(err)
 				return
 			}
 
-			//  if component is nil, run start component
-			if component == nil {
+			//  component not found, run start component
+			if err != nil && err.Error() == "not found" {
+				// (start id)
 				stepID = 1
-				// user.StepId = stepID
-				// btx.Rdb.SetUser(btx.Id, user)
 				continue
 			}
 
@@ -64,20 +66,18 @@ func (btx *TBot) mainHandler() th.Handler {
 				origComponent = component
 			}
 
-			// check start component
+			// check main component
 			if component.IsMain {
 				if component.NextStepId == nil {
-					log.Warnf("start component does not have link to the following: bot #%q", btx.Id)
+					log.Warnf("main component does not have link to the following: bot #%q", btx.Id)
 					return
 				}
 
 				stepID = *component.NextStepId
-				// user.StepId = stepID
-				// btx.Rdb.SetUser(btx.Id, user)
 				continue
 			}
 
-			if !firstCheck {
+			if isFound {
 				// next component was found successfully
 				break
 			}
@@ -85,7 +85,7 @@ func (btx *TBot) mainHandler() th.Handler {
 			// In this part, the id of the next component is determined.
 			// In case of successful identification of the ID, an additional check occurs in the first part of the cycle.
 
-			firstCheck = false
+			isFound = true
 
 			if component.NextStepId != nil {
 				stepID = *component.NextStepId
@@ -101,47 +101,33 @@ func (btx *TBot) mainHandler() th.Handler {
 
 			// next component not found, will be executed initial (current) component
 			component = origComponent
+			stepID = origStepID
 			break
 		}
 
-		user.StepId = 1
-		if err := btx.Rdb.SetUser(btx.Id, user); err != nil {
+		if err := btx.Rdb.SetUserStep(btx.Id, update.Message.From.ID, stepID); err != nil {
 			log.Error(err)
 		}
 
-		if err := execMethod(bot, &update, component.Data); err != nil {
+		if err := exec(bot, &update, component.Data); err != nil {
 			log.Error(err)
 		}
 	}
 }
 
-func execMethod(bot *telego.Bot, update *telego.Update, data *model.Data) error {
-
-	// for linter (switch with one case)
-	if *data.Type == "text" {
-		e, err := bot.SendMessage(tu.Messagef(
+func exec(bot *telego.Bot, update *telego.Update, data *model.Data) error {
+	switch *data.Type {
+	case "text":
+		_, err := bot.SendMessage(tu.Messagef(
 			tu.ID(update.Message.Chat.ID),
 			*(*data.Content)[0].Text,
 		))
 		if err != nil {
 			return err
 		}
-
-		log.Warn(e)
+	default:
+		log.Warn("Unknown type method: ", *data.Type)
 	}
-
-	// switch *data.Type {
-	// case "text":
-	// 	e, err := bot.SendMessage(tu.Messagef(
-	// 		tu.ID(update.Message.Chat.ID),
-	// 		*(*data.Content)[0].Text,
-	// 	))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	log.Warn(e)
-	// }
 
 	return nil
 }

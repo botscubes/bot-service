@@ -8,8 +8,12 @@ type User struct {
 	FirstName *string `json:"firstName"`
 	LastName  *string `json:"lastName"`
 	Username  *string `json:"username"`
-	StepId    int64   `json:"stepId"`
-	Status    int     `json:"-"`
+	StepID
+	Status int `json:"-"`
+}
+
+type StepID struct {
+	StepId int64 `json:"stepId"`
 }
 
 // Encode component struct to binary format (for redis)
