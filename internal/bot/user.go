@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
@@ -16,7 +17,7 @@ func (btx *TBot) getUserStep(from *telego.User) (int64, error) {
 		return stepID, nil
 	}
 
-	if err.Error() != "not found" {
+	if !errors.Is(err, rdb.ErrNotFound) {
 		log.Error(err)
 	}
 
@@ -39,7 +40,7 @@ func (btx *TBot) getUserStep(from *telego.User) (int64, error) {
 		return stepID, nil
 	}
 
-	return 0, errors.New("user not found")
+	return 0, ErrNotFound
 }
 
 func (btx *TBot) addUser(from *telego.User) error {
@@ -69,7 +70,7 @@ func (btx *TBot) addUser(from *telego.User) error {
 func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 	// try get component from cache
 	component, err := btx.Rdb.GetComponent(btx.Id, stepID)
-	if err != nil && err.Error() != "not found" {
+	if err != nil && !errors.Is(err, rdb.ErrNotFound) {
 		log.Error(err)
 	}
 
@@ -78,7 +79,6 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 	}
 
 	// component not found in cache, try get from db
-
 	exist, err := btx.Db.CheckComponentExist(btx.Id, stepID)
 	if err != nil {
 		return nil, err
@@ -93,5 +93,5 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 		return component, nil
 	}
 
-	return nil, errors.New("not found")
+	return nil, ErrNotFound
 }

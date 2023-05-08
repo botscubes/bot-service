@@ -37,7 +37,7 @@ func (rdb *Rdb) GetComponent(botId int64, compId int64) (*model.Component, error
 	}
 
 	if result == "" {
-		return nil, errors.New("not found")
+		return nil, ErrNotFound
 	}
 
 	if err := component.UnmarshalBinary([]byte(result)); err != nil {

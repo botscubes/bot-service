@@ -1,6 +1,9 @@
 package bot
 
 import (
+	"errors"
+
+	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
@@ -10,21 +13,20 @@ import (
 
 func (btx *TBot) mainHandler() th.Handler {
 	return func(bot *telego.Bot, update telego.Update) {
-
 		stepID, err := btx.getUserStep(update.Message.From)
-		if err != nil && err.Error() != "user not found" {
-			log.Error(err)
-			return
-		}
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				if err = btx.addUser(update.Message.From); err != nil {
+					log.Error(err)
+					return
+				}
 
-		if err != nil && err.Error() == "user not found" {
-			if err = btx.addUser(update.Message.From); err != nil {
+				// (start id)
+				stepID = 1
+			} else {
 				log.Error(err)
 				return
 			}
-
-			// (start id)
-			stepID = 1
 		}
 
 		// find next component for execute
@@ -50,16 +52,15 @@ func (btx *TBot) mainHandler() th.Handler {
 			stepsPassed[stepID] = struct{}{}
 
 			component, err = btx.getComponent(stepID)
-			if err != nil && err.Error() != "not found" {
-				log.Error(err)
-				return
-			}
-
-			//  component not found, run start component
-			if err != nil && err.Error() == "not found" {
-				// (start id)
-				stepID = 1
-				continue
+			if err != nil {
+				if errors.Is(err, rdb.ErrNotFound) {
+					// (start id)
+					stepID = 1
+					continue
+				} else {
+					log.Error(err)
+					return
+				}
 			}
 
 			if origComponent == nil {

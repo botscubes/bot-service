@@ -28,8 +28,7 @@ func (rdb *Rdb) GetUserStep(botId int64, userID int64) (int64, error) {
 	}
 
 	if errors.Is(err, redis.Nil) {
-		// todo: change errors
-		return 0, errors.New("not found")
+		return 0, ErrNotFound
 	}
 
 	stepID, err := strconv.Atoi(val)
