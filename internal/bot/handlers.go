@@ -74,6 +74,7 @@ func (btx *TBot) mainHandler() th.Handler {
 				}
 
 				stepID = *component.NextStepId
+				isFound = true
 				continue
 			}
 
