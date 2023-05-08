@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/model"
 )
 
@@ -15,7 +14,7 @@ var (
 
 func (db *Db) AddUser(botId int64, m *model.User) (int64, error) {
 	var id int64
-	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
 
 	query := `INSERT INTO ` + prefix + `.user 
 	(tg_id, first_name, last_name, username, step_id, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
@@ -31,7 +30,7 @@ func (db *Db) AddUser(botId int64, m *model.User) (int64, error) {
 
 func (db *Db) CheckUserExistByTgId(botId int64, tgId int64) (bool, error) {
 	var c bool
-	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
 
 	query := `SELECT EXISTS(SELECT 1 FROM ` + prefix + `.user WHERE tg_id = $1 AND status = $2) AS "exists";`
 	if err := db.Pool.QueryRow(
@@ -44,7 +43,7 @@ func (db *Db) CheckUserExistByTgId(botId int64, tgId int64) (bool, error) {
 }
 
 // func (db *Db) UserByTgId(userId int64, botId int64) (*model.User, error) {
-// 	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
+// 	prefix := prefixSchema + strconv.FormatInt(botId, 10)
 
 // 	query := `SELECT id, tg_id, first_name, last_name, username, status
 // 			FROM ` + prefix + `.user WHERE tg_id = $1;`
@@ -60,7 +59,7 @@ func (db *Db) CheckUserExistByTgId(botId int64, tgId int64) (bool, error) {
 // }
 
 func (db *Db) UserStepByTgId(botId int64, userId int64) (int64, error) {
-	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
 
 	query := `SELECT step_id FROM ` + prefix + `.user WHERE tg_id = $1;`
 

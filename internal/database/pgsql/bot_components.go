@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/model"
 )
 
@@ -21,7 +20,7 @@ var (
 
 func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 	var id int64
-	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+	query := `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			("data", keyboard, next_step_id, is_main,"position", status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
 
 	if err := db.Pool.QueryRow(
@@ -35,7 +34,7 @@ func (db *Db) AddBotComponent(botId int64, m *model.Component) (int64, error) {
 
 func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
 	var id int64
-	query := `INSERT INTO ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+	query := `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			("type", "data", component_id, next_step_id, status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 
 	if err := db.Pool.QueryRow(
@@ -49,7 +48,7 @@ func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
 
 func (db *Db) CheckComponentExist(botId int64, compId int64) (bool, error) {
 	var c bool
-	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+	query := `SELECT EXISTS(SELECT 1 FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			WHERE id = $1 AND status = $2) AS "exists";`
 
 	if err := db.Pool.QueryRow(
@@ -62,7 +61,7 @@ func (db *Db) CheckComponentExist(botId int64, compId int64) (bool, error) {
 }
 
 func (db *Db) SetNextStepComponent(botId int64, compId int64, nextStepId int64) error {
-	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET next_step_id = $1 WHERE id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, nextStepId, compId)
@@ -70,7 +69,7 @@ func (db *Db) SetNextStepComponent(botId int64, compId int64, nextStepId int64) 
 }
 
 func (db *Db) SetNextStepCommand(botId int64, commandId int64, nextStepId int64) error {
-	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET next_step_id = $1 WHERE id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, nextStepId, commandId)
@@ -79,7 +78,7 @@ func (db *Db) SetNextStepCommand(botId int64, commandId int64, nextStepId int64)
 
 func (db *Db) CheckCommandExist(botId int64, commandId int64) (bool, error) {
 	var c bool
-	query := `SELECT EXISTS(SELECT 1 FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+	query := `SELECT EXISTS(SELECT 1 FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			WHERE id = $1 AND status = $2) AS "exists";`
 
 	if err := db.Pool.QueryRow(
@@ -96,10 +95,10 @@ func (db *Db) BotComponentsForEd(botId int64) (*[]*model.Component, error) {
 
 	query := `SELECT id, data, keyboard, ARRAY(
 				SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'componentId', component_id, 'nextStepId', next_step_id)
-				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+				FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 				WHERE component_id = t.id AND status = $1 ORDER BY id
 			), next_step_id, is_main, position, status
-			FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
+			FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component t
 			WHERE status = $2 ORDER BY id;`
 
 	rows, err := db.Pool.Query(context.Background(), query, StatusCommandActive, StatusComponentActive)
@@ -127,7 +126,7 @@ func (db *Db) BotComponentsForEd(botId int64) (*[]*model.Component, error) {
 }
 
 func (db *Db) DelNextStepComponent(botId int64, compId int64) error {
-	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET next_step_id = null WHERE id = $1;`
 
 	_, err := db.Pool.Exec(context.Background(), query, compId)
@@ -135,7 +134,7 @@ func (db *Db) DelNextStepComponent(botId int64, compId int64) error {
 }
 
 func (db *Db) DelNextStepCommand(botId int64, commandId int64) error {
-	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET next_step_id = null WHERE id = $1;`
 
 	_, err := db.Pool.Exec(context.Background(), query, commandId)
@@ -143,7 +142,7 @@ func (db *Db) DelNextStepCommand(botId int64, commandId int64) error {
 }
 
 func (db *Db) DelBotComponent(botId int64, compId int64) error {
-	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET status = $1 WHERE id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, StatusComponentDel, compId)
@@ -151,7 +150,7 @@ func (db *Db) DelBotComponent(botId int64, compId int64) error {
 }
 
 func (db *Db) DelCommandsByCompId(botId int64, compId int64) error {
-	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET status = $1 WHERE component_id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, compId)
@@ -159,7 +158,7 @@ func (db *Db) DelCommandsByCompId(botId int64, compId int64) error {
 }
 
 func (db *Db) DelCommand(botId int64, commandId int64) error {
-	query := `UPDATE ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET status = $1 WHERE id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, commandId)
@@ -174,10 +173,10 @@ func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
 
 	query := `SELECT id, data, keyboard, ARRAY(
 			SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'componentId', component_id, 'nextStepId', next_step_id)
-				FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.command
+				FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 				WHERE component_id = t.id AND status = $1 ORDER BY id
 			), next_step_id, is_main, position, status
-			FROM ` + config.PrefixSchema + strconv.FormatInt(botId, 10) + `.component t
+			FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component t
 			WHERE status = $2 ORDER BY id;`
 
 	rows, err := db.Pool.Query(context.Background(), query, StatusCommandActive, StatusComponentActive)
@@ -206,7 +205,7 @@ func (db *Db) BotComponentsForBot(botId int64) (*[]*model.Component, error) {
 func (db *Db) ComponentForBot(botId int64, compID int64) (*model.Component, error) {
 	// TODO: REMOVE POSITION !
 
-	prefix := config.PrefixSchema + strconv.FormatInt(botId, 10)
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
 
 	query := `SELECT id, data, keyboard, ARRAY(
 		SELECT jsonb_build_object('id', id, 'data', data, 'type', type, 'componentId', component_id, 'nextStepId', next_step_id)

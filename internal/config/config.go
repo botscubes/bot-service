@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	PrefixSchema = "bot_"
-
 	// Max bot title length
 	MaxTitleLen = 50
 

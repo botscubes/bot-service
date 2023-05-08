@@ -10,6 +10,8 @@ type Db struct {
 	Pool *pgxpool.Pool
 }
 
+const prefixSchema = "bot_"
+
 func OpenConnection(url string) (*Db, error) {
 	pool, err := pgxpool.New(context.Background(), url)
 	if err != nil {

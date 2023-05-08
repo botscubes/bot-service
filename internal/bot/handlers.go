@@ -96,7 +96,6 @@ func (btx *TBot) mainHandler() th.Handler {
 			command := determineCommand(&update.Message.Text, component.Commands)
 			if command != nil && command.NextStepId != nil {
 				stepID = *command.NextStepId
-				// user.StepId = stepID
 				continue
 			}
 
@@ -106,8 +105,10 @@ func (btx *TBot) mainHandler() th.Handler {
 			break
 		}
 
-		if err := btx.Rdb.SetUserStep(btx.Id, update.Message.From.ID, stepID); err != nil {
-			log.Error(err)
+		if stepID != origStepID {
+			if err := btx.Rdb.SetUserStep(btx.Id, update.Message.From.ID, stepID); err != nil {
+				log.Error(err)
+			}
 		}
 
 		if err := exec(bot, &update, component.Data); err != nil {
