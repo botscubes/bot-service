@@ -2,6 +2,7 @@ package bot
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/botscubes/bot-service/internal/config"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
@@ -9,9 +10,11 @@ import (
 	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 )
 
+// Handles incoming updates from Telegram.
+// The next step in the bot structure is being determined.
+// If the detection is successful, the step is executed
 func (btx *TBot) mainHandler() th.Handler {
 	return func(bot *telego.Bot, update telego.Update) {
 		stepID, err := btx.getUserStep(update.Message.From)
@@ -111,24 +114,20 @@ func (btx *TBot) mainHandler() th.Handler {
 			}
 		}
 
-		if err := exec(bot, &update, component.Data); err != nil {
+		if err := exec(bot, &update, component); err != nil {
 			log.Error(err)
 		}
 	}
 }
 
-func exec(bot *telego.Bot, update *telego.Update, data *model.Data) error {
-	switch *data.Type {
+func exec(bot *telego.Bot, update *telego.Update, component *model.Component) error {
+	switch *component.Data.Type {
 	case "text":
-		_, err := bot.SendMessage(tu.Messagef(
-			tu.ID(update.Message.Chat.ID),
-			*(*data.Content)[0].Text,
-		))
-		if err != nil {
+		if err := sendMessage(bot, update, component); err != nil {
 			return err
 		}
 	default:
-		log.Warn("Unknown type method: ", *data.Type)
+		log.Warn("Unknown type method: ", *component.Data.Type)
 	}
 
 	return nil
@@ -139,7 +138,8 @@ func determineCommand(mes *string, commands *model.Commands) *model.Command {
 	// work with command type - text
 
 	for _, command := range *commands {
-		if *command.Data == *mes {
+		// The comparison is not case sensitive
+		if strings.EqualFold(*command.Data, *mes) {
 			return command
 		}
 	}
