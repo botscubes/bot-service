@@ -20,12 +20,10 @@ func (btx *TBot) mainHandler() th.Handler {
 		stepID, err := btx.getUserStep(update.Message.From)
 		if err != nil {
 			if !errors.Is(err, ErrNotFound) {
-				log.Error(err)
 				return
 			}
 
 			if err = btx.addUser(update.Message.From); err != nil {
-				log.Error(err)
 				return
 			}
 
@@ -61,7 +59,6 @@ func (btx *TBot) mainHandler() th.Handler {
 					continue
 				}
 
-				log.Error(err)
 				return
 			}
 

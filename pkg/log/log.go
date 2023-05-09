@@ -28,7 +28,7 @@ func lookupEnv(key string) (string, bool) {
 func newLogger() *logrus.Logger {
 	level := getLevel()
 	formatter := getFormatter()
-	output := getOutput()
+	output := setOutput()
 
 	logger := logrus.New()
 	logger.SetLevel(level)
@@ -84,7 +84,7 @@ func getFormatter() logrus.Formatter {
 // setOutput sets the logger output.
 // Trying to open a log file.
 // For output to stderr, do not set the value of the environment variable of the log file path (see logPathVarName)
-func getOutput() io.Writer {
+func setOutput() io.Writer {
 	filePath, ok := lookupEnv(logPathVarName)
 	if !ok {
 		return os.Stderr

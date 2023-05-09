@@ -103,6 +103,6 @@ func (btx *TBot) SetDb(db *pgsql.Db) {
 	btx.Db = db
 }
 
-func (btx *TBot) SetRdb(rdb *rdb.Rdb) {
-	btx.Rdb = rdb
+func (btx *TBot) SetRdb(r *rdb.Rdb) {
+	btx.Rdb = r
 }

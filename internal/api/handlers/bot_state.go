@@ -163,15 +163,15 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 		// TODO: check bot started
 		if _, ok := (*bots)[botId]; !ok {
 			// TODO: Own token health check to get a specific error
-			nbot, err := bot.New(token, botId)
+			(*bots)[botId], err = bot.New(token, botId)
 			if err != nil {
 				log.Debug("[API: startBot]\n", err)
 				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
 				return
 			}
 
-			nbot.SetDb(db)
-			nbot.SetRdb(r)
+			(*bots)[botId].SetDb(db)
+			(*bots)[botId].SetRdb(r)
 		}
 
 		components, err := db.BotComponentsForBot(botId)

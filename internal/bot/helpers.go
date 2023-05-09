@@ -25,12 +25,14 @@ func (btx *TBot) getUserStep(from *telego.User) (int64, error) {
 	// userStep not found in cache, try get from db
 	exist, err := btx.Db.CheckUserExistByTgId(btx.Id, from.ID)
 	if err != nil {
+		log.Error(err)
 		return 0, err
 	}
 
 	if exist {
 		stepID, err = btx.Db.UserStepByTgId(btx.Id, from.ID)
 		if err != nil {
+			log.Error(err)
 			return 0, err
 		}
 
@@ -58,6 +60,7 @@ func (btx *TBot) addUser(from *telego.User) error {
 
 	_, err := btx.Db.AddUser(btx.Id, user)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 
@@ -82,12 +85,14 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 	// component not found in cache, try get from db
 	exist, err := btx.Db.CheckComponentExist(btx.Id, stepID)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
 	if exist {
-		component, err = btx.Db.ComponentForBot(btx.Id, btx.Id)
+		component, err = btx.Db.ComponentForBot(btx.Id, stepID)
 		if err != nil {
+			log.Error(err)
 			return nil, err
 		}
 

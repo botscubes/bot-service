@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/model"
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -15,16 +15,16 @@ func (rdb *Rdb) SetComponent(botId int64, comp *model.Component) error {
 
 	key := "bot" + strconv.FormatInt(botId, 10) + ":component"
 
-	return rdb.HSet(ctx, key, strconv.FormatInt(comp.Id, 10), comp).Err()
+	if err := rdb.HSet(ctx, key, strconv.FormatInt(comp.Id, 10), comp).Err(); err != nil {
+		return err
+	}
+
+	return rdb.Expire(ctx, key, config.RedisExpire).Err()
 }
 
 func (rdb *Rdb) SetComponents(botId int64, comps *[]*model.Component) error {
-	ctx := context.Background()
-
-	key := "bot" + strconv.FormatInt(botId, 10) + ":component"
-
 	for _, v := range *comps {
-		if err := rdb.HSet(ctx, key, strconv.FormatInt(v.Id, 10), v).Err(); err != nil {
+		if err := rdb.SetComponent(botId, v); err != nil {
 			return err
 		}
 	}
@@ -53,15 +53,4 @@ func (rdb *Rdb) GetComponent(botId int64, compId int64) (*model.Component, error
 	}
 
 	return component, nil
-}
-
-func (rdb *Rdb) PrintAllComponents(botId int64) {
-	ctx := context.Background()
-
-	key := "bot" + strconv.FormatInt(botId, 10) + ":component"
-	log.Debug("key")
-	log.Debug(key)
-
-	data := rdb.HGetAll(ctx, key).Val()
-	log.Debug(data)
 }

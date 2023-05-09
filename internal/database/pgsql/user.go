@@ -50,7 +50,7 @@ func (db *Db) CheckUserExistByTgId(botId int64, tgId int64) (bool, error) {
 
 // 	var r model.User
 // 	if err := db.Pool.QueryRow(
-// 		context.Background(), query, botId, userId,
+// 		context.Background(), query, userId,
 // 	).Scan(&r.Id, &r.TgId, &r.FirstName, &r.LastName, &r.Username, &r.Status); err != nil {
 // 		return nil, err
 // 	}
@@ -65,8 +65,8 @@ func (db *Db) UserStepByTgId(botId int64, userId int64) (int64, error) {
 
 	var r int64
 	if err := db.Pool.QueryRow(
-		context.Background(), query, botId, userId,
-	).Scan(r); err != nil {
+		context.Background(), query, userId,
+	).Scan(&r); err != nil {
 		return 0, err
 	}
 

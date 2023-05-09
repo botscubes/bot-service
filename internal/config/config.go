@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"time"
 
 	"github.com/sethvargo/go-envconfig"
 )
@@ -15,6 +16,8 @@ const (
 	MaxPositionY       = 10000
 	StartComponentPosX = 50
 	StartComponentPosY = 50
+
+	RedisExpire = 1 * time.Hour
 )
 
 type ServiceConfig struct {

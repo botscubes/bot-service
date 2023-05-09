@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -13,7 +14,7 @@ func (rdb *Rdb) SetUserStep(botId int64, userID int64, stepID int64) error {
 
 	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10) + ":step"
 
-	return rdb.Set(ctx, key, stepID, 0).Err()
+	return rdb.Set(ctx, key, stepID, config.RedisExpire).Err()
 }
 
 func (rdb *Rdb) GetUserStep(botId int64, userID int64) (int64, error) {
