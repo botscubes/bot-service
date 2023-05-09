@@ -46,7 +46,6 @@ func NewBot(db *pgsql.Db) reqHandler {
 		}
 
 		token := ""
-		status := 0
 
 		if title == nil || *title == "" {
 			log.Debug("[API: newBot] - title is misssing")
@@ -64,7 +63,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 			UserId: userId,
 			Token:  &token,
 			Title:  title,
-			Status: status,
+			Status: pgsql.StatusBotActive,
 		}
 
 		botId, err := db.AddBot(m)
@@ -81,8 +80,6 @@ func NewBot(db *pgsql.Db) reqHandler {
 		}
 
 		dataType := "start"
-		px := 50
-		py := 50
 
 		mc := &model.Component{
 			Data: &model.Data{
@@ -95,7 +92,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 			NextStepId: nil,
 			IsMain:     true,
 			Position: &model.Point{
-				X: float64(px), Y: float64(py),
+				X: float64(config.StartComponentPosX), Y: float64(config.StartComponentPosY),
 				Valid: true,
 			},
 			Status: pgsql.StatusComponentActive,
@@ -166,19 +163,15 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 		// TODO: check bot started
 		if _, ok := (*bots)[botId]; !ok {
 			// TODO: Own token health check to get a specific error
-			nbot, err := bot.NewBot(token)
+			nbot, err := bot.New(token, botId)
 			if err != nil {
 				log.Debug("[API: startBot]\n", err)
 				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
 				return
 			}
 
-			// TODO: move create bot logic to bot pkg
-			(*bots)[botId] = new(bot.TBot)
-			(*bots)[botId].Id = botId
-			(*bots)[botId].Db = db
-			(*bots)[botId].Rdb = r
-			(*bots)[botId].Bot = nbot
+			nbot.SetDb(db)
+			nbot.SetRdb(r)
 		}
 
 		components, err := db.BotComponentsForBot(botId)

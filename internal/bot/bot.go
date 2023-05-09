@@ -21,8 +21,15 @@ type TBot struct {
 
 const handlerTimeout = 10 // sec
 
-func NewBot(token *string) (*telego.Bot, error) {
-	return telego.NewBot(*token, telego.WithHealthCheck(), telego.WithDefaultDebugLogger())
+func New(token *string, botId int64) (*TBot, error) {
+	bot, err := telego.NewBot(*token, telego.WithHealthCheck(), telego.WithDefaultDebugLogger())
+	if err != nil {
+		return nil, err
+	}
+	res := new(TBot)
+	res.Id = botId
+	res.Bot = bot
+	return res, nil
 }
 
 func (btx *TBot) setBotHandlers() {
@@ -90,4 +97,12 @@ func (btx *TBot) StopBot(stopWebhookServer bool) error {
 	}
 
 	return btx.Bot.DeleteWebhook(nil)
+}
+
+func (btx *TBot) SetDb(db *pgsql.Db) {
+	btx.Db = db
+}
+
+func (btx *TBot) SetRdb(rdb *rdb.Rdb) {
+	btx.Rdb = rdb
 }

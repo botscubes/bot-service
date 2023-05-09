@@ -6,8 +6,8 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func Keyboard(commands *model.Commands, markup *model.Keyboard) *telego.ReplyKeyboardMarkup {
-	// markup: unused - for future
+func Keyboard(commands *model.Commands, _ *model.Keyboard) *telego.ReplyKeyboardMarkup {
+	// markup (keyboard): unused - for future
 
 	rows := [][]telego.KeyboardButton{}
 	for _, v := range *commands {
