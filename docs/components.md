@@ -387,14 +387,15 @@ DELETE /api/bots/{botId}/components/{compId}/next
 Установка номера следующего шага для команды в компоненте
 
 ```plaintext
-POST /api/bots/{botId}/commands/{commandId}/next
+POST /api/bots/{botId}/components/{compId}/commands/{commandId}/next
 ```
 
 Параметры пути
 
 Поле        | Описание
-------------|-----------
+------------|--------------
 `botId`     | id бота
+`compId`    | id компонента
 `commandId` | id команды
 
 Параметры тела
@@ -434,14 +435,15 @@ POST /api/bots/{botId}/commands/{commandId}/next
 Удаление номера следующего шага для команды в компоненте
 
 ```plaintext
-DELETE /api/bots/{botId}/commands/{commandId}/next
+DELETE /api/bots/{botId}/components/{compId}/commands/{commandId}/next
 ```
 
 Параметры пути
 
 Поле        | Описание
-------------|-----------
+------------|--------------
 `botId`     | id бота
+`compId`    | id компонента
 `commandId` | id команды
 
 #### Ответ
@@ -557,14 +559,15 @@ POST /api/bots/67/components/3/commands
 Удаление команды в компоненте
 
 ```plaintext
-DELETE /api/bots/{botId}/commands/{commandId}
+DELETE /api/bots/{botId}/components/{compId}/commands/{commandId}
 ```
 
 Параметры пути
 
 Поле        | Описание
-------------|-----------
+------------|--------------
 `botId`     | id бота
+`compId`    | id компонента
 `commandId` | id команды
 
 #### Ответ

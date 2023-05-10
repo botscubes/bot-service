@@ -76,13 +76,13 @@ func (db *Db) SetNextStepCommand(botId int64, commandId int64, nextStepId int64)
 	return err
 }
 
-func (db *Db) CheckCommandExist(botId int64, commandId int64) (bool, error) {
+func (db *Db) CheckCommandExist(botId int64, compId int64, commandId int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
-			WHERE id = $1 AND status = $2) AS "exists";`
+			WHERE id = $1 AND component_id = $2 AND status = $3) AS "exists";`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, commandId, StatusCommandActive,
+		context.Background(), query, commandId, compId, StatusCommandActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}
@@ -225,19 +225,4 @@ func (db *Db) ComponentForBot(botId int64, compID int64) (*model.Component, erro
 	}
 
 	return &r, nil
-}
-
-func (db *Db) ComponentIdFromCommand(botId int64, commandId int64) (int64, error) {
-	prefix := prefixSchema + strconv.FormatInt(botId, 10)
-
-	query := `SELECT component_id FROM ` + prefix + `.command WHERE id = $1;`
-
-	var r int64
-	if err := db.Pool.QueryRow(
-		context.Background(), query, commandId,
-	).Scan(&r); err != nil {
-		return 0, err
-	}
-
-	return r, nil
 }
