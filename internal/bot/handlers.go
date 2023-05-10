@@ -46,6 +46,10 @@ func (btx *TBot) mainHandler() th.Handler {
 			// Also, the next component is selected here by the id found in the second part of the cycle.
 
 			if _, ok := stepsPassed[stepID]; ok {
+				if origStepID == stepID {
+					break
+				}
+
 				log.Warnf("cycle detected: bot #%d", btx.Id)
 				return
 			}
@@ -68,8 +72,8 @@ func (btx *TBot) mainHandler() th.Handler {
 
 			// check main component
 			if component.IsMain {
-				if component.NextStepId == nil {
-					log.Warnf("main component does not have link to the following: bot #%q", btx.Id)
+				if component.NextStepId == nil || *component.NextStepId == stepID {
+					log.Warnf("error referring to the next component in the main component: bot #%d", btx.Id)
 					return
 				}
 
@@ -109,6 +113,7 @@ func (btx *TBot) mainHandler() th.Handler {
 			if err := btx.Rdb.SetUserStep(btx.Id, update.Message.From.ID, stepID); err != nil {
 				log.Error(err)
 			}
+			// Async upd stepID in db
 			go btx.setUserStep(update.Message.From.ID, stepID)
 		}
 
