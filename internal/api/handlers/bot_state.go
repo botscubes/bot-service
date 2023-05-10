@@ -98,7 +98,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 			Status: pgsql.StatusComponentActive,
 		}
 
-		compId, err := db.AddBotComponent(botId, mc)
+		compId, err := db.AddComponent(botId, mc)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))

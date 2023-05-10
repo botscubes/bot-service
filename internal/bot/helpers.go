@@ -91,7 +91,7 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 	// components not found in cache
 	if err == nil && ex == 0 {
 		// get all components from db
-		components, err := btx.Db.BotComponentsForBot(btx.Id)
+		components, err := btx.Db.ComponentsForBot(btx.Id)
 		if err != nil {
 			log.Error(err)
 		}
