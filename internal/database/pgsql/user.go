@@ -72,3 +72,11 @@ func (db *Db) UserStepByTgId(botId int64, userId int64) (int64, error) {
 
 	return r, nil
 }
+
+func (db *Db) SetUserStep(botId int64, userId int64, stepID int64) error {
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
+
+	query := `UPDATE ` + prefix + `.user SET step_id = $1 WHERE tg_id = $2;`
+	_, err := db.Pool.Exec(context.Background(), query, stepID, userId)
+	return err
+}

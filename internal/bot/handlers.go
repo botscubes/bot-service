@@ -109,6 +109,7 @@ func (btx *TBot) mainHandler() th.Handler {
 			if err := btx.Rdb.SetUserStep(btx.Id, update.Message.From.ID, stepID); err != nil {
 				log.Error(err)
 			}
+			go btx.setUserStep(update.Message.From.ID, stepID)
 		}
 
 		if err := exec(bot, &update, component); err != nil {

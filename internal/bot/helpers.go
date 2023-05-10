@@ -105,3 +105,9 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 
 	return nil, ErrNotFound
 }
+
+func (btx *TBot) setUserStep(userId int64, stepID int64) {
+	if err := btx.Db.SetUserStep(btx.Id, userId, stepID); err != nil {
+		log.Error(err)
+	}
+}
