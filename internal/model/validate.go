@@ -25,15 +25,15 @@ func ValidateComponent(d *Data, c *Commands, p *Point) *se.ServiceError {
 // Validation of component type and data value by type
 func (d *Data) Validate() *se.ServiceError {
 	if d == nil {
-		return e.InvalidParam("data")
+		return e.MissingParam("data")
 	}
 
 	if d.Type == nil {
-		return e.InvalidParam("data.type")
+		return e.MissingParam("data.type")
 	}
 
 	if d.Content == nil {
-		return e.InvalidParam("data.content")
+		return e.MissingParam("data.content")
 	}
 
 	switch *d.Type {
@@ -49,7 +49,7 @@ func (d *Data) Validate() *se.ServiceError {
 // Validation of component commands list
 func (c *Commands) Validate() *se.ServiceError {
 	if c == nil {
-		return e.InvalidParam("commands")
+		return e.MissingParam("commands")
 	}
 
 	for _, v := range *c {
@@ -64,7 +64,7 @@ func (c *Commands) Validate() *se.ServiceError {
 // Validation of component command
 func ValidateCommand(t, d *string) *se.ServiceError {
 	if t == nil {
-		return e.InvalidParam("command.type")
+		return e.MissingParam("command.type")
 	}
 
 	switch *t {
@@ -78,15 +78,15 @@ func ValidateCommand(t, d *string) *se.ServiceError {
 // Validation of component position
 func (p *Point) Validate() *se.ServiceError {
 	if p == nil {
-		return e.InvalidParam("position")
+		return e.MissingParam("position")
 	}
 
 	if int64(p.X) < 0 || int64(p.X) > config.MaxPositionX {
-		return e.IncorrectVal("position.x")
+		return e.InvalidParam("position.x")
 	}
 
 	if int64(p.Y) < 0 || int64(p.Y) > config.MaxPositionY {
-		return e.IncorrectVal("position.y")
+		return e.InvalidParam("position.y")
 	}
 
 	return nil
@@ -98,15 +98,15 @@ func vStart() *se.ServiceError {
 
 func vContentText(c *[]*Content) *se.ServiceError {
 	if len(*c) != 1 {
-		return e.IncorrectVal("data.content")
+		return e.InvalidParam("data.content")
 	}
 
 	if (*c)[0].Text == nil {
-		return e.InvalidParam("data.content.text")
+		return e.MissingParam("data.content.text")
 	}
 
 	if *(*c)[0].Text == "" {
-		return e.IncorrectVal("data.content.text is empty")
+		return e.InvalidParam("data.content.text is empty")
 	}
 
 	return nil
@@ -114,11 +114,11 @@ func vContentText(c *[]*Content) *se.ServiceError {
 
 func vCommandText(t *string) *se.ServiceError {
 	if t == nil {
-		return e.InvalidParam("command.data")
+		return e.MissingParam("command.data")
 	}
 
 	if *t == "" {
-		return e.IncorrectVal("command.data is empty")
+		return e.InvalidParam("command.data is empty")
 	}
 
 	return nil

@@ -45,7 +45,7 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 		token := data.Token
 		if token == nil {
 			log.Debug("[API: SetBotToken] - token is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("token")))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("token")))
 			return
 		}
 

@@ -142,7 +142,7 @@ func SetNextStepComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 
 		if reqData.NextStepId == nil {
 			log.Debug("[API: SetNextStepComponent] nextStepId is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("nextStepId")))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("nextStepId")))
 			return
 		}
 
@@ -254,7 +254,7 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 
 		if reqData.NextStepId == nil {
 			log.Debug("[API: SetNextStepCommand] nextStepId is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("nextStepId")))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("nextStepId")))
 			return
 		}
 

@@ -7,6 +7,7 @@ import (
 var (
 	InvalidRequestCode = 1400
 	InvalidParamCode   = 1411
+	MissingParamCode   = 1412
 	InternalServerCode = 1500
 	UnauthorizedCode   = 1401
 	IncorrectValCode   = 1402
@@ -14,7 +15,8 @@ var (
 
 var (
 	ErrInvalidRequest = err.New(InvalidRequestCode, "Invalid request")
-	ErrInvalidParam   = err.New(InvalidParamCode, "Required parameter is missing")
+	ErrInvalidParam   = err.New(InvalidParamCode, "Invalid parameter")
+	ErrMissingParam   = err.New(MissingParamCode, "Required parameter is missing")
 	ErrInternalServer = err.New(InternalServerCode, "Internal server error")
 	ErrUnauthorized   = err.New(UnauthorizedCode, "Unauthorized")
 	ErrIncorrectVal   = err.New(IncorrectValCode, "Incorrect value")
@@ -40,9 +42,9 @@ var (
 )
 
 func InvalidParam(mes string) *err.ServiceError {
-	return err.New(InvalidParamCode, "Required parameter is missing: "+mes)
+	return err.New(InvalidParamCode, "Invalid parameter value: "+mes)
 }
 
-func IncorrectVal(mes string) *err.ServiceError {
-	return err.New(IncorrectValCode, "Incorrect value: "+mes)
+func MissingParam(mes string) *err.ServiceError {
+	return err.New(InvalidParamCode, "Required parameter is missing: "+mes)
 }

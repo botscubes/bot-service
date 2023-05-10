@@ -49,7 +49,7 @@ func NewBot(db *pgsql.Db) reqHandler {
 
 		if title == nil || *title == "" {
 			log.Debug("[API: newBot] - title is misssing")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("title")))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("title")))
 			return
 		}
 
