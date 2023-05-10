@@ -82,6 +82,34 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 		log.Error(err)
 	}
 
+	// check bot components exists in cache
+	ex, err := btx.Rdb.CheckComponentsExist(btx.Id)
+	if err != nil {
+		log.Error(err)
+	}
+
+	// components not found in cache
+	if err == nil && ex == 0 {
+		// get all components from db
+		components, err := btx.Db.BotComponentsForBot(btx.Id)
+		if err != nil {
+			log.Error(err)
+		}
+
+		if err := btx.Rdb.SetComponents(btx.Id, components); err != nil {
+			log.Error(err)
+		}
+
+		component, err := btx.Rdb.GetComponent(btx.Id, stepID)
+		if err == nil {
+			return component, nil
+		}
+
+		if !errors.Is(err, rdb.ErrNotFound) {
+			log.Error(err)
+		}
+	}
+
 	// component not found in cache, try get from db
 	exist, err := btx.Db.CheckComponentExist(btx.Id, stepID)
 	if err != nil {
@@ -107,7 +135,7 @@ func (btx *TBot) getComponent(stepID int64) (*model.Component, error) {
 }
 
 func (btx *TBot) setUserStep(userId int64, stepID int64) {
-	if err := btx.Db.SetUserStep(btx.Id, userId, stepID); err != nil {
+	if err := btx.Db.SetUserStepByTgId(btx.Id, userId, stepID); err != nil {
 		log.Error(err)
 	}
 }

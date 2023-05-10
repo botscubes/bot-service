@@ -9,6 +9,7 @@ import (
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/botscubes/bot-service/pkg/log"
@@ -116,7 +117,7 @@ type setNextStepComponentReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextStepComponent(db *pgsql.Db) reqHandler {
+func SetNextStepComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -201,6 +202,11 @@ func SetNextStepComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// Invalidate component cache
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
+		}
+
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
@@ -209,7 +215,7 @@ type setNextStepCommandReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextStepCommand(db *pgsql.Db) reqHandler {
+func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -294,6 +300,18 @@ func SetNextStepCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// Invalidate component cache
+		compId, err := db.ComponentIdFromCommand(botId, commandId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
+		}
+
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
@@ -339,7 +357,7 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 	}
 }
 
-func DelNextStepComponent(db *pgsql.Db) reqHandler {
+func DelNextStepComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -396,11 +414,16 @@ func DelNextStepComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// Invalidate component cache
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
+		}
+
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
 
-func DelNextStepCommand(db *pgsql.Db) reqHandler {
+func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -457,11 +480,23 @@ func DelNextStepCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// Invalidate component cache
+		compId, err := db.ComponentIdFromCommand(botId, commandId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
+		}
+
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
 
-func DelBotComponent(db *pgsql.Db) reqHandler {
+func DelBotComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -531,11 +566,16 @@ func DelBotComponent(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// Invalidate component cache
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
+		}
+
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
 
-func DelCommand(db *pgsql.Db) reqHandler {
+func DelCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -592,6 +632,18 @@ func DelCommand(db *pgsql.Db) reqHandler {
 			return
 		}
 
+		// Invalidate component cache
+		compId, err := db.ComponentIdFromCommand(botId, commandId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
+		}
+
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
@@ -605,7 +657,7 @@ type addCommandRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddCommand(db *pgsql.Db) reqHandler {
+func AddCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -684,6 +736,11 @@ func AddCommand(db *pgsql.Db) reqHandler {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
+		}
+
+		// Invalidate component cache
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
 		}
 
 		dataRes := &addCommandRes{

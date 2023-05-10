@@ -174,19 +174,6 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 			(*bots)[botId].SetRdb(r)
 		}
 
-		components, err := db.BotComponentsForBot(botId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if err := r.SetComponents(botId, components); err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
 		if err = (*bots)[botId].StartBot(c.WebhookBase, c.ListenAddress, s); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrStartBot))

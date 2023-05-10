@@ -226,3 +226,18 @@ func (db *Db) ComponentForBot(botId int64, compID int64) (*model.Component, erro
 
 	return &r, nil
 }
+
+func (db *Db) ComponentIdFromCommand(botId int64, commandId int64) (int64, error) {
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
+
+	query := `SELECT component_id FROM ` + prefix + `.command WHERE id = $1;`
+
+	var r int64
+	if err := db.Pool.QueryRow(
+		context.Background(), query, commandId,
+	).Scan(&r); err != nil {
+		return 0, err
+	}
+
+	return r, nil
+}

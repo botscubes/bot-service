@@ -36,11 +36,11 @@ func (app *App) addHandlers() {
 
 	// Set next step component
 	app.Router.POST("/api/bots/{botId}/components/{compId}/next",
-		h.Auth(h.SetNextStepComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.SetNextStepComponent(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Set next step component command
 	app.Router.POST("/api/bots/{botId}/commands/{commandId}/next",
-		h.Auth(h.SetNextStepCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.SetNextStepCommand(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Get bot components
 	app.Router.GET("/api/bots/{botId}/components",
@@ -48,21 +48,21 @@ func (app *App) addHandlers() {
 
 	// Delete next step component
 	app.Router.DELETE("/api/bots/{botId}/components/{compId}/next",
-		h.Auth(h.DelNextStepComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.DelNextStepComponent(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Delete next step command
 	app.Router.DELETE("/api/bots/{botId}/commands/{commandId}/next",
-		h.Auth(h.DelNextStepCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.DelNextStepCommand(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Delete bot component
 	app.Router.DELETE("/api/bots/{botId}/components/{compId}",
-		h.Auth(h.DelBotComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.DelBotComponent(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Delete component command
 	app.Router.DELETE("/api/bots/{botId}/commands/{commandId}",
-		h.Auth(h.DelCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.DelCommand(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 
 	// Add component command
 	app.Router.POST("/api/bots/{botId}/components/{compId}/commands",
-		h.Auth(h.AddCommand(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
+		h.Auth(h.AddCommand(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
 }

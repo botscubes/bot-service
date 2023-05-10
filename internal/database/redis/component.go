@@ -54,3 +54,15 @@ func (rdb *Rdb) GetComponent(botId int64, compId int64) (*model.Component, error
 
 	return component, nil
 }
+
+func (rdb *Rdb) DelComponent(botId int64, compId int64) error {
+	ctx := context.Background()
+	key := "bot" + strconv.FormatInt(botId, 10) + ":component"
+	return rdb.HDel(ctx, key, strconv.FormatInt(compId, 10)).Err()
+}
+
+func (rdb *Rdb) CheckComponentsExist(botId int64) (int64, error) {
+	ctx := context.Background()
+	key := "bot" + strconv.FormatInt(botId, 10) + ":component"
+	return rdb.Exists(ctx, key).Result()
+}
