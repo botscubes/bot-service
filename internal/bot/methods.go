@@ -7,16 +7,16 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func sendMessage(bot *telego.Bot, update *telego.Update, component *model.Component) error {
-	message := tu.Message(
-		tu.ID(update.Message.Chat.ID),
+func sendMessage(bot *telego.Bot, message *telego.Message, component *model.Component) error {
+	mes := tu.Message(
+		tu.ID(message.Chat.ID),
 		*(*component.Data.Content)[0].Text,
 	)
 
 	if len(*component.Commands) > 0 {
-		message.WithReplyMarkup(bu.Keyboard(component.Commands, component.Keyboard).WithResizeKeyboard())
+		mes.WithReplyMarkup(bu.Keyboard(component.Commands, component.Keyboard).WithResizeKeyboard())
 	}
 
-	_, err := bot.SendMessage(message)
+	_, err := bot.SendMessage(mes)
 	return err
 }

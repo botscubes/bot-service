@@ -33,7 +33,18 @@ func New(token *string, botId int64) (*TBot, error) {
 }
 
 func (btx *TBot) setBotHandlers() {
-	btx.Handler.Handle(btx.mainHandler())
+	// Handle command
+	btx.Handler.Handle(btx.commandHandler(),
+		th.Union(
+			th.AnyCommand(),
+		))
+
+	// Handle message
+	btx.Handler.Handle(btx.messageHandler(),
+		th.Union(
+			th.AnyMessage(),
+			th.AnyEditedMessage(),
+		))
 }
 
 func (btx *TBot) startBotHandler() {
