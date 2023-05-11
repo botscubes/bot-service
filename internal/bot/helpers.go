@@ -23,27 +23,17 @@ func (btx *TBot) getUserStep(from *telego.User) (int64, error) {
 	}
 
 	// userStep not found in cache, try get from db
-	exist, err := btx.Db.CheckUserExistByTgId(btx.Id, from.ID)
+	stepID, err = btx.Db.UserStepByTgId(btx.Id, from.ID)
 	if err != nil {
 		log.Error(err)
 		return 0, err
 	}
 
-	if exist {
-		stepID, err = btx.Db.UserStepByTgId(btx.Id, from.ID)
-		if err != nil {
-			log.Error(err)
-			return 0, err
-		}
-
-		if err = btx.Rdb.SetUserStep(btx.Id, from.ID, stepID); err != nil {
-			log.Error(err)
-		}
-
-		return stepID, nil
+	if err = btx.Rdb.SetUserStep(btx.Id, from.ID, stepID); err != nil {
+		log.Error(err)
 	}
 
-	return 0, ErrNotFound
+	return stepID, nil
 }
 
 func (btx *TBot) addUser(from *telego.User) error {

@@ -38,3 +38,9 @@ func (rdb *Rdb) GetUserStep(botId int64, userID int64) (int64, error) {
 
 	return stepID, nil
 }
+
+func (rdb *Rdb) CheckUserExist(botId int64, userID int64) (int64, error) {
+	ctx := context.Background()
+	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10)
+	return rdb.Exists(ctx, key).Result()
+}

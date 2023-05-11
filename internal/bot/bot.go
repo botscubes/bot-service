@@ -32,7 +32,11 @@ func New(token *string, botId int64) (*TBot, error) {
 	return res, nil
 }
 
-func (btx *TBot) setBotHandlers() {
+func (btx *TBot) setMiddlwares() {
+	btx.Handler.Use(btx.regUserMW)
+}
+
+func (btx *TBot) setHandlers() {
 	// Handle command
 	btx.Handler.Handle(btx.commandHandler(),
 		th.Union(
@@ -47,7 +51,7 @@ func (btx *TBot) setBotHandlers() {
 		))
 }
 
-func (btx *TBot) startBotHandler() {
+func (btx *TBot) startHandler() {
 	go btx.Handler.Start()
 }
 
@@ -72,10 +76,11 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 			return err
 		}
 
-		btx.setBotHandlers()
+		btx.setMiddlwares()
+		btx.setHandlers()
 	}
 
-	btx.startBotHandler()
+	btx.startHandler()
 
 	if !btx.Bot.IsRunningWebhook() {
 		go func(b *telego.Bot) {
