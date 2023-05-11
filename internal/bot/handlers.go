@@ -61,9 +61,9 @@ func (btx *TBot) messageHandler() th.Handler {
 func (btx *TBot) commandHandler() th.Handler {
 	return func(bot *telego.Bot, update telego.Update) {
 		message := update.Message
-
+		var stepID int64
 		// Get user stepID
-		stepID, err := btx.getUserStep(message.From)
+		_, err := btx.getUserStep(message.From)
 		if err != nil {
 			if !errors.Is(err, ErrNotFound) {
 				return
@@ -73,14 +73,14 @@ func (btx *TBot) commandHandler() th.Handler {
 				return
 			}
 
-			stepID = config.MainComponentId
+			// stepID = config.MainComponentId
 		}
 
-		if commandEqual(message.Text, "start") {
-			stepID = config.MainComponentId
-		} else {
+		if !commandEqual(message.Text, "start") {
 			return
 		}
+
+		stepID = config.MainComponentId
 
 		// find next component for execute
 		ok, component, nextStepId := btx.findComponent(stepID, message)
