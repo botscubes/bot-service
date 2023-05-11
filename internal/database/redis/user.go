@@ -12,18 +12,22 @@ import (
 func (rdb *Rdb) SetUserStep(botId int64, userID int64, stepID int64) error {
 	ctx := context.Background()
 
-	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10) + ":step"
+	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10)
 
-	return rdb.Set(ctx, key, stepID, config.RedisExpire).Err()
+	if err := rdb.HSet(ctx, key, "step", stepID).Err(); err != nil {
+		return err
+	}
+
+	return rdb.Expire(ctx, key, config.RedisExpire).Err()
 }
 
 func (rdb *Rdb) GetUserStep(botId int64, userID int64) (int64, error) {
 	ctx := context.Background()
 
-	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10) + ":step"
+	key := "bot" + strconv.FormatInt(botId, 10) + ":user:" + strconv.FormatInt(userID, 10)
 
-	val, err := rdb.Get(ctx, key).Result()
-
+	var stepID int64
+	err := rdb.HGet(ctx, key, "step").Scan(&stepID)
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return 0, err
 	}
@@ -32,10 +36,5 @@ func (rdb *Rdb) GetUserStep(botId int64, userID int64) (int64, error) {
 		return 0, ErrNotFound
 	}
 
-	stepID, err := strconv.Atoi(val)
-	if err != nil {
-		return 0, err
-	}
-
-	return int64(stepID), nil
+	return stepID, nil
 }
