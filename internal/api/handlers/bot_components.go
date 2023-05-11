@@ -403,3 +403,110 @@ func DelComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
 }
+
+type updComponentReq struct {
+	Data     *model.Data  `json:"data"`
+	Position *model.Point `json:"position"`
+}
+
+func UpdComponent(db *pgsql.Db) reqHandler {
+	return func(ctx *fh.RequestCtx) {
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: UpdComponent] - botId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		if err != nil {
+			log.Debug("[API: UpdComponent] - compId param error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		var reqData updComponentReq
+		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
+			log.Debug("[API: UpdComponent] - Serialization error;\n", err)
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Debug("[API: UpdComponent] - userId convertation to int64 error")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if reqData.Data == nil && reqData.Position == nil {
+			log.Debug("[API: UpdComponent] - [request fields not found]")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		if reqData.Data != nil {
+			if err := reqData.Data.Validate(); err != nil {
+				log.Debug("[API: UpdComponent] - [Validate data];\n", err)
+				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
+				return
+			}
+		}
+
+		if reqData.Position != nil {
+			if err := reqData.Position.Validate(); err != nil {
+				log.Debug("[API: UpdComponent] - [Validate position];\n", err)
+				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
+				return
+			}
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			log.Debug("[API: UpdComponent] - bot not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
+			return
+		}
+
+		// check bot component exists
+		existComp, err := db.CheckComponentExist(botId, compId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existComp {
+			log.Debug("[API: UpdComponent] - component not found")
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
+			return
+		}
+
+		if reqData.Position != nil {
+			err = db.UpdComponentPosition(botId, compId, reqData.Position)
+			if err != nil {
+				log.Error(err)
+				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+				return
+			}
+		}
+
+		if reqData.Data != nil {
+			err = db.UpdComponentData(botId, compId, reqData.Data)
+			if err != nil {
+				log.Error(err)
+				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+				return
+			}
+		}
+
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+	}
+}

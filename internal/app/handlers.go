@@ -65,4 +65,8 @@ func (app *App) addHandlers() {
 	// Add component command
 	app.Router.POST("/api/bots/{botId}/components/{compId}/commands",
 		h.Auth(h.AddCommand(app.Db, app.Redis), &app.SessionStorage, &app.Conf.JWTKey))
+
+	// update component
+	app.Router.PATCH("/api/bots/{botId}/components/{compId}",
+		h.Auth(h.UpdComponent(app.Db), &app.SessionStorage, &app.Conf.JWTKey))
 }

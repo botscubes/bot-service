@@ -161,3 +161,19 @@ func (db *Db) ComponentForBot(botId int64, compID int64) (*model.Component, erro
 
 	return &r, nil
 }
+
+func (db *Db) UpdComponentPosition(botId int64, compId int64, pos *model.Point) error {
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
+	query := `UPDATE ` + prefix + `.component SET "position" = $1 WHERE id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, pos, compId)
+	return err
+}
+
+func (db *Db) UpdComponentData(botId int64, compId int64, data *model.Data) error {
+	prefix := prefixSchema + strconv.FormatInt(botId, 10)
+	query := `UPDATE ` + prefix + `.component SET "data" = $1 WHERE id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, data, compId)
+	return err
+}
