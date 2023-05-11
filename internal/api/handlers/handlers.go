@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/goccy/go-json"
@@ -18,6 +19,8 @@ import (
 var (
 	strContentType     = []byte("Content-Type")
 	strApplicationJSON = []byte("application/json")
+
+	ErrUserIDConvertation = errors.New("userId convertation to int64")
 )
 
 type reqHandler = fh.RequestHandler
@@ -75,4 +78,12 @@ func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string) reqHandl
 func Health(ctx *fh.RequestCtx) {
 	_, _ = ctx.WriteString("OK")
 	ctx.SetStatusCode(fh.StatusOK)
+}
+
+func PanicHandler(ctx *fh.RequestCtx, err any) {
+	if err != nil {
+		log.Errorf("API panic recovered: %v", err)
+	}
+
+	doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 }

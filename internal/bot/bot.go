@@ -33,6 +33,7 @@ func New(token *string, botId int64) (*TBot, error) {
 }
 
 func (btx *TBot) setMiddlwares() {
+	btx.Handler.Use(th.PanicRecovery)
 	btx.Handler.Use(btx.regUserMW)
 }
 

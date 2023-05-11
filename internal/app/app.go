@@ -1,6 +1,5 @@
 package app
 
-// TODO: handle the panic
 // WARN: bot not receive updates on app stop by panic
 
 import (
@@ -72,7 +71,7 @@ func (app *App) Run() error {
 
 	defer app.Db.CloseConnection()
 
-	app.addHandlers()
+	app.regiterHandlers()
 
 	go func() {
 		if err = app.Server.Start(app.Conf.Bot.ListenAddress); err != nil {

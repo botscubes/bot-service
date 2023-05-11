@@ -32,7 +32,6 @@ func NewBot(db *pgsql.Db) reqHandler {
 		var data newBotReq
 
 		if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			log.Debug("[API: newBot] - Serialization error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
@@ -40,21 +39,19 @@ func NewBot(db *pgsql.Db) reqHandler {
 		title := data.Title
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: newBot] - userId convertation to int64 error")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
+			log.Error(ErrUserIDConvertation)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
 		token := ""
 
 		if title == nil || *title == "" {
-			log.Debug("[API: newBot] - title is misssing")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("title")))
 			return
 		}
 
 		if utf8.RuneCountInString(*title) > config.MaxTitleLen {
-			log.Debug("[API: newBot] - title len > ", config.MaxTitleLen)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidTitleLength))
 			return
 		}
@@ -122,15 +119,14 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: StartBot] - botId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: StartBot] - userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
+			log.Error(ErrUserIDConvertation)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -142,7 +138,6 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 		}
 
 		if !existBot {
-			log.Debug("[API: startBot] - bot not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
 			return
 		}
@@ -155,7 +150,6 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 		}
 
 		if token == nil || *token == "" {
-			log.Debug("[API: startBot] - Token not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrTokenNotFound))
 			return
 		}
@@ -165,7 +159,6 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 			// TODO: Own token health check to get a specific error
 			(*bots)[botId], err = bot.New(token, botId)
 			if err != nil {
-				log.Debug("[API: startBot]\n", err)
 				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
 				return
 			}
@@ -190,15 +183,14 @@ func StopBot(db *pgsql.Db, bots *map[int64]*bot.TBot) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
-			log.Debug("[API: StopBot] - botId param error;\n", err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
 			return
 		}
 
 		userId, ok := ctx.UserValue("userId").(int64)
 		if !ok {
-			log.Debug("[API: StopBot] - userId convertation to int64 error;")
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInternalServer))
+			log.Error(ErrUserIDConvertation)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
@@ -210,7 +202,6 @@ func StopBot(db *pgsql.Db, bots *map[int64]*bot.TBot) reqHandler {
 		}
 
 		if !existBot {
-			log.Debug("[API: stopBot] - bot not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
 			return
 		}
@@ -223,13 +214,11 @@ func StopBot(db *pgsql.Db, bots *map[int64]*bot.TBot) reqHandler {
 		}
 
 		if token == nil || *token == "" {
-			log.Debug("[API: stopBot] - Token not found")
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrTokenNotFound))
 			return
 		}
 
 		if _, ok := (*bots)[botId]; !ok {
-			log.Debug("[API: startBot] Bot not found in bots map")
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrBotNotRunning))
 			return
 		}

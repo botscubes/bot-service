@@ -4,7 +4,9 @@ import (
 	h "github.com/botscubes/bot-service/internal/api/handlers"
 )
 
-func (app *App) addHandlers() {
+func (app *App) regiterHandlers() {
+	app.Router.PanicHandler = h.PanicHandler
+
 	app.Router.GET("/api/bots/health",
 		h.Auth(h.Health, &app.SessionStorage, &app.Conf.JWTKey))
 
