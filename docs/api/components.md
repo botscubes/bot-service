@@ -6,6 +6,7 @@
 
 - [Add component](#add-component)
 - [Delete component](#delete-component)
+- [Update component](#update-component)
 - [Get bot structure](#get-bot-structure)
 - [Set next step for component](#set-next-step-for-component)
 - [Delete next step for component](#delete-next-step-for-component)
@@ -179,6 +180,117 @@ DELETE /api/bots/{botId}/components/{compId}
 
 
 - - -
+
+
+## Update component
+
+[Наверх][toup]
+
+Обновление компонента в структуре бота
+
+```plaintext
+PATCH /api/bots/{botId}/components/{compId}
+```
+
+Параметры пути
+
+Поле     | Описание
+---------|--------------
+`botId`  | id бота
+`compId` | id компонента
+
+Параметры тела
+
+Запрос должен включать только необходимые для обновления поля.  
+Т.е основные поля тела запроса являются необзательными (см. пример).
+
+```json
+{
+    "data": {
+        "type": "string",
+        "content": [
+            "content"
+        ]
+    },
+    "position": {
+        "x": "integer",
+        "y": "integer"
+    }
+}
+```
+
+Поле              | Тип                       | Описание
+------------------|---------------------------|-----------------------------------------------------------
+`data`            | object                    | Данные компонента
+`data.type`       | string                    | Тип компонента
+`data.content`    | [content][type_content][] | Список c данными, специфичными для каждого типа компонента
+`position`        | object                    | Координаты компонента на поле редактора
+`position.x`      | integer                   | Координата X
+`position.y`      | integer                   | Координата Y
+
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+```
+
+<details>
+    <summary>Пример</summary>
+   
+`Запрос`
+
+```plaintext
+PACTH /api/bots/64/components/5
+```
+
+Обновление текста и позиции
+
+Тело запроса
+
+```json
+{
+    "data": {
+        "type": "text",
+        "content": [
+            {
+                "text": "Updated Hello Telegram"
+            }
+        ]
+    },
+    "position": {
+        "x": 141,
+        "y": 112
+    }
+}
+```
+
+Обновление только позиции
+
+Тело запроса
+
+```json
+{
+    "position": {
+        "x": 111,
+        "y": 222
+    }
+}
+```
+
+
+</details>
+
+
+- - - 
 
 
 ## Get bot structure
