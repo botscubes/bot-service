@@ -1,15 +1,13 @@
 # Описание объектов 
 
 - [Главная](./README.md)
-- [Типы компонентов][types_of_components]
+- [Список компонентов][components_list]
 
 ## Objects
 
 - [Component](#component)
 - [Content](#content)
 - [Command](#command)
-- [Types of components](#types-of-components)
-
 
 
 ## Component
@@ -45,7 +43,7 @@
 ---------------|-----------------------|-----------------------------------------------------------
 `id`           | integer               | id компонента
 `data`         | object                | Данные компонента
-`data.type`    | string                | [Тип][types_of_components] компонента
+`data.type`    | string                | [Тип][components_list] компонента
 `data.content` | [content](#content)[] | Список c данными, специфичными для каждого типа компонента
 `keyboard`     | keyboard              | Структура клавиатуры (НЕ ИСПОЛЬЗУЕТСЯ)
 `commands`     | [command](#command)[] | Список команд
@@ -133,7 +131,7 @@
 
 Структуры данных смотреть в
 
---> [Типы компонентов][types_of_components] <--
+--> [Список компонентов][components_list] <--
 
 
 - - - 
@@ -193,36 +191,6 @@
 - - -
 
 
-## Types of components
-
-[Наверх][toup]
-
-Список типов компонентов и описание их структуры
-
-| Тип     | Описание                      |
-|---------|-------------------------------|
-| `start` | Начальный компонент           |
-| `text`  | Отправка текстового сообщения |
-
-**Описание структуры компонентов**
-
-#### start
-
-Начальный компонент
-
-`No data`
-
-#### text
-
-Отправка текстового сообщения
-
-```json
-{
-    "text": "string"
-}
-```
-
-
 [//]: # (LINKS)
-[types_of_components]: #types-of-components
+[components_list]: ./components.md
 [toup]: #описание-объектов 

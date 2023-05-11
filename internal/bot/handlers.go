@@ -58,8 +58,7 @@ func (btx *TBot) commandHandler() th.Handler {
 			return
 		}
 
-		var stepID int64
-		stepID = config.MainComponentId
+		stepID := int64(config.MainComponentId)
 
 		// find next component for execute
 		ok, component, nextStepId := btx.findComponent(stepID, message)

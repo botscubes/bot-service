@@ -1,6 +1,6 @@
 # API управления ботом
 
-- [Главная](./README.md)
+- [Главная](../README.md)
 
 ## Methods
 
@@ -257,5 +257,5 @@ PATCH /api/bots/{botId}/stop
 ```
 
 [//]: # (LINKS)
-[type_component]: ./objects.md#component
+[type_component]: ../objects.md#component
 [toup]: #api-управления-ботом 
