@@ -9,6 +9,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/valyala/fasthttp"
+	"go.uber.org/zap"
 
 	fastRouter "github.com/fasthttp/router"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/database/redisauth"
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/token_storage"
 
 	"github.com/mymmrac/telego"
@@ -32,11 +32,10 @@ type App struct {
 	SessionStorage token_storage.TokenStorage
 	RedisAuth      *redis.Client
 	Redis          *rdb.Rdb
+	Log            *zap.SugaredLogger
 }
 
-func (app *App) Run() error {
-	log.Debug("App Run")
-
+func (app *App) Run(logger *zap.SugaredLogger) error {
 	var err error
 	done := make(chan struct{}, 1)
 	sigs := make(chan os.Signal, 1)
@@ -46,6 +45,8 @@ func (app *App) Run() error {
 	if err != nil {
 		return err
 	}
+
+	app.Log = logger
 
 	app.Router = fastRouter.New()
 	app.Server = &telego.MultiBotWebhookServer{
@@ -75,7 +76,7 @@ func (app *App) Run() error {
 
 	go func() {
 		if err = app.Server.Start(app.Conf.Bot.ListenAddress); err != nil {
-			log.Error(err)
+			app.Log.Error(err)
 			sigs <- syscall.SIGTERM
 		}
 	}()
@@ -83,16 +84,16 @@ func (app *App) Run() error {
 	// On close, error program
 	go func() {
 		<-sigs
-		log.Info("Stopping...")
+		app.Log.Info("Stopping...")
 		for _, v := range app.Bots {
 			if err := v.StopBot(true); err != nil {
-				log.Error("Stop App: bot stop:\n", err)
+				app.Log.Error("Stop App: bot stop:\n", err)
 			}
 		}
 		done <- struct{}{}
 	}()
 
-	log.Info("App Started")
+	app.Log.Info("App Started")
 
 	<-done
 

@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/goccy/go-json"
+	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/botscubes/user-service/pkg/jwt"
 	"github.com/botscubes/user-service/pkg/token_storage"
 
@@ -33,7 +33,7 @@ func doJsonRes(ctx *fh.RequestCtx, code int, obj any) {
 	}
 }
 
-func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string) reqHandler {
+func Auth(h reqHandler, st *token_storage.TokenStorage, jwtKey *string, log *zap.SugaredLogger) reqHandler {
 	return fh.RequestHandler(func(ctx *fh.RequestCtx) {
 		const prefix = "Bearer "
 
@@ -80,10 +80,12 @@ func Health(ctx *fh.RequestCtx) {
 	ctx.SetStatusCode(fh.StatusOK)
 }
 
-func PanicHandler(ctx *fh.RequestCtx, err any) {
-	if err != nil {
-		log.Errorf("API panic recovered: %v", err)
-	}
+func PanicHandler(log *zap.SugaredLogger) func(ctx *fh.RequestCtx, err any) {
+	return func(ctx *fh.RequestCtx, err any) {
+		if err != nil {
+			log.Errorf("API panic recovered: %v", err)
+		}
 
-	doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+		doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+	}
 }

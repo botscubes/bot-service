@@ -8,9 +8,9 @@ import (
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/goccy/go-json"
 	fh "github.com/valyala/fasthttp"
+	"go.uber.org/zap"
 )
 
 type addCommandReq struct {
@@ -22,7 +22,7 @@ type addCommandRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
+func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -110,7 +110,7 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	}
 }
 
-func DelCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
+func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -195,7 +195,7 @@ type setNextStepCommandReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
+func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -307,7 +307,7 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	}
 }
 
-func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb) reqHandler {
+func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {

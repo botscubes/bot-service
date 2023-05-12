@@ -7,7 +7,6 @@ import (
 	"github.com/botscubes/bot-service/internal/config"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
@@ -36,14 +35,14 @@ func (btx *TBot) messageHandler() th.Handler {
 
 		if nextStepId != stepID {
 			if err := btx.Rdb.SetUserStep(btx.Id, message.From.ID, nextStepId); err != nil {
-				log.Error(err)
+				btx.log.Error(err)
 			}
 			// Async upd stepID in db
 			go btx.setUserStep(message.From.ID, nextStepId)
 		}
 
-		if err := execMethod(bot, message, component); err != nil {
-			log.Error(err)
+		if err := btx.execMethod(bot, message, component); err != nil {
+			btx.log.Error(err)
 		}
 	}
 }
@@ -68,14 +67,14 @@ func (btx *TBot) commandHandler() th.Handler {
 
 		if nextStepId != stepID {
 			if err := btx.Rdb.SetUserStep(btx.Id, message.From.ID, nextStepId); err != nil {
-				log.Error(err)
+				btx.log.Error(err)
 			}
 			// Async upd stepID in db
 			go btx.setUserStep(message.From.ID, nextStepId)
 		}
 
-		if err := execMethod(bot, message, component); err != nil {
-			log.Error(err)
+		if err := btx.execMethod(bot, message, component); err != nil {
+			btx.log.Error(err)
 		}
 	}
 }
@@ -100,7 +99,7 @@ func (btx *TBot) findComponent(stepID int64, message *telego.Message) (bool, *mo
 				break
 			}
 
-			log.Warnf("cycle detected: bot #%d", btx.Id)
+			btx.log.Warnf("cycle detected: bot #%d", btx.Id)
 			return false, nil, 0
 		}
 
@@ -124,7 +123,7 @@ func (btx *TBot) findComponent(stepID int64, message *telego.Message) (bool, *mo
 		// check main component
 		if component.IsMain {
 			if component.NextStepId == nil || *component.NextStepId == stepID {
-				log.Warnf("error referring to the next component in the main component: bot #%d", btx.Id)
+				btx.log.Warnf("error referring to the next component in the main component: bot #%d", btx.Id)
 				return false, nil, 0
 			}
 
@@ -163,14 +162,14 @@ func (btx *TBot) findComponent(stepID int64, message *telego.Message) (bool, *mo
 	return true, component, stepID
 }
 
-func execMethod(bot *telego.Bot, message *telego.Message, component *model.Component) error {
+func (btx *TBot) execMethod(bot *telego.Bot, message *telego.Message, component *model.Component) error {
 	switch *component.Data.Type {
 	case "text":
 		if err := sendMessage(bot, message, component); err != nil {
 			return err
 		}
 	default:
-		log.Warn("Unknown type method: ", *component.Data.Type)
+		btx.log.Warn("Unknown type method: ", *component.Data.Type)
 	}
 
 	return nil

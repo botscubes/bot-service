@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/goccy/go-json"
+	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
@@ -13,7 +14,6 @@ import (
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	fh "github.com/valyala/fasthttp"
 )
@@ -27,7 +27,7 @@ type newBotRes struct {
 	Component *model.Component `json:"conponent"`
 }
 
-func NewBot(db *pgsql.Db) reqHandler {
+func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		var data newBotReq
 
@@ -114,7 +114,14 @@ func NewBot(db *pgsql.Db) reqHandler {
 	}
 }
 
-func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhookServer, c *config.BotConfig, r *rdb.Rdb) reqHandler {
+func StartBot(
+	db *pgsql.Db,
+	bots *map[int64]*bot.TBot,
+	s *telego.MultiBotWebhookServer,
+	c *config.BotConfig,
+	r *rdb.Rdb,
+	log *zap.SugaredLogger,
+) reqHandler {
 	// check bot already started
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
@@ -157,7 +164,7 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 		// TODO: check bot started
 		if _, ok := (*bots)[botId]; !ok {
 			// TODO: Own token health check to get a specific error
-			(*bots)[botId], err = bot.New(token, botId)
+			(*bots)[botId], err = bot.New(token, botId, log)
 			if err != nil {
 				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
 				return
@@ -177,7 +184,7 @@ func StartBot(db *pgsql.Db, bots *map[int64]*bot.TBot, s *telego.MultiBotWebhook
 	}
 }
 
-func StopBot(db *pgsql.Db, bots *map[int64]*bot.TBot) reqHandler {
+func StopBot(db *pgsql.Db, bots *map[int64]*bot.TBot, log *zap.SugaredLogger) reqHandler {
 	// TODO: check bot is running
 	// check bot already stopped
 	return func(ctx *fh.RequestCtx) {

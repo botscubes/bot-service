@@ -5,6 +5,7 @@ import (
 
 	"github.com/goccy/go-json"
 	fh "github.com/valyala/fasthttp"
+	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/config"
@@ -12,7 +13,6 @@ import (
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	"github.com/botscubes/bot-service/pkg/log"
 )
 
 type addComponentReq struct {
@@ -25,7 +25,7 @@ type addComponentRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddComponent(db *pgsql.Db) reqHandler {
+func AddComponent(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -113,7 +113,7 @@ type setNextStepComponentReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextStepComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
+func SetNextStepComponent(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -206,7 +206,7 @@ func SetNextStepComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	}
 }
 
-func GetBotComponents(db *pgsql.Db) reqHandler {
+func GetBotComponents(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -245,7 +245,7 @@ func GetBotComponents(db *pgsql.Db) reqHandler {
 	}
 }
 
-func DelNextStepComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
+func DelNextStepComponent(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -307,7 +307,7 @@ func DelNextStepComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
 	}
 }
 
-func DelComponent(db *pgsql.Db, r *rdb.Rdb) reqHandler {
+func DelComponent(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -386,7 +386,7 @@ type updComponentReq struct {
 	Position *model.Point `json:"position"`
 }
 
-func UpdComponent(db *pgsql.Db) reqHandler {
+func UpdComponent(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {

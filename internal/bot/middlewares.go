@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
@@ -23,14 +22,14 @@ func (btx *TBot) regUserMW(next th.Handler) th.Handler {
 		// check user exist in cache
 		ex, err := btx.Rdb.CheckUserExist(btx.Id, user.ID)
 		if err != nil {
-			log.Error(err)
+			btx.log.Error(err)
 		}
 
 		// user not found in cache, check db
 		if ex == 0 {
 			exist, err := btx.Db.CheckUserExistByTgId(btx.Id, user.ID)
 			if err != nil {
-				log.Error(err)
+				btx.log.Error(err)
 				return
 			}
 

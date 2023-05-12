@@ -4,11 +4,11 @@ import (
 	"strconv"
 
 	"github.com/goccy/go-json"
+	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	"github.com/botscubes/bot-service/pkg/log"
 	fh "github.com/valyala/fasthttp"
 )
 
@@ -16,7 +16,7 @@ type setBotTokenReq struct {
 	Token *string `json:"token"`
 }
 
-func SetBotToken(db *pgsql.Db) reqHandler {
+func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	// TODO: check bot is started
 	return func(ctx *fh.RequestCtx) {
 		var data setBotTokenReq
@@ -100,7 +100,7 @@ func SetBotToken(db *pgsql.Db) reqHandler {
 	}
 }
 
-func DeleteBotToken(db *pgsql.Db) reqHandler {
+func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	// TODO: check bot is started
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)

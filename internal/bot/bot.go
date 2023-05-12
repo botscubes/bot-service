@@ -5,9 +5,9 @@ import (
 
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
-	"github.com/botscubes/bot-service/pkg/log"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	"go.uber.org/zap"
 )
 
 type TBot struct {
@@ -17,11 +17,12 @@ type TBot struct {
 	Bot     *telego.Bot
 	Updates <-chan telego.Update
 	Handler *th.BotHandler
+	log     *zap.SugaredLogger
 }
 
 const handlerTimeout = 10 // sec
 
-func New(token *string, botId int64) (*TBot, error) {
+func New(token *string, botId int64, logger *zap.SugaredLogger) (*TBot, error) {
 	bot, err := telego.NewBot(*token, telego.WithHealthCheck(), telego.WithDefaultDebugLogger())
 	if err != nil {
 		return nil, err
@@ -29,6 +30,7 @@ func New(token *string, botId int64) (*TBot, error) {
 	res := new(TBot)
 	res.Id = botId
 	res.Bot = bot
+	res.log = logger
 	return res, nil
 }
 
@@ -86,7 +88,7 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 	if !btx.Bot.IsRunningWebhook() {
 		go func(b *telego.Bot) {
 			if err := b.StartWebhook(listenAddress); err != nil {
-				log.Error("Start webhook:", err)
+				btx.log.Error("Start webhook:", err)
 			}
 		}(btx.Bot)
 	}
