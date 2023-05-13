@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/botscubes/bot-service/internal/config"
-	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	"github.com/mymmrac/telego"
@@ -44,7 +43,7 @@ func (btx *TBot) addUser(from *telego.User) error {
 		StepID: model.StepID{
 			StepId: config.MainComponentId,
 		},
-		Status: pgsql.StatusUserActive,
+		Status: model.StatusUserActive,
 	}
 
 	_, err := btx.Db.AddUser(btx.Id, user)

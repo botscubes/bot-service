@@ -7,12 +7,6 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-// Statuses
-var (
-	StatusComponentActive = 0
-	StatusComponentDel    = 1
-)
-
 func (db *Db) AddComponent(botId int64, m *model.Component) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
@@ -33,7 +27,7 @@ func (db *Db) CheckComponentExist(botId int64, compId int64) (bool, error) {
 			WHERE id = $1 AND status = $2) AS "exists";`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, compId, StatusComponentActive,
+		context.Background(), query, compId, model.StatusComponentActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}
@@ -60,7 +54,7 @@ func (db *Db) ComponentsForEd(botId int64) (*[]*model.Component, error) {
 			FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component t
 			WHERE status = $2 ORDER BY id;`
 
-	rows, err := db.Pool.Query(context.Background(), query, StatusCommandActive, StatusComponentActive)
+	rows, err := db.Pool.Query(context.Background(), query, model.StatusCommandActive, model.StatusComponentActive)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +90,7 @@ func (db *Db) DelComponent(botId int64, compId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET status = $1 WHERE id = $2;`
 
-	_, err := db.Pool.Exec(context.Background(), query, StatusComponentDel, compId)
+	_, err := db.Pool.Exec(context.Background(), query, model.StatusComponentDel, compId)
 	return err
 }
 
@@ -114,7 +108,7 @@ func (db *Db) ComponentsForBot(botId int64) (*[]*model.Component, error) {
 			FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component t
 			WHERE status = $2 ORDER BY id;`
 
-	rows, err := db.Pool.Query(context.Background(), query, StatusCommandActive, StatusComponentActive)
+	rows, err := db.Pool.Query(context.Background(), query, model.StatusCommandActive, model.StatusComponentActive)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +148,7 @@ func (db *Db) ComponentForBot(botId int64, compID int64) (*model.Component, erro
 	var r model.Component
 	r.Commands = &model.Commands{}
 	if err := db.Pool.QueryRow(
-		context.Background(), query, StatusCommandActive, StatusComponentActive, compID,
+		context.Background(), query, model.StatusCommandActive, model.StatusComponentActive, compID,
 	).Scan(&r.Id, &r.Data, &r.Keyboard, r.Commands, &r.NextStepId, &r.IsMain, &r.Position, &r.Status); err != nil {
 		return nil, err
 	}

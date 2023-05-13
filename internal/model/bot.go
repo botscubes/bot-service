@@ -1,10 +1,9 @@
 package model
 
-// Statuses
 type BotStatus int
 
 var (
-	StatusBotActive BotStatus = 0
+	StatusBotActive BotStatus
 	StatusBotRunnig BotStatus = 1
 	StatusBotDel    BotStatus = 2
 )

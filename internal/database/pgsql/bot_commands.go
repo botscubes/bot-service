@@ -7,11 +7,6 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-var (
-	StatusCommandActive = 0
-	StatusCommandDel    = 1
-)
-
 func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
@@ -40,7 +35,7 @@ func (db *Db) CheckCommandExist(botId int64, compId int64, commandId int64) (boo
 			WHERE id = $1 AND component_id = $2 AND status = $3) AS "exists";`
 
 	if err := db.Pool.QueryRow(
-		context.Background(), query, commandId, compId, StatusCommandActive,
+		context.Background(), query, commandId, compId, model.StatusCommandActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}
@@ -60,7 +55,7 @@ func (db *Db) DelCommandsByCompId(botId int64, compId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET status = $1 WHERE component_id = $2;`
 
-	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, compId)
+	_, err := db.Pool.Exec(context.Background(), query, model.StatusCommandDel, compId)
 	return err
 }
 
@@ -68,6 +63,6 @@ func (db *Db) DelCommand(botId int64, commandId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET status = $1 WHERE id = $2;`
 
-	_, err := db.Pool.Exec(context.Background(), query, StatusCommandDel, commandId)
+	_, err := db.Pool.Exec(context.Background(), query, model.StatusCommandDel, commandId)
 	return err
 }

@@ -6,15 +6,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ComponentStatus int
+
+var (
+	StatusComponentActive ComponentStatus
+	StatusComponentDel    ComponentStatus = 1
+)
+
+type CommandStatus int
+
+var (
+	StatusCommandActive CommandStatus
+	StatusCommandDel    CommandStatus = 1
+)
+
 type Component struct {
-	Id         int64     `json:"id"`
-	Data       *Data     `json:"data"`
-	Keyboard   *Keyboard `json:"keyboard"`
-	Commands   *Commands `json:"commands"`
-	NextStepId *int64    `json:"nextStepId"`
-	IsMain     bool      `json:"isMain"`
-	Position   *Point    `json:"position"`
-	Status     int       `json:"-"`
+	Id         int64           `json:"id"`
+	Data       *Data           `json:"data"`
+	Keyboard   *Keyboard       `json:"keyboard"`
+	Commands   *Commands       `json:"commands"`
+	NextStepId *int64          `json:"nextStepId"`
+	IsMain     bool            `json:"isMain"`
+	Position   *Point          `json:"position"`
+	Status     ComponentStatus `json:"-"`
 }
 
 type Commands []*Command
@@ -33,12 +47,12 @@ type Keyboard struct {
 }
 
 type Command struct {
-	Id          *int64  `json:"id"`
-	Type        *string `json:"type"`
-	Data        *string `json:"data"`
-	ComponentId *int64  `json:"componentId"`
-	NextStepId  *int64  `json:"nextStepId"`
-	Status      int     `json:"status"`
+	Id          *int64        `json:"id"`
+	Type        *string       `json:"type"`
+	Data        *string       `json:"data"`
+	ComponentId *int64        `json:"componentId"`
+	NextStepId  *int64        `json:"nextStepId"`
+	Status      CommandStatus `json:"status"`
 }
 
 type Point struct {

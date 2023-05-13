@@ -74,7 +74,7 @@ func AddComponent(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 			NextStepId: nil,
 			IsMain:     false,
 			Position:   reqData.Position,
-			Status:     pgsql.StatusComponentActive,
+			Status:     model.StatusComponentActive,
 		}
 
 		compId, err := db.AddComponent(botId, component)
@@ -90,7 +90,7 @@ func AddComponent(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 				Data:        v.Data,
 				ComponentId: &compId,
 				NextStepId:  nil,
-				Status:      pgsql.StatusCommandActive,
+				Status:      model.StatusCommandActive,
 			}
 
 			_, err := db.AddCommand(botId, mc)

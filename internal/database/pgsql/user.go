@@ -7,11 +7,6 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-// Statuses
-var (
-	StatusUserActive = 0
-)
-
 func (db *Db) AddUser(botId int64, m *model.User) (int64, error) {
 	var id int64
 	prefix := prefixSchema + strconv.FormatInt(botId, 10)
@@ -34,7 +29,7 @@ func (db *Db) CheckUserExistByTgId(botId int64, tgId int64) (bool, error) {
 
 	query := `SELECT EXISTS(SELECT 1 FROM ` + prefix + `.user WHERE tg_id = $1 AND status = $2) AS "exists";`
 	if err := db.Pool.QueryRow(
-		context.Background(), query, tgId, StatusUserActive,
+		context.Background(), query, tgId, model.StatusUserActive,
 	).Scan(&c); err != nil {
 		return false, err
 	}

@@ -2,6 +2,12 @@ package model
 
 import "github.com/goccy/go-json"
 
+type UserStatus int
+
+var (
+	StatusUserActive UserStatus
+)
+
 type User struct {
 	Id        int64   `json:"id"`
 	TgId      int64   `json:"tgId"`
@@ -9,7 +15,7 @@ type User struct {
 	LastName  *string `json:"lastName"`
 	Username  *string `json:"username"`
 	StepID
-	Status int `json:"-"`
+	Status UserStatus `json:"-"`
 }
 
 type StepID struct {

@@ -91,7 +91,7 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 				X: float64(config.StartComponentPosX), Y: float64(config.StartComponentPosY),
 				Valid: true,
 			},
-			Status: pgsql.StatusComponentActive,
+			Status: model.StatusComponentActive,
 		}
 
 		compId, err := db.AddComponent(botId, mc)

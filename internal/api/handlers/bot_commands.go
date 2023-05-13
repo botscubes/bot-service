@@ -87,7 +87,7 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 			Data:        reqData.Data,
 			ComponentId: &compId,
 			NextStepId:  nil,
-			Status:      pgsql.StatusCommandActive,
+			Status:      model.StatusCommandActive,
 		}
 
 		commandId, err := db.AddCommand(botId, m)
