@@ -27,7 +27,7 @@ func (app *App) regiterHandlers() {
 	// Delete bot token
 	app.Router.DELETE("/api/bots/{botId}/token",
 		h.Auth(
-			h.DeleteBotToken(app.Db, app.Log),
+			h.DeleteBotToken(app.Db, app.Log, app.BotService),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 

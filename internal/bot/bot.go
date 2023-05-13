@@ -18,13 +18,14 @@ type BotService struct {
 }
 
 type TBot struct {
-	Id      int64
-	Rdb     *rdb.Rdb
-	Db      *pgsql.Db
-	Bot     *telego.Bot
-	Updates <-chan telego.Update
-	Handler *th.BotHandler
-	log     *zap.SugaredLogger
+	Id        int64
+	Rdb       *rdb.Rdb
+	Db        *pgsql.Db
+	Bot       *telego.Bot
+	Updates   <-chan telego.Update
+	Handler   *th.BotHandler
+	log       *zap.SugaredLogger
+	IsRunning bool
 }
 
 const handlerTimeout = 10 // sec
@@ -50,11 +51,12 @@ func (bs *BotService) NewBot(
 	}
 
 	bs.bots[botId] = &TBot{
-		Id:  botId,
-		Bot: bot,
-		log: logger,
-		Rdb: r,
-		Db:  db,
+		Id:        botId,
+		Bot:       bot,
+		log:       logger,
+		Rdb:       r,
+		Db:        db,
+		IsRunning: false,
 	}
 
 	return nil
@@ -119,6 +121,8 @@ func (btx *TBot) startBot(webhookBase string, listenAddress string, server *tele
 		}(btx.Bot)
 	}
 
+	btx.IsRunning = true
+
 	return nil
 }
 
@@ -140,6 +144,8 @@ func (btx *TBot) stopBot(stopWebhookServer bool) error {
 	if btx.Handler != nil {
 		btx.Handler.Stop()
 	}
+
+	btx.IsRunning = false
 
 	return btx.Bot.DeleteWebhook(nil)
 }
@@ -176,4 +182,12 @@ func (bs *BotService) StopBot(botID int64) error {
 	}
 
 	return bot.stopBot(false)
+}
+
+func (bs *BotService) BotIsRunnig(botID int64) (bool, error) {
+	if ok := bs.CheckBotExist(botID); !ok {
+		return false, ErrBotNotFound
+	}
+
+	return bs.bots[botID].IsRunning, nil
 }

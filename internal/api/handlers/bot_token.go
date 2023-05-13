@@ -7,8 +7,8 @@ import (
 	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
-	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	fh "github.com/valyala/fasthttp"
 )
@@ -100,7 +100,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	}
 }
 
-func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
+func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -129,14 +129,14 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 		}
 
 		// check bot already runnig
-		botStatus, err := db.GetBotStatus(botId)
+		isRunning, err := bs.BotIsRunnig(botId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
-		if botStatus == model.StatusBotRunnig {
+		if isRunning {
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNeedsStopped))
 			return
 		}

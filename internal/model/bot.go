@@ -4,8 +4,6 @@ type BotStatus int
 
 var (
 	StatusBotActive BotStatus
-	StatusBotRunnig BotStatus = 1
-	StatusBotDel    BotStatus = 2
 )
 
 type Bot struct {

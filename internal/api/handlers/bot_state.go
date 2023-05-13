@@ -157,19 +157,6 @@ func StartBot(
 			return
 		}
 
-		// check bot already runnig
-		botStatus, err := db.GetBotStatus(botId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if botStatus == model.StatusBotRunnig {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyRunning))
-			return
-		}
-
 		if ok := bs.CheckBotExist(botId); !ok {
 			// TODO: Own token health check to get a specific error
 			if err = bs.NewBot(token, botId, log, r, db); err != nil {
@@ -178,15 +165,22 @@ func StartBot(
 			}
 		}
 
-		if err = bs.StartBot(botId); err != nil {
+		// check bot already runnig
+		isRunning, err := bs.BotIsRunnig(botId)
+		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrStartBot))
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
-		if err = db.SetBotStatus(botId, model.StatusBotRunnig); err != nil {
+		if isRunning {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyRunning))
+			return
+		}
+
+		if err = bs.StartBot(botId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrStartBot))
 			return
 		}
 
@@ -233,33 +227,27 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandle
 			return
 		}
 
+		if ok := bs.CheckBotExist(botId); !ok {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyStopped))
+			return
+		}
+
 		// check bot already stopped
-		botStatus, err := db.GetBotStatus(botId)
+		isRunning, err := bs.BotIsRunnig(botId)
 		if err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
-		if botStatus == model.StatusBotActive {
+		if !isRunning {
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyStopped))
-			return
-		}
-
-		if ok := bs.CheckBotExist(botId); !ok {
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrBotAlreadyStopped))
 			return
 		}
 
 		if err := bs.StopBot(botId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrStopBot))
-			return
-		}
-
-		if err = db.SetBotStatus(botId, model.StatusBotActive); err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
 
