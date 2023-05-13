@@ -386,7 +386,7 @@ type updComponentReq struct {
 	Position *model.Point `json:"position"`
 }
 
-func UpdComponent(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
+func UpdComponent(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -474,6 +474,11 @@ func UpdComponent(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 				return
 			}
+		}
+
+		// Invalidate component cache
+		if err = r.DelComponent(botId, compId); err != nil {
+			log.Error(err)
 		}
 
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))

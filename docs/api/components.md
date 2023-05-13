@@ -4,16 +4,20 @@
 
 ## Methods
 
+- **COMPONENTS:**
 - [Add component](#add-component)
 - [Delete component](#delete-component)
 - [Update component](#update-component)
 - [Get bot structure](#get-bot-structure)
+- **NEXT STEPS:**
 - [Set next step for component](#set-next-step-for-component)
 - [Delete next step for component](#delete-next-step-for-component)
 - [Set next step for command](#set-next-step-for-command)
 - [Delete next step for command](#delete-next-step-for-command)
+- **COMMANDS:**
 - [Add command](#add-command)
 - [Delete command](#delete-command)
+- [Update command](#update-command)
 
 
 - - -
@@ -219,14 +223,14 @@ PATCH /api/bots/{botId}/components/{compId}
 }
 ```
 
-Поле              | Тип                       | Описание
-------------------|---------------------------|-----------------------------------------------------------
-`data`            | object                    | Данные компонента
-`data.type`       | string                    | Тип компонента
-`data.content`    | [content][type_content][] | Список c данными, специфичными для каждого типа компонента
-`position`        | object                    | Координаты компонента на поле редактора
-`position.x`      | integer                   | Координата X
-`position.y`      | integer                   | Координата Y
+Поле           | Тип                       | Описание
+---------------|---------------------------|-----------------------------------------------------------
+`data`         | object                    | Данные компонента
+`data.type`    | string                    | Тип компонента
+`data.content` | [content][type_content][] | Список c данными, специфичными для каждого типа компонента
+`position`     | object                    | Координаты компонента на поле редактора
+`position.x`   | integer                   | Координата X
+`position.y`   | integer                   | Координата Y
 
 
 #### Ответ
@@ -695,6 +699,83 @@ DELETE /api/bots/{botId}/components/{compId}/commands/{commandId}
     }
 }
 ```
+
+
+- - -
+
+
+## Update command
+
+[Наверх][toup]
+
+Обновление [команды][type_command] в компоненте
+
+```plaintext
+PATCH /api/bots/{botId}/components/{compId}/commands/{commandId}
+```
+
+Параметры пути
+
+Поле        | Описание
+------------|--------------
+`botId`     | id бота
+`compId`    | id компонента
+`commandId` | id команды
+
+Параметры тела запроса
+
+```json
+{
+    "type": "string",
+    "data": "string"
+}
+```
+
+Поле   | Тип    | Описание
+-------|--------|---------------------------------------------
+`type` | string | Тип команды
+`data` | string | Данные, специфичные для каждого типа команды
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+```
+
+<details>
+    <summary>Пример</summary>  
+
+`Запрос`
+
+```plaintext
+POST /api/bots/67/components/5/commands/5
+```
+
+Тело запроса
+
+```json
+{
+    "type": "text",
+    "data": "updated"
+}
+```
+
+`Ответ` 
+
+```json
+{
+    "ok": true,
+}
+```
+</details>
 
 
 [//]: # (LINKS)

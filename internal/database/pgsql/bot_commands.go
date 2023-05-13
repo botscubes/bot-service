@@ -66,3 +66,11 @@ func (db *Db) DelCommand(botId int64, commandId int64) error {
 	_, err := db.Pool.Exec(context.Background(), query, model.StatusCommandDel, commandId)
 	return err
 }
+
+func (db *Db) UpdCommand(botId int64, commandId int64, t *string, data *string) error {
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET "type" = $1, "data" = $2 WHERE id = $3;`
+
+	_, err := db.Pool.Exec(context.Background(), query, t, data, commandId)
+	return err
+}

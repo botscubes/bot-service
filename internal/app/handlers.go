@@ -109,7 +109,14 @@ func (app *App) regiterHandlers() {
 	// update component
 	app.Router.PATCH("/api/bots/{botId}/components/{compId}",
 		h.Auth(
-			h.UpdComponent(app.Db, app.Log),
+			h.UpdComponent(app.Db, app.Redis, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
+
+	// update commmand
+	app.Router.PATCH("/api/bots/{botId}/components/{compId}/commands/{commandId}",
+		h.Auth(
+			h.UpdCommand(app.Db, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 }
