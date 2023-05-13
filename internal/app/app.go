@@ -26,7 +26,7 @@ import (
 type App struct {
 	Router         *fastRouter.Router
 	Server         *telego.MultiBotWebhookServer
-	Bots           map[int64]*bot.TBot
+	BotService     *bot.BotService
 	Conf           *config.ServiceConfig
 	Db             *pgsql.Db
 	SessionStorage token_storage.TokenStorage
@@ -58,7 +58,7 @@ func (app *App) Run(logger *zap.SugaredLogger) error {
 		},
 	}
 
-	app.Bots = make(map[int64]*bot.TBot)
+	app.BotService = bot.NewBotService(&app.Conf.Bot, app.Server)
 
 	app.RedisAuth = redisauth.NewClient(&app.Conf.RedisAuth)
 	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)
@@ -85,10 +85,8 @@ func (app *App) Run(logger *zap.SugaredLogger) error {
 	go func() {
 		<-sigs
 		app.Log.Info("Stopping...")
-		for _, v := range app.Bots {
-			if err := v.StopBot(true); err != nil {
-				app.Log.Error("Stop App: bot stop:\n", err)
-			}
+		if err := app.BotService.StopBots(); err != nil {
+			app.Log.Info("bots stop:\n", err)
 		}
 		done <- struct{}{}
 	}()

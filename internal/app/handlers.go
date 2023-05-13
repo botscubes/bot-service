@@ -34,14 +34,14 @@ func (app *App) regiterHandlers() {
 	// Start bot
 	app.Router.PATCH("/api/bots/{botId}/start",
 		h.Auth(
-			h.StartBot(app.Db, &app.Bots, app.Server, &app.Conf.Bot, app.Redis, app.Log),
+			h.StartBot(app.Db, app.BotService, app.Server, &app.Conf.Bot, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 
 	// Stop bot
 	app.Router.PATCH("/api/bots/{botId}/stop",
 		h.Auth(
-			h.StopBot(app.Db, &app.Bots, app.Log),
+			h.StopBot(app.Db, app.BotService, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 

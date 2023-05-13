@@ -3,12 +3,19 @@ package bot
 import (
 	"time"
 
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	"go.uber.org/zap"
 )
+
+type BotService struct {
+	bots   map[int64]*TBot
+	conf   *config.BotConfig
+	server *telego.MultiBotWebhookServer
+}
 
 type TBot struct {
 	Id      int64
@@ -22,16 +29,35 @@ type TBot struct {
 
 const handlerTimeout = 10 // sec
 
-func New(token *string, botId int64, logger *zap.SugaredLogger) (*TBot, error) {
+func NewBotService(c *config.BotConfig, s *telego.MultiBotWebhookServer) *BotService {
+	return &BotService{
+		conf:   c,
+		server: s,
+		bots:   make(map[int64]*TBot),
+	}
+}
+
+func (bs *BotService) NewBot(
+	token *string,
+	botId int64,
+	logger *zap.SugaredLogger,
+	r *rdb.Rdb,
+	db *pgsql.Db,
+) error {
 	bot, err := telego.NewBot(*token, telego.WithHealthCheck(), telego.WithDefaultDebugLogger())
 	if err != nil {
-		return nil, err
+		return err
 	}
-	res := new(TBot)
-	res.Id = botId
-	res.Bot = bot
-	res.log = logger
-	return res, nil
+
+	bs.bots[botId] = &TBot{
+		Id:  botId,
+		Bot: bot,
+		log: logger,
+		Rdb: r,
+		Db:  db,
+	}
+
+	return nil
 }
 
 func (btx *TBot) setMiddlwares() {
@@ -58,7 +84,7 @@ func (btx *TBot) startHandler() {
 	go btx.Handler.Start()
 }
 
-func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *telego.MultiBotWebhookServer) error {
+func (btx *TBot) startBot(webhookBase string, listenAddress string, server *telego.MultiBotWebhookServer) error {
 	var err error
 
 	_ = btx.Bot.SetWebhook(&telego.SetWebhookParams{
@@ -96,7 +122,7 @@ func (btx *TBot) StartBot(webhookBase string, listenAddress string, server *tele
 	return nil
 }
 
-func (btx *TBot) StopBot(stopWebhookServer bool) error {
+func (btx *TBot) stopBot(stopWebhookServer bool) error {
 	// WARN: The bot is not removed from the app.bots.
 	// Because btx.Updates and btx.Handler
 	// cannot be initialized again when StartBot is called again.
@@ -118,10 +144,36 @@ func (btx *TBot) StopBot(stopWebhookServer bool) error {
 	return btx.Bot.DeleteWebhook(nil)
 }
 
-func (btx *TBot) SetDb(db *pgsql.Db) {
-	btx.Db = db
+func (bs *BotService) StopBots() error {
+	for _, v := range bs.bots {
+		if err := v.stopBot(true); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (btx *TBot) SetRdb(r *rdb.Rdb) {
-	btx.Rdb = r
+// TODO: -> check runnig
+func (bs *BotService) CheckBotExist(botID int64) bool {
+	_, ok := bs.bots[botID]
+	return ok
+}
+
+func (bs *BotService) StartBot(botID int64) error {
+	bot, ok := bs.bots[botID]
+	if !ok {
+		return ErrBotNotFound
+	}
+
+	return bot.startBot(bs.conf.WebhookBase, bs.conf.ListenAddress, bs.server)
+}
+
+func (bs *BotService) StopBot(botID int64) error {
+	bot, ok := bs.bots[botID]
+	if !ok {
+		return ErrBotNotFound
+	}
+
+	return bot.stopBot(false)
 }

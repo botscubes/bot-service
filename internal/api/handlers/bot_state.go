@@ -116,7 +116,7 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 
 func StartBot(
 	db *pgsql.Db,
-	bots *map[int64]*bot.TBot,
+	bs *bot.BotService,
 	s *telego.MultiBotWebhookServer,
 	c *config.BotConfig,
 	r *rdb.Rdb,
@@ -162,19 +162,15 @@ func StartBot(
 		}
 
 		// TODO: check bot started
-		if _, ok := (*bots)[botId]; !ok {
+		if ok := bs.CheckBotExist(botId); !ok {
 			// TODO: Own token health check to get a specific error
-			(*bots)[botId], err = bot.New(token, botId, log)
-			if err != nil {
+			if err = bs.NewBot(token, botId, log, r, db); err != nil {
 				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
 				return
 			}
-
-			(*bots)[botId].SetDb(db)
-			(*bots)[botId].SetRdb(r)
 		}
 
-		if err = (*bots)[botId].StartBot(c.WebhookBase, c.ListenAddress, s); err != nil {
+		if err = bs.StartBot(botId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrStartBot))
 			return
@@ -184,7 +180,7 @@ func StartBot(
 	}
 }
 
-func StopBot(db *pgsql.Db, bots *map[int64]*bot.TBot, log *zap.SugaredLogger) reqHandler {
+func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandler {
 	// TODO: check bot is running
 	// check bot already stopped
 	return func(ctx *fh.RequestCtx) {
@@ -225,12 +221,12 @@ func StopBot(db *pgsql.Db, bots *map[int64]*bot.TBot, log *zap.SugaredLogger) re
 			return
 		}
 
-		if _, ok := (*bots)[botId]; !ok {
+		if ok := bs.CheckBotExist(botId); !ok {
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrBotNotRunning))
 			return
 		}
 
-		if err := (*bots)[botId].StopBot(false); err != nil {
+		if err := bs.StopBot(botId); err != nil {
 			log.Error(err)
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrStopBot))
 			return
