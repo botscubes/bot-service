@@ -39,7 +39,7 @@ POST /api/bots/{botId}/components
 --------|---------
 `botId` | id бота
 
-Параметры тела
+Параметры тела запроса
 
 ```json
 {
@@ -203,7 +203,7 @@ PATCH /api/bots/{botId}/components/{compId}
 `botId`  | id бота
 `compId` | id компонента
 
-Параметры тела
+Параметры тела запроса
 
 Запрос должен включать только необходимые для обновления поля.  
 Т.е основные поля тела запроса являются необзательными (см. пример).
@@ -430,7 +430,7 @@ POST /api/bots/{botId}/components/{compId}/next
 `botId`  | id бота
 `compId` | id исходного компонента
 
-Параметры тела
+Параметры тела запроса
 
 ```json
 {
@@ -514,7 +514,7 @@ POST /api/bots/{botId}/components/{compId}/commands/{commandId}/next
 `compId`    | id компонента
 `commandId` | id команды
 
-Параметры тела
+Параметры тела запроса
 
 ```json
 {
@@ -597,7 +597,7 @@ POST /api/bots/{botId}/components/{compId}/commands
 `botId`  | id бота
 `compId` | id компонента
 
-Параметры тела
+Параметры тела запроса
 
 ```json
 {
