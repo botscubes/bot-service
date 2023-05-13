@@ -16,10 +16,14 @@ func main() {
 		_ = fmt.Errorf("new logger: %w", err)
 	}
 
-	defer app.Log.Sync()
+	defer func() {
+		if err := app.Log.Sync(); err != nil {
+			log.Error(err)
+		}
+	}()
 
 	if err := app.Run(log); err != nil {
-		log.Fatal("App run:\n", err)
+		log.Error("App run:\n", err)
 	}
 
 	log.Info("App Done")

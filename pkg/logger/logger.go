@@ -1,10 +1,12 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const envPrefix = "TBOT_"
@@ -15,7 +17,6 @@ const (
 )
 
 func NewLogger() (*zap.SugaredLogger, error) {
-
 	ltype, ok := lookupEnv(loggerTypeVarName)
 	if !ok {
 		fmt.Printf("env %q not found, used default loggerType: %s\n", envPrefix+loggerTypeVarName, defLogggerType)
@@ -23,14 +24,20 @@ func NewLogger() (*zap.SugaredLogger, error) {
 	}
 
 	var logger *zap.Logger
+	var loggerConf zap.Config
 	var err error
 	switch ltype {
 	case "dev":
-		logger, err = zap.NewDevelopment()
+		loggerConf = zap.NewDevelopmentConfig()
 	case "prod":
-		logger, err = zap.NewProduction()
+		loggerConf = zap.NewProductionConfig()
+	default:
+		return nil, errors.New("unknown logger type")
 	}
 
+	loggerConf.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+	logger, err = loggerConf.Build()
 	if err != nil {
 		return nil, err
 	}
