@@ -32,13 +32,15 @@ var (
 	ErrTokenNotFound         = err.New(106, "Token not found")
 	ErrStartBot              = err.New(107, "Start bot error")
 	ErrStopBot               = err.New(108, "Stop bot error")
-	ErrBotNotRunning         = err.New(109, "The bot is not running")
+	ErrBotAlreadyStopped     = err.New(109, "The bot already stopped")
 	ErrComponentNotFound     = err.New(110, "Component not found")
 	ErrNextComponentNotFound = err.New(111, "Next component not found")
 	ErrCommandNotFound       = err.New(112, "Command not found")
 	ErrMainComponent         = err.New(113, "The action is not available for the main component")
 	ErrUnknownComponent      = err.New(114, "Unknown component")
 	ErrUnknownCommand        = err.New(115, "Unknown command")
+	ErrBotAlreadyRunning     = err.New(116, "The bot already running")
+	ErrBotNeedsStopped       = err.New(117, "Bot needs to be stopped")
 )
 
 func InvalidParam(mes string) *err.ServiceError {

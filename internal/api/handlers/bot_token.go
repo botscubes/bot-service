@@ -8,6 +8,7 @@ import (
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	fh "github.com/valyala/fasthttp"
 )
@@ -17,7 +18,6 @@ type setBotTokenReq struct {
 }
 
 func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
-	// TODO: check bot is started
 	return func(ctx *fh.RequestCtx) {
 		var data setBotTokenReq
 
@@ -101,7 +101,6 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 }
 
 func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
-	// TODO: check bot is started
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -126,6 +125,19 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 
 		if !existBot {
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
+			return
+		}
+
+		// check bot already runnig
+		botStatus, err := db.GetBotStatus(botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if botStatus == model.StatusBotRunnig {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNeedsStopped))
 			return
 		}
 

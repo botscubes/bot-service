@@ -6,11 +6,6 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-// Statuses
-var (
-	StatusBotActive = 0
-)
-
 func (db *Db) AddBot(m *model.Bot) (int64, error) {
 	var id int64
 	query := `INSERT INTO public.bot (user_id, token, title, status) VALUES ($1, $2, $3, $4) RETURNING id;`
@@ -25,9 +20,9 @@ func (db *Db) AddBot(m *model.Bot) (int64, error) {
 
 func (db *Db) CheckBotExist(userId int64, botId int64) (bool, error) {
 	var c bool
-	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2 AND status = $3) AS "exists";`
+	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2 AND status < $3) AS "exists";`
 	if err := db.Pool.QueryRow(
-		context.Background(), query, botId, userId, StatusBotActive,
+		context.Background(), query, botId, userId, model.StatusBotDel,
 	).Scan(&c); err != nil {
 		return false, err
 	}
@@ -63,4 +58,22 @@ func (db *Db) SetBotToken(userId int64, botId int64, token *string) error {
 	query := `UPDATE public.bot SET token = $1 WHERE id = $2 AND user_id = $3;`
 	_, err := db.Pool.Exec(context.Background(), query, token, botId, userId)
 	return err
+}
+
+func (db *Db) SetBotStatus(botId int64, status model.BotStatus) error {
+	query := `UPDATE public.bot SET status = $1 WHERE id = $2;`
+	_, err := db.Pool.Exec(context.Background(), query, status, botId)
+	return err
+}
+
+func (db *Db) GetBotStatus(botId int64) (model.BotStatus, error) {
+	var data model.BotStatus
+	query := `SELECT status FROM public.bot WHERE id = $1;`
+	if err := db.Pool.QueryRow(
+		context.Background(), query, botId,
+	).Scan(&data); err != nil {
+		return 0, err
+	}
+
+	return data, nil
 }
