@@ -274,3 +274,79 @@ func GetBots(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, bots, nil))
 	}
 }
+
+func WipeBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandler {
+	return func(ctx *fh.RequestCtx) {
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Error(ErrUserIDConvertation)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyRunning))
+			return
+		}
+
+		// stop bot worker
+		if ok := bs.CheckBotExist(botId); ok {
+
+			// check bot already stopped
+			isRunning, err := bs.BotIsRunnig(botId)
+			if err != nil {
+				log.Error(err)
+				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+				return
+			}
+
+			if isRunning {
+				if err := bs.StopBot(botId); err != nil {
+					log.Error(err)
+					doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrStopBot))
+					return
+				}
+			}
+		}
+
+		// remove components
+		err = db.DelAllComponents(botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// remove commands
+		err = db.DelAllCommands(botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// remove token
+		token := ""
+		if err = db.SetBotToken(userId, botId, &token); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+	}
+}

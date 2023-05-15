@@ -4,12 +4,8 @@ import (
 	h "github.com/botscubes/bot-service/internal/api/handlers"
 )
 
-func (app *App) regiterHandlers() {
-	app.Router.PanicHandler = h.PanicHandler(app.Log)
-
-	app.Router.GET("/api/bots/health",
-		h.Auth(h.Health, &app.SessionStorage, &app.Conf.JWTKey, app.Log))
-
+// Bot handlers
+func (app *App) regBotsHandlers() {
 	// Create new bot
 	app.Router.POST("/api/bots",
 		h.Auth(
@@ -52,23 +48,37 @@ func (app *App) regiterHandlers() {
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 
-	// Bot components
+	// Wipe bot data
+	app.Router.PATCH("/api/bots/{botId}/wipe",
+		h.Auth(
+			h.WipeBot(app.Db, app.BotService, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
+}
 
+func (app *App) regComponentsHandlers() {
 	// Adds a component to the bot structure
 	app.Router.POST("/api/bots/{botId}/components",
 		h.Auth(h.AddComponent(app.Db, app.Log), &app.SessionStorage, &app.Conf.JWTKey, app.Log))
+
+	// Delete bot component
+	app.Router.DELETE("/api/bots/{botId}/components/{compId}",
+		h.Auth(
+			h.DelComponent(app.Db, app.Redis, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
+
+	// update component
+	app.Router.PATCH("/api/bots/{botId}/components/{compId}",
+		h.Auth(
+			h.UpdComponent(app.Db, app.Redis, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
 
 	// Set next step component
 	app.Router.POST("/api/bots/{botId}/components/{compId}/next",
 		h.Auth(
 			h.SetNextStepComponent(app.Db, app.Redis, app.Log),
-			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
-		))
-
-	// Set next step component command
-	app.Router.POST("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
-		h.Auth(
-			h.SetNextStepCommand(app.Db, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 
@@ -84,18 +94,13 @@ func (app *App) regiterHandlers() {
 		h.Auth(
 			h.DelNextStepComponent(app.Db, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log))
+}
 
-	// Delete next step command
-	app.Router.DELETE("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
+func (app *App) regCommandsHandlers() {
+	// Add command
+	app.Router.POST("/api/bots/{botId}/components/{compId}/commands",
 		h.Auth(
-			h.DelNextStepCommand(app.Db, app.Redis, app.Log),
-			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
-		))
-
-	// Delete bot component
-	app.Router.DELETE("/api/bots/{botId}/components/{compId}",
-		h.Auth(
-			h.DelComponent(app.Db, app.Redis, app.Log),
+			h.AddCommand(app.Db, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 
@@ -106,24 +111,35 @@ func (app *App) regiterHandlers() {
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 
-	// Add component command
-	app.Router.POST("/api/bots/{botId}/components/{compId}/commands",
-		h.Auth(
-			h.AddCommand(app.Db, app.Redis, app.Log),
-			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
-		))
-
-	// update component
-	app.Router.PATCH("/api/bots/{botId}/components/{compId}",
-		h.Auth(
-			h.UpdComponent(app.Db, app.Redis, app.Log),
-			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
-		))
-
 	// update command
 	app.Router.PATCH("/api/bots/{botId}/components/{compId}/commands/{commandId}",
 		h.Auth(
 			h.UpdCommand(app.Db, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
+
+	// Set next step component command
+	app.Router.POST("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
+		h.Auth(
+			h.SetNextStepCommand(app.Db, app.Redis, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
+
+	// Delete next step command
+	app.Router.DELETE("/api/bots/{botId}/components/{compId}/commands/{commandId}/next",
+		h.Auth(
+			h.DelNextStepCommand(app.Db, app.Redis, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
+}
+
+func (app *App) regiterHandlers() {
+	app.Router.PanicHandler = h.PanicHandler(app.Log)
+
+	app.Router.GET("/api/bots/health",
+		h.Auth(h.Health, &app.SessionStorage, &app.Conf.JWTKey, app.Log))
+
+	app.regBotsHandlers()
+	app.regComponentsHandlers()
+	app.regCommandsHandlers()
 }

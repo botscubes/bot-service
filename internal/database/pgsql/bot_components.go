@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/model"
 )
 
@@ -91,6 +92,14 @@ func (db *Db) DelComponent(botId int64, compId int64) error {
 			SET status = $1 WHERE id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, model.StatusComponentDel, compId)
+	return err
+}
+
+func (db *Db) DelAllComponents(botId int64) error {
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET status = $1 WHERE id != $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, model.StatusComponentDel, config.MainComponentId)
 	return err
 }
 
