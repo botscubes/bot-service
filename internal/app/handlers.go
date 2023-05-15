@@ -45,6 +45,13 @@ func (app *App) regiterHandlers() {
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 
+	// Get user bots
+	app.Router.GET("/api/bots",
+		h.Auth(
+			h.GetBots(app.Db, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
+
 	// Bot components
 
 	// Adds a component to the bot structure

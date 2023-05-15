@@ -59,3 +59,29 @@ func (db *Db) SetBotToken(userId int64, botId int64, token *string) error {
 	_, err := db.Pool.Exec(context.Background(), query, token, botId, userId)
 	return err
 }
+
+func (db *Db) UserBots(userId int64) (*[]*model.Bot, error) {
+	data := []*model.Bot{}
+
+	query := `SELECT id, title FROM public.bot WHERE status = $1 AND user_id = $2 ORDER BY id;`
+
+	rows, err := db.Pool.Query(context.Background(), query, model.StatusBotActive, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var r model.Bot
+		if err = rows.Scan(&r.Id, &r.Title); err != nil {
+			return nil, err
+		}
+
+		data = append(data, &r)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return &data, nil
+}

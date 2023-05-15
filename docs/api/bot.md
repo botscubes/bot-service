@@ -86,7 +86,7 @@ POST /api/bots
     "ok": true,
     "data": {
         "botId": 66,
-        "conponent": {
+        "component": {
             "id": 1,
             "data": {
                 "type": "start",

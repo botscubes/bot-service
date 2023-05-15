@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
@@ -33,6 +34,12 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
 		if err != nil {
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		// check component is main
+		if compId == config.MainComponentId {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrMainComponent))
 			return
 		}
 

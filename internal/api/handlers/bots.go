@@ -23,7 +23,7 @@ type newBotReq struct {
 
 type newBotRes struct {
 	BotId     int64            `json:"botId"`
-	Component *model.Component `json:"conponent"`
+	Component *model.Component `json:"component"`
 }
 
 func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
@@ -252,5 +252,25 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandle
 		}
 
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+	}
+}
+
+func GetBots(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
+	return func(ctx *fh.RequestCtx) {
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Error(ErrUserIDConvertation)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		bots, err := db.UserBots(userId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, bots, nil))
 	}
 }
