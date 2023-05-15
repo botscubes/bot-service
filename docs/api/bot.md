@@ -5,10 +5,12 @@
 ## Methods
 
 - [New bot](#new-bot)
+- [Get bots](#get-bots)
 - [Set token](#set-token)
 - [Delete token](#delete-token)
 - [Start](#start)
 - [Stop](#stop)
+- [Wipe bot](#wipe-bot)
 
 
 - - -
@@ -104,6 +106,75 @@ POST /api/bots
             }
         }
     }
+}
+```
+</details>
+
+
+- - -
+
+
+## Get bots
+
+[Наверх][toup]
+
+Получение списка ботов пользователя
+
+```plaintext
+GET /api/bots
+```
+
+#### Ответ
+
+Включает только одно из полей: `data`, `error`  
+После создания бот включает в свою структуру стартовый компонент
+
+```json
+{
+    "ok": "bool",
+    "data": [
+        "bot"
+    ],
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+```
+
+Поле   | Тип             | Описание
+-------|-----------------|-------------
+`data` | bot[]           | Список ботов
+`bot`  | [bot][type_bot] | Бот
+
+<details>
+    <summary>Пример</summary>
+   
+`Запрос`
+
+```plaintext
+GET /api/bots
+```
+
+`Ответ` 
+
+```json
+{
+    "ok": true,
+    "data": [
+        {
+            "id": 79,
+            "title": "qwerty"
+        },
+        {
+            "id": 80,
+            "title": "qwerty"
+        },
+        {
+            "id": 124,
+            "title": "--"
+        }
+    ]
 }
 ```
 </details>
@@ -256,6 +327,44 @@ PATCH /api/bots/{botId}/stop
 }
 ```
 
+
+- - -
+
+
+## Wipe bot
+
+[Наверх][toup]
+
+Очиста бота:  
+- Удаление всех компонентов в структре, кроме начального  
+- Удаление всех команд  
+- Сброс токена  
+
+```plaintext
+PATCH /api/bots/{botId}/wipe
+```
+
+Параметры пути
+
+Поле    | Описание
+--------|---------
+`botId` | id бота
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+```
+
 [//]: # (LINKS)
 [type_component]: ../objects.md#component
+[type_bot]: ../objects.md#bot
 [toup]: #api-управления-ботом 

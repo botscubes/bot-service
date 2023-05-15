@@ -5,9 +5,44 @@
 
 ## Objects
 
+- [Bot](#bot)
 - [Component](#component)
 - [Content](#content)
 - [Command](#command)
+
+
+## Bot
+
+[Наверх][toup]
+
+Содержит информацию о боте
+
+```json
+{
+    "id": "integer",
+    "title": "string",
+}
+```
+
+| Поле    | Тип     | Описание   |
+|---------|---------|------------|
+| `id`    | integer | id команды |
+| `title` | string  | Название   |
+
+
+<details>
+    <summary>Примеры</summary>
+
+```json
+{
+    "id": 79,
+    "title": "qwerty"
+}
+```
+</details>
+
+
+- - -
 
 
 ## Component

@@ -305,7 +305,6 @@ func WipeBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandle
 
 		// stop bot worker
 		if ok := bs.CheckBotExist(botId); ok {
-
 			// check bot already stopped
 			isRunning, err := bs.BotIsRunnig(botId)
 			if err != nil {
