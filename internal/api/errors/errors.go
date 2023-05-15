@@ -15,7 +15,7 @@ var (
 
 var (
 	ErrInvalidRequest = err.New(InvalidRequestCode, "Invalid request")
-	ErrInvalidParam   = err.New(InvalidParamCode, "Invalid parameter")
+	ErrInvalidParam   = err.New(InvalidParamCode, "Invalid parameter value")
 	ErrMissingParam   = err.New(MissingParamCode, "Required parameter is missing")
 	ErrInternalServer = err.New(InternalServerCode, "Internal server error")
 	ErrUnauthorized   = err.New(UnauthorizedCode, "Unauthorized")

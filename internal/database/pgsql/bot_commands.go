@@ -51,11 +51,27 @@ func (db *Db) DelNextStepCommand(botId int64, commandId int64) error {
 	return err
 }
 
+func (db *Db) DelNextStepsCommandByNS(botId int64, nextSteps *[]int64) error {
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET next_step_id = null WHERE next_step_id = ANY($1::bigint[]);`
+
+	_, err := db.Pool.Exec(context.Background(), query, nextSteps)
+	return err
+}
+
 func (db *Db) DelCommandsByCompId(botId int64, compId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET status = $1 WHERE component_id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, model.StatusCommandDel, compId)
+	return err
+}
+
+func (db *Db) DelCommandsByCompIds(botId int64, data *[]int64) error {
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET status = $1 WHERE component_id = ANY($2::bigint[]);`
+
+	_, err := db.Pool.Exec(context.Background(), query, model.StatusCommandDel, data)
 	return err
 }
 

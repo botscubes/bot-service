@@ -7,6 +7,7 @@
 - **COMPONENTS:**
 - [Add component](#add-component)
 - [Delete component](#delete-component)
+- [Delete set of components](#delete-set-of-components)
 - [Update component](#update-component)
 - [Get bot structure](#get-bot-structure)
 - **NEXT STEPS:**
@@ -181,6 +182,79 @@ DELETE /api/bots/{botId}/components/{compId}
     }
 }
 ```
+
+
+- - -
+
+
+## Delete set of components
+
+[Наверх][toup]
+
+Удаление набора компонентов из структуры бота
+
+```plaintext
+POST /api/bots/{botId}/components/del
+```
+
+Параметры пути
+
+Поле    | Описание
+--------|---------
+`botId` | id бота
+
+Параметры тела запроса
+
+```json
+{
+    "data": [ "componentID" ]
+}
+```
+
+Поле          | Тип           | Описание
+--------------|---------------|------------------------
+`data`        | []componentID | Список с id компонентов
+`componentID` | integer       | id компонента
+
+#### Ответ
+
+В случае успеха включает только поле `ok`
+
+```json
+{
+    "ok": "bool",
+    "error": {
+        "code": "integer",
+        "message": "string"
+    }
+}
+```
+
+<details>
+    <summary>Пример</summary>
+   
+`Запрос`
+
+```plaintext
+POST /api/bots/64/components/del
+```
+
+Тело запроса
+
+```json
+{
+    "data": [21, 24]
+}
+```
+
+`Ответ` 
+
+```json
+{
+    "ok": true
+}
+```
+</details>
 
 
 - - -

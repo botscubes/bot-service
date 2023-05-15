@@ -372,9 +372,111 @@ func DelComponent(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 			return
 		}
 
+		// remove component next steps, that reference these component
+		if err = db.DelNextStepComponentByNS(botId, compId); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
 		// Invalidate component cache
 		if err = r.DelComponent(botId, compId); err != nil {
 			log.Error(err)
+		}
+
+		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+	}
+}
+
+type delSetComponentsReq struct {
+	Data *[]int64 `json:"data"`
+}
+
+func DelSetOfComponents(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
+	return func(ctx *fh.RequestCtx) {
+		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
+		if err != nil {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		var reqData delSetComponentsReq
+		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		userId, ok := ctx.UserValue("userId").(int64)
+		if !ok {
+			log.Error(ErrUserIDConvertation)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if reqData.Data == nil {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
+			return
+		}
+
+		if len(*reqData.Data) == 0 {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidParam))
+			return
+		}
+
+		// check exist main component
+		for _, v := range *reqData.Data {
+			if v == config.MainComponentId {
+				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrMainComponent))
+				return
+			}
+		}
+
+		// check bot exists
+		existBot, err := db.CheckBotExist(userId, botId)
+		if err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		if !existBot {
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
+			return
+		}
+
+		// remove components
+		if err = db.DelSetOfComponents(botId, reqData.Data); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// remove component commands
+		if err = db.DelCommandsByCompIds(botId, reqData.Data); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// remove component next steps, that reference these components
+		if err = db.DelNextStepsComponentByNS(botId, reqData.Data); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// remove command next steps, that reference these components
+		if err = db.DelNextStepsCommandByNS(botId, reqData.Data); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
+		// Invalidate component cache
+		for _, v := range *reqData.Data {
+			if err = r.DelComponent(botId, v); err != nil {
+				log.Error(err)
+			}
 		}
 
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))

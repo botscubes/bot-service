@@ -4,6 +4,17 @@ import (
 	h "github.com/botscubes/bot-service/internal/api/handlers"
 )
 
+func (app *App) regiterHandlers() {
+	app.Router.PanicHandler = h.PanicHandler(app.Log)
+
+	app.Router.GET("/api/bots/health",
+		h.Auth(h.Health, &app.SessionStorage, &app.Conf.JWTKey, app.Log))
+
+	app.regBotsHandlers()
+	app.regComponentsHandlers()
+	app.regCommandsHandlers()
+}
+
 // Bot handlers
 func (app *App) regBotsHandlers() {
 	// Create new bot
@@ -65,6 +76,13 @@ func (app *App) regComponentsHandlers() {
 	app.Router.DELETE("/api/bots/{botId}/components/{compId}",
 		h.Auth(
 			h.DelComponent(app.Db, app.Redis, app.Log),
+			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
+		))
+
+	// Delete set of components
+	app.Router.POST("/api/bots/{botId}/components/del",
+		h.Auth(
+			h.DelSetOfComponents(app.Db, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 
@@ -131,15 +149,4 @@ func (app *App) regCommandsHandlers() {
 			h.DelNextStepCommand(app.Db, app.Redis, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
-}
-
-func (app *App) regiterHandlers() {
-	app.Router.PanicHandler = h.PanicHandler(app.Log)
-
-	app.Router.GET("/api/bots/health",
-		h.Auth(h.Health, &app.SessionStorage, &app.Conf.JWTKey, app.Log))
-
-	app.regBotsHandlers()
-	app.regComponentsHandlers()
-	app.regCommandsHandlers()
 }

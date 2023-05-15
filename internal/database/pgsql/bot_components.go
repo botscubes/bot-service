@@ -87,11 +87,35 @@ func (db *Db) DelNextStepComponent(botId int64, compId int64) error {
 	return err
 }
 
+func (db *Db) DelNextStepComponentByNS(botId int64, nextStep int64) error {
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET next_step_id = null WHERE next_step_id = $1;`
+
+	_, err := db.Pool.Exec(context.Background(), query, nextStep)
+	return err
+}
+
+func (db *Db) DelNextStepsComponentByNS(botId int64, nextSteps *[]int64) error {
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET next_step_id = null WHERE next_step_id = ANY($1::bigint[]);`
+
+	_, err := db.Pool.Exec(context.Background(), query, nextSteps)
+	return err
+}
+
 func (db *Db) DelComponent(botId int64, compId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET status = $1 WHERE id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, model.StatusComponentDel, compId)
+	return err
+}
+
+func (db *Db) DelSetOfComponents(botId int64, data *[]int64) error {
+	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET status = $1 WHERE id = ANY($2::bigint[]);`
+
+	_, err := db.Pool.Exec(context.Background(), query, model.StatusComponentDel, data)
 	return err
 }
 

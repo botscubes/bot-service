@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/botscubes/bot-service/internal/config"
-	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -108,7 +107,7 @@ func (btx *TBot) findComponent(stepID int64, message *telego.Message) (bool, *mo
 		var err error
 		component, err = btx.getComponent(stepID)
 		if err != nil {
-			if errors.Is(err, rdb.ErrNotFound) {
+			if errors.Is(err, ErrNotFound) {
 				stepID = config.MainComponentId
 				continue
 			}
