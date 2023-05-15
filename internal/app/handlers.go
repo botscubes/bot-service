@@ -51,7 +51,7 @@ func (app *App) regBotsHandlers() {
 	// Wipe bot data
 	app.Router.PATCH("/api/bots/{botId}/wipe",
 		h.Auth(
-			h.WipeBot(app.Db, app.BotService, app.Log),
+			h.WipeBot(app.Db, app.Redis, app.BotService, app.Log),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 }

@@ -275,7 +275,7 @@ func GetBots(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	}
 }
 
-func WipeBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandler {
+func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogger) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
 		if err != nil {
@@ -338,6 +338,13 @@ func WipeBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandle
 			return
 		}
 
+		// remove next step from main component
+		if err = db.DelNextStepComponent(botId, config.MainComponentId); err != nil {
+			log.Error(err)
+			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+			return
+		}
+
 		// remove token
 		token := ""
 		if err = db.SetBotToken(userId, botId, &token); err != nil {
@@ -345,6 +352,9 @@ func WipeBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandle
 			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
 			return
 		}
+
+		// Invalidate bot cache
+		r.DelBotData(botId)
 
 		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
 	}
