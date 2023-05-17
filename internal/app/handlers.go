@@ -27,7 +27,7 @@ func (app *App) regBotsHandlers() {
 	// Set bot token
 	app.Router.POST("/api/bots/{botId}/token",
 		h.Auth(
-			h.SetBotToken(app.Db, app.Log),
+			h.SetBotToken(app.Db, app.Log, app.BotService),
 			&app.SessionStorage, &app.Conf.JWTKey, app.Log,
 		))
 

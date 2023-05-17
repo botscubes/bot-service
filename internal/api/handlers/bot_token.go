@@ -17,7 +17,7 @@ type setBotTokenReq struct {
 	Token *string `json:"token"`
 }
 
-func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
+func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) reqHandler {
 	return func(ctx *fh.RequestCtx) {
 		var data setBotTokenReq
 
@@ -64,17 +64,19 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 			return
 		}
 
-		// check bot token installed
-		oldToken, err := db.GetBotToken(userId, botId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
+		// check bot already runnig
+		if ok := bs.CheckBotExist(botId); ok {
+			isRunning, err := bs.BotIsRunnig(botId)
+			if err != nil {
+				log.Error(err)
+				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+				return
+			}
 
-		if oldToken != nil && *oldToken != "" {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrTokenAlreadyInstalled))
-			return
+			if isRunning {
+				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNeedsStopped))
+				return
+			}
 		}
 
 		// check token exists
@@ -129,16 +131,18 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) re
 		}
 
 		// check bot already runnig
-		isRunning, err := bs.BotIsRunnig(botId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
+		if ok := bs.CheckBotExist(botId); ok {
+			isRunning, err := bs.BotIsRunnig(botId)
+			if err != nil {
+				log.Error(err)
+				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
+				return
+			}
 
-		if isRunning {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNeedsStopped))
-			return
+			if isRunning {
+				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNeedsStopped))
+				return
+			}
 		}
 
 		token := ""
