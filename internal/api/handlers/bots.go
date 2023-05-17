@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"strconv"
 	"unicode/utf8"
 
@@ -113,6 +114,8 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 	}
 }
 
+var ErrTgAuth401 = errors.New(`telego: health check: telego: getMe(): api: 401 "Unauthorized"`)
+
 func StartBot(
 	db *pgsql.Db,
 	bs *bot.BotService,
@@ -158,9 +161,14 @@ func StartBot(
 		}
 
 		if ok := bs.CheckBotExist(botId); !ok {
-			// TODO: Own token health check to get a specific error
 			if err = bs.NewBot(token, botId, log, r, db); err != nil {
-				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
+				if err.Error() == ErrTgAuth401.Error() {
+					doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
+					return
+				}
+
+				log.Error(err)
+				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrNewBot))
 				return
 			}
 		}

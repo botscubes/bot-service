@@ -41,6 +41,7 @@ var (
 	ErrUnknownCommand        = err.New(115, "Unknown command")
 	ErrBotAlreadyRunning     = err.New(116, "The bot already running")
 	ErrBotNeedsStopped       = err.New(117, "Bot needs to be stopped")
+	ErrNewBot                = err.New(118, "Create bot error")
 )
 
 func InvalidParam(mes string) *err.ServiceError {
