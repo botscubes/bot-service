@@ -219,7 +219,7 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandle
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyRunning))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
 			return
 		}
 
@@ -307,7 +307,7 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyRunning))
+			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
 			return
 		}
 
