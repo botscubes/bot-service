@@ -174,6 +174,7 @@ func StartBot(
 		}
 
 		// check bot already runnig
+		// TODO: move to UP
 		isRunning, err := bs.BotIsRunnig(botId)
 		if err != nil {
 			log.Error(err)
@@ -220,18 +221,6 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandle
 
 		if !existBot {
 			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
-		}
-
-		token, err := db.GetBotToken(userId, botId)
-		if err != nil {
-			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
-		if token == nil || *token == "" {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrTokenNotFound))
 			return
 		}
 

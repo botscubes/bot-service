@@ -3,11 +3,11 @@ module github.com/botscubes/bot-service
 go 1.20
 
 require (
-	github.com/botscubes/user-service v0.0.0-20230427145246-bf89bbd8212f
+	github.com/botscubes/user-service v0.0.0-20230518151626-80acbd92cf57
 	github.com/fasthttp/router v1.4.19
 	github.com/goccy/go-json v0.10.2
 	github.com/jackc/pgx/v5 v5.3.1
-	github.com/mymmrac/telego v0.24.0
+	github.com/mymmrac/telego v0.25.0
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/valyala/fasthttp v1.47.0
@@ -27,7 +27,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 )

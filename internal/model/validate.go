@@ -36,6 +36,7 @@ func (d *Data) Validate() *se.ServiceError {
 		return e.MissingParam("data.content")
 	}
 
+	// TODO: create map with components, contains validate func (mb struct)
 	switch *d.Type {
 	case "start":
 		return vStart()

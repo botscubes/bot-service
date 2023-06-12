@@ -42,6 +42,7 @@ linters:
     - forbidigo # Forbids identifiers
     - dupl # Tool for code clone detection
     - cyclop # checks function and package cyclomatic complexity
+    - depguard # Go linter that checks if package imports are in a list of acceptable packages
 
     # Disabled because of generics
     - rowserrcheck # checks whether Err of rows is checked successfully
@@ -139,12 +140,6 @@ linters-settings:
   staticcheck: # Staticcheck is a go vet on steroids, applying a ton of static analysis checks
     # Include tests in the analysis.
     tests: true
-  depguard: # Go linter that checks if package imports are in a list of acceptable packages
-    list-type: blacklist
-    include-go-root: false
-    packages:
-      - unsafe
-      - reflect
   funlen: # Tool for detection of long functions
     lines: 120
     statements: 60
