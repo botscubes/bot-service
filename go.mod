@@ -8,7 +8,7 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/mymmrac/telego v0.24.0
-	github.com/redis/go-redis/v9 v9.0.4
+	github.com/redis/go-redis/v9 v9.0.5
 	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/valyala/fasthttp v1.47.0
 	go.uber.org/zap v1.24.0
