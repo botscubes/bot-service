@@ -10,7 +10,7 @@ require (
 	github.com/mymmrac/telego v0.25.0
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/sethvargo/go-envconfig v0.9.0
-	github.com/valyala/fasthttp v1.47.0
+	github.com/valyala/fasthttp v1.48.0
 	go.uber.org/zap v1.24.0
 )
 
