@@ -7,7 +7,7 @@ require (
 	github.com/fasthttp/router v1.4.19
 	github.com/goccy/go-json v0.10.2
 	github.com/jackc/pgx/v5 v5.4.1
-	github.com/mymmrac/telego v0.25.0
+	github.com/mymmrac/telego v0.25.1
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/valyala/fasthttp v1.48.0
@@ -29,5 +29,5 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 )
