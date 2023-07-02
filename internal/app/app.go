@@ -1,17 +1,18 @@
 package app
 
-// WARN: bot not receive updates on app stop by panic
-
 import (
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/goccy/go-json"
+
 	"github.com/redis/go-redis/v9"
-	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 
-	fastRouter "github.com/fasthttp/router"
+	e "github.com/botscubes/bot-service/internal/api/errors"
+	resp "github.com/botscubes/bot-service/pkg/api_response"
 
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
@@ -20,12 +21,11 @@ import (
 	"github.com/botscubes/bot-service/internal/database/redisauth"
 	"github.com/botscubes/user-service/pkg/token_storage"
 
-	"github.com/mymmrac/telego"
+	"github.com/gofiber/fiber/v2"
 )
 
 type App struct {
-	Router         *fastRouter.Router
-	Server         *telego.MultiBotWebhookServer
+	Server         *fiber.App
 	BotService     *bot.BotService
 	Conf           *config.ServiceConfig
 	Db             *pgsql.Db
@@ -41,24 +41,31 @@ func (app *App) Run(logger *zap.SugaredLogger) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+	app.Log = logger
+
 	app.Conf, err = config.GetConfig()
 	if err != nil {
 		return err
 	}
 
-	app.Log = logger
+	app.Server = fiber.New(fiber.Config{
+		AppName:               "Bot-API service",
+		DisableStartupMessage: true,
+		JSONEncoder:           json.Marshal,
+		JSONDecoder:           json.Unmarshal,
+		ErrorHandler:          app.errorHandler,
+	})
 
-	app.Router = fastRouter.New()
-	app.Server = &telego.MultiBotWebhookServer{
-		Server: telego.FastHTTPWebhookServer{
-			Server: &fasthttp.Server{
-				Handler: app.Router.Handler,
-			},
-			Router: app.Router,
-		},
-	}
+	// app.Server = &telego.MultiBotWebhookServer{
+	// 	Server: telego.FastHTTPWebhookServer{
+	// 		Server: &fasthttp.Server{
+	// 			Handler: app.Router.Handler,
+	// 		},
+	// 		Router: app.Router,
+	// 	},
+	// }
 
-	app.BotService = bot.NewBotService(&app.Conf.Bot, app.Server)
+	// app.BotService = bot.NewBotService(&app.Conf.Bot, app.Server)
 
 	app.RedisAuth = redisauth.NewClient(&app.Conf.RedisAuth)
 	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)
@@ -75,13 +82,12 @@ func (app *App) Run(logger *zap.SugaredLogger) error {
 	app.regiterHandlers()
 
 	go func() {
-		if err = app.Server.Start(app.Conf.Bot.ListenAddress); err != nil {
-			app.Log.Error(err)
+		if err := app.Server.Listen(app.Conf.ListenAddress); err != nil {
+			app.Log.Error("Start server:", err)
 			sigs <- syscall.SIGTERM
 		}
 	}()
 
-	// On close, error program
 	go func() {
 		<-sigs
 		app.Log.Info("Stopping...")
@@ -96,4 +102,19 @@ func (app *App) Run(logger *zap.SugaredLogger) error {
 	<-done
 
 	return nil
+}
+
+func (app *App) errorHandler(ctx *fiber.Ctx, err error) error {
+	// Status code defaults to 500
+	code := fiber.StatusInternalServerError
+
+	// Retrieve the custom status code if it's a *fiber.Error
+	var fiberErr *fiber.Error
+	if errors.As(err, &fiberErr) {
+		code = fiberErr.Code
+	}
+
+	app.Log.Errorf("API panic recovered: %v", err)
+
+	return ctx.Status(code).JSON(resp.New(false, nil, e.ErrInternalServer))
 }

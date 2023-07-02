@@ -172,7 +172,11 @@ func (bs *BotService) StartBot(botID int64) error {
 		return ErrBotNotFound
 	}
 
-	return bot.startBot(bs.conf.WebhookBase, bs.conf.ListenAddress, bs.server)
+	bot.log.Debug("Call Bot Start Handler")
+
+	// return bot.startBot(bs.conf.WebhookBase, bs.conf.ListenAddress, bs.server)
+
+	return nil
 }
 
 func (bs *BotService) StopBot(botID int64) error {

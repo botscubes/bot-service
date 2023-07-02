@@ -3,65 +3,57 @@ package handlers
 import (
 	"strconv"
 
-	"github.com/goccy/go-json"
 	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	fh "github.com/valyala/fasthttp"
+	"github.com/gofiber/fiber/v2"
 )
 
 type setBotTokenReq struct {
 	Token *string `json:"token"`
 }
 
-func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		var data setBotTokenReq
-
-		if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
+func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		data := new(setBotTokenReq)
+
+		if err := ctx.BodyParser(data); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		// check token
 		token := data.Token
 		if token == nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("token")))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("token")))
 		}
 
 		if !validateToken(*token) {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrIncorrectTokenFormat))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrIncorrectTokenFormat))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// check bot already runnig
@@ -69,13 +61,11 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) reqHa
 			isRunning, err := bs.BotIsRunnig(botId)
 			if err != nil {
 				log.Error(err)
-				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-				return
+				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 			}
 
 			if isRunning {
-				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNeedsStopped))
-				return
+				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNeedsStopped))
 			}
 		}
 
@@ -83,51 +73,44 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) reqHa
 		existToken, err := db.CheckBotTokenExist(token)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if existToken {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrTokenAlreadyExists))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenAlreadyExists))
 		}
 
 		if err = db.SetBotToken(userId, botId, token); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 
-func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
+func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// check bot already runnig
@@ -135,13 +118,11 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) re
 			isRunning, err := bs.BotIsRunnig(botId)
 			if err != nil {
 				log.Error(err)
-				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-				return
+				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 			}
 
 			if isRunning {
-				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNeedsStopped))
-				return
+				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNeedsStopped))
 			}
 		}
 
@@ -149,10 +130,9 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) re
 
 		if err = db.SetBotToken(userId, botId, &token); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }

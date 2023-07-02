@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	"github.com/goccy/go-json"
 	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
@@ -15,7 +14,7 @@ import (
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	fh "github.com/valyala/fasthttp"
+	"github.com/gofiber/fiber/v2"
 )
 
 type newBotReq struct {
@@ -27,33 +26,29 @@ type newBotRes struct {
 	Component *model.Component `json:"component"`
 }
 
-func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		var data newBotReq
+func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
+		if !ok {
+			log.Error(ErrUserIDConvertation)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
 
-		if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+		data := new(newBotReq)
+
+		if err := ctx.BodyParser(data); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		title := data.Title
-		userId, ok := ctx.UserValue("userId").(int64)
-		if !ok {
-			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
-		}
-
 		token := ""
 
 		if title == nil || *title == "" {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("title")))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("title")))
 		}
 
 		if utf8.RuneCountInString(*title) > config.MaxTitleLen {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidTitleLength))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidTitleLength))
 		}
 
 		m := &model.Bot{
@@ -66,14 +61,12 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 		botId, err := db.AddBot(m)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if err := db.CreateBotSchema(botId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		dataType := "start"
@@ -98,8 +91,7 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 		compId, err := db.AddComponent(botId, mc)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		mc.Id = compId
@@ -110,7 +102,7 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
 			Component: mc,
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, dataRes, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, dataRes, nil))
 	}
 }
 
@@ -121,55 +113,47 @@ func StartBot(
 	bs *bot.BotService,
 	r *rdb.Rdb,
 	log *zap.SugaredLogger,
-) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
+) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		token, err := db.GetBotToken(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if token == nil || *token == "" {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrTokenNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenNotFound))
 		}
 
 		if ok := bs.CheckBotExist(botId); !ok {
 			if err = bs.NewBot(token, botId, log, r, db); err != nil {
 				if err.Error() == ErrTgAuth401.Error() {
-					doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidToken))
-					return
+					return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 				}
 
 				log.Error(err)
-				doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrNewBot))
-				return
+				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrNewBot))
 			}
 		}
 
@@ -178,126 +162,109 @@ func StartBot(
 		isRunning, err := bs.BotIsRunnig(botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if isRunning {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyRunning))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotAlreadyRunning))
 		}
 
 		if err = bs.StartBot(botId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrStartBot))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrStartBot))
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 
-func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
+func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		if ok := bs.CheckBotExist(botId); !ok {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyStopped))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotAlreadyStopped))
 		}
 
 		// check bot already stopped
 		isRunning, err := bs.BotIsRunnig(botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !isRunning {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotAlreadyStopped))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotAlreadyStopped))
 		}
 
 		if err := bs.StopBot(botId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrStopBot))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 
-func GetBots(db *pgsql.Db, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		userId, ok := ctx.UserValue("userId").(int64)
+func GetBots(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		bots, err := db.UserBots(userId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, bots, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, bots, nil))
 	}
 }
 
-func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
+func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// stop bot worker
@@ -306,15 +273,13 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 			isRunning, err := bs.BotIsRunnig(botId)
 			if err != nil {
 				log.Error(err)
-				doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-				return
+				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 			}
 
 			if isRunning {
 				if err := bs.StopBot(botId); err != nil {
 					log.Error(err)
-					doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrStopBot))
-					return
+					return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
 				}
 			}
 		}
@@ -323,36 +288,32 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 		err = db.DelAllComponents(botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// remove commands
 		err = db.DelAllCommands(botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// remove next step from main component
 		if err = db.DelNextStepComponent(botId, config.MainComponentId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// remove token
 		token := ""
 		if err = db.SetBotToken(userId, botId, &token); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate bot cache
 		r.DelBotData(botId)
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }

@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	InvalidRequestCode = 1400
+	BadRequestCode     = 1400
 	InvalidParamCode   = 1411
 	MissingParamCode   = 1412
 	InternalServerCode = 1500
@@ -14,7 +14,7 @@ var (
 )
 
 var (
-	ErrInvalidRequest = err.New(InvalidRequestCode, "Invalid request")
+	ErrBadRequest     = err.New(BadRequestCode, "Bad request")
 	ErrInvalidParam   = err.New(InvalidParamCode, "Invalid parameter value")
 	ErrMissingParam   = err.New(MissingParamCode, "Required parameter is missing")
 	ErrInternalServer = err.New(InternalServerCode, "Internal server error")

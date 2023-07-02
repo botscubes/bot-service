@@ -9,8 +9,7 @@ import (
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
-	"github.com/goccy/go-json"
-	fh "github.com/valyala/fasthttp"
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
 
@@ -23,68 +22,59 @@ type addCommandRes struct {
 	Id int64 `json:"id"`
 }
 
-func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
+		if !ok {
+			log.Error(ErrUserIDConvertation)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
 		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		compId, err := strconv.ParseInt(ctx.Params("compId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		// check component is main
 		if compId == config.MainComponentId {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrMainComponent))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrMainComponent))
 		}
 
-		var reqData addCommandReq
-		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+		reqData := new(addCommandReq)
+
+		if err := ctx.BodyParser(reqData); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		if err := model.ValidateCommand(reqData.Type, reqData.Data); err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
-		if !ok {
-			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existComp {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 		}
 
 		m := &model.Command{
@@ -98,8 +88,7 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 		commandId, err := db.AddCommand(botId, m)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
@@ -111,80 +100,69 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 			Id: commandId,
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, dataRes, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, dataRes, nil))
 	}
 }
 
-func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
+func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		compId, err := strconv.ParseInt(ctx.Params("compId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		commandId, err := strconv.ParseInt(ctx.Params("commandId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existComp {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 		}
 
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existCommand {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrCommandNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrCommandNotFound))
 		}
 
 		if err = db.DelCommand(botId, commandId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
@@ -192,7 +170,7 @@ func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 			log.Error(err)
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 
@@ -200,107 +178,92 @@ type setNextStepCommandReq struct {
 	NextStepId *int64 `json:"nextStepId"`
 }
 
-func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
+		if !ok {
+			log.Error(ErrUserIDConvertation)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
 		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
-		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
+		compId, err := strconv.ParseInt(ctx.Params("compId"), 10, 64)
 		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
-		var reqData setNextStepCommandReq
-		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+		commandId, err := strconv.ParseInt(ctx.Params("commandId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		reqData := new(setNextStepCommandReq)
+
+		if err := ctx.BodyParser(reqData); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		if reqData.NextStepId == nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.MissingParam("nextStepId")))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("nextStepId")))
 		}
 
 		nextComponentId := reqData.NextStepId
 
 		if *nextComponentId == compId {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.InvalidParam("nextStepId")))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
-		if !ok {
-			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.InvalidParam("nextStepId")))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// check bot component exists
 		existInitialComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existInitialComp {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 		}
 
 		// Check next component exists
 		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existNextComp {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrNextComponentNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrNextComponentNotFound))
 		}
 
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existCommand {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrCommandNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrCommandNotFound))
 		}
 
 		if err = db.SetNextStepCommand(botId, commandId, *nextComponentId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
@@ -308,80 +271,69 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHan
 			log.Error(err)
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 
-func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
+func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
 			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		compId, err := strconv.ParseInt(ctx.Params("compId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		commandId, err := strconv.ParseInt(ctx.Params("commandId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existComp {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 		}
 
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existCommand {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrCommandNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrCommandNotFound))
 		}
 
 		if err = db.DelNextStepCommand(botId, commandId); err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
@@ -389,7 +341,7 @@ func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHan
 			log.Error(err)
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 
@@ -398,88 +350,76 @@ type updCommandReq struct {
 	Data *string `json:"data"`
 }
 
-func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
-	return func(ctx *fh.RequestCtx) {
-		botId, err := strconv.ParseInt(ctx.UserValue("botId").(string), 10, 64)
-		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userId, ok := ctx.Locals("userId").(int64)
+		if !ok {
+			log.Error(ErrUserIDConvertation)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		compId, err := strconv.ParseInt(ctx.UserValue("compId").(string), 10, 64)
+		botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
 		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
-		commandId, err := strconv.ParseInt(ctx.UserValue("commandId").(string), 10, 64)
+		compId, err := strconv.ParseInt(ctx.Params("compId"), 10, 64)
 		if err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
-		var reqData updCommandReq
-		if err = json.Unmarshal(ctx.PostBody(), &reqData); err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrInvalidRequest))
-			return
+		commandId, err := strconv.ParseInt(ctx.Params("commandId"), 10, 64)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
+		}
+
+		reqData := new(updCommandReq)
+
+		if err := ctx.BodyParser(reqData); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
 		if err := model.ValidateCommand(reqData.Type, reqData.Data); err != nil {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, err))
-			return
-		}
-
-		userId, ok := ctx.UserValue("userId").(int64)
-		if !ok {
-			log.Error(ErrUserIDConvertation)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 		}
 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existBot {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrBotNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existComp {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrComponentNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 		}
 
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if !existCommand {
-			doJsonRes(ctx, fh.StatusBadRequest, resp.New(false, nil, e.ErrCommandNotFound))
-			return
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrCommandNotFound))
 		}
 
 		err = db.UpdCommand(botId, commandId, reqData.Type, reqData.Data)
 		if err != nil {
 			log.Error(err)
-			doJsonRes(ctx, fh.StatusInternalServerError, resp.New(false, nil, e.ErrInternalServer))
-			return
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
@@ -487,6 +427,6 @@ func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) reqHandler {
 			log.Error(err)
 		}
 
-		doJsonRes(ctx, fh.StatusOK, resp.New(true, nil, nil))
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
