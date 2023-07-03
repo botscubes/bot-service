@@ -6,23 +6,33 @@ import (
 	"github.com/botscubes/bot-service/pkg/logger"
 
 	a "github.com/botscubes/bot-service/internal/app"
+	"github.com/botscubes/bot-service/internal/config"
 )
 
 func main() {
 	var app a.App
 
-	log, err := logger.NewLogger()
+	c, err := config.GetConfig()
 	if err != nil {
-		_ = fmt.Errorf("new logger: %w", err)
+		fmt.Println("Get config: ", err)
+		return
+	}
+
+	log, err := logger.NewLogger(logger.Config{
+		Type: c.LoggerType,
+	})
+	if err != nil {
+		fmt.Println("Create logger: ", err)
+		return
 	}
 
 	defer func() {
-		if err := app.Log.Sync(); err != nil {
+		if err := log.Sync(); err != nil {
 			log.Error(err)
 		}
 	}()
 
-	if err := app.Run(log); err != nil {
+	if err := app.Run(log, c); err != nil {
 		log.Error("App run:\n", err)
 	}
 

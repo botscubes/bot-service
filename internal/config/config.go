@@ -27,10 +27,11 @@ type ServiceConfig struct {
 	Redis         RedisConfig
 	JWTKey        string `env:"JWT_SECRET_KEY,required"`
 	ListenAddress string `env:"LISTEN_ADDRESS,required"`
+	LoggerType    string `env:"LOGGER_TYPE,required"`
 }
 
 type BotConfig struct {
-	WebhookBase string `env:"TBOT_WEBHOOK_BASE,required"`
+	WebhookBase string `env:"WEBHOOK_BASE,required"`
 }
 
 type PostgresConfig struct {

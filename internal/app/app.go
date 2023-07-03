@@ -35,19 +35,14 @@ type App struct {
 	Log            *zap.SugaredLogger
 }
 
-func (app *App) Run(logger *zap.SugaredLogger) error {
+func (app *App) Run(logger *zap.SugaredLogger, c *config.ServiceConfig) error {
 	var err error
 	done := make(chan struct{}, 1)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	app.Log = logger
-
-	app.Conf, err = config.GetConfig()
-	if err != nil {
-		return err
-	}
-
+	app.Conf = c
 	app.Server = fiber.New(fiber.Config{
 		AppName:               "Bot-API service",
 		DisableStartupMessage: true,
@@ -91,9 +86,9 @@ func (app *App) Run(logger *zap.SugaredLogger) error {
 	go func() {
 		<-sigs
 		app.Log.Info("Stopping...")
-		if err := app.BotService.StopBots(); err != nil {
-			app.Log.Info("bots stop:\n", err)
-		}
+		// if err := app.BotService.StopBots(); err != nil {
+		// 	app.Log.Info("bots stop:\n", err)
+		// }
 		done <- struct{}{}
 	}()
 
