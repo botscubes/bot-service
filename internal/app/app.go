@@ -13,6 +13,7 @@ import (
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
+	se "github.com/botscubes/user-service/pkg/service_error"
 
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
@@ -102,14 +103,16 @@ func (app *App) Run(logger *zap.SugaredLogger, c *config.ServiceConfig) error {
 func (app *App) errorHandler(ctx *fiber.Ctx, err error) error {
 	// Status code defaults to 500
 	code := fiber.StatusInternalServerError
+	errData := e.ErrInternalServer
 
 	// Retrieve the custom status code if it's a *fiber.Error
 	var fiberErr *fiber.Error
 	if errors.As(err, &fiberErr) {
 		code = fiberErr.Code
+		errData = se.New(code, fiberErr.Message)
 	}
 
 	app.Log.Errorf("API panic recovered: %v", err)
 
-	return ctx.Status(code).JSON(resp.New(false, nil, e.ErrInternalServer))
+	return ctx.Status(code).JSON(resp.New(false, nil, errData))
 }
