@@ -44,7 +44,7 @@ func (app *App) Run(logger *zap.SugaredLogger, c *config.ServiceConfig) error {
 	app.Log = logger
 	app.Conf = c
 	app.Server = fiber.New(fiber.Config{
-		AppName:               "Bot-API service",
+		AppName:               "Bot API Server",
 		DisableStartupMessage: true,
 		JSONEncoder:           json.Marshal,
 		JSONDecoder:           json.Unmarshal,
