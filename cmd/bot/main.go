@@ -10,6 +10,7 @@ import (
 
 	a "github.com/botscubes/bot-service/internal/app"
 	"github.com/botscubes/bot-service/internal/config"
+	"github.com/botscubes/bot-service/internal/database/pgsql"
 )
 
 func main() {
@@ -33,11 +34,19 @@ func main() {
 		}
 	}()
 
+	pgsqlUrl := "postgres://" + c.Pg.User + ":" + c.Pg.Pass + "@" + c.Pg.Host + ":" + c.Pg.Port + "/" + c.Pg.Db
+	db, err := pgsql.OpenConnection(pgsqlUrl)
+	if err != nil {
+		log.Fatalw("Open PostgreSQL connection", "error", err)
+	}
+
+	defer db.CloseConnection()
+
+	app := a.CreateApp(log, c, db)
+
 	done := make(chan struct{}, 1)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	app := a.CreateApp(log, c)
 
 	go func() {
 		<-sigs

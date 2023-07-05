@@ -23,41 +23,34 @@ import (
 )
 
 type App struct {
-	Server         *fiber.App
-	BotService     *bot.BotService
-	Conf           *config.ServiceConfig
-	Db             *pgsql.Db
-	SessionStorage token_storage.TokenStorage
-	RedisAuth      *redis.Client
-	Redis          *rdb.Rdb
-	Log            *zap.SugaredLogger
+	server         *fiber.App
+	botService     *bot.BotService
+	conf           *config.ServiceConfig
+	db             *pgsql.Db
+	sessionStorage token_storage.TokenStorage
+	redisAuth      *redis.Client
+	redis          *rdb.Rdb
+	log            *zap.SugaredLogger
 }
 
-func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig) *App {
+func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db) *App {
 	redisAuth := redisauth.NewClient(&c.RedisAuth)
 
-	pgsqlUrl := "postgres://" + c.Pg.User + ":" + c.Pg.Pass + "@" + c.Pg.Host + ":" + c.Pg.Port + "/" + c.Pg.Db
-	db, err := pgsql.OpenConnection(pgsqlUrl)
-	if err != nil {
-		logger.Fatalw("Open PostgreSQL connection", "error", err)
-	}
-
-	defer db.CloseConnection()
-
 	app := &App{
-		Log:  logger,
-		Conf: c,
-		Server: fiber.New(fiber.Config{
+		log:  logger,
+		conf: c,
+		server: fiber.New(fiber.Config{
 			AppName:               "Bot API Server",
 			DisableStartupMessage: true,
 			JSONEncoder:           json.Marshal,
 			JSONDecoder:           json.Unmarshal,
 			ErrorHandler:          errorHandler(logger),
 		}),
-		BotService:     bot.NewBotService(c, logger),
-		RedisAuth:      redisAuth,
-		SessionStorage: token_storage.NewRedisTokenStorage(redisAuth),
-		Redis:          rdb.NewClient(&c.Redis),
+		botService:     bot.NewBotService(c, logger),
+		redisAuth:      redisAuth,
+		sessionStorage: token_storage.NewRedisTokenStorage(redisAuth),
+		redis:          rdb.NewClient(&c.Redis),
+		db:             db,
 	}
 
 	app.regiterHandlers()
@@ -66,14 +59,14 @@ func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig) *App {
 
 func (app *App) Run() {
 	go func() {
-		if err := app.Server.Listen(app.Conf.ListenAddress); err != nil {
-			app.Log.Fatalw("Start server", "error", err)
+		if err := app.server.Listen(app.conf.ListenAddress); err != nil {
+			app.log.Fatalw("Start server", "error", err)
 		}
 	}()
 }
 
 func (app *App) Shutdown() error {
-	return app.Server.ShutdownWithTimeout(config.ShutdownTimeout)
+	return app.server.ShutdownWithTimeout(config.ShutdownTimeout)
 }
 
 func errorHandler(log *zap.SugaredLogger) func(ctx *fiber.Ctx, err error) error {
