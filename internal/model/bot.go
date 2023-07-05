@@ -3,7 +3,8 @@ package model
 type BotStatus int
 
 var (
-	StatusBotActive BotStatus
+	StatusBotStopped BotStatus = 0
+	StatusBotRunning BotStatus = 1
 )
 
 type Bot struct {

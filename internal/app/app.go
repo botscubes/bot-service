@@ -52,16 +52,7 @@ func (app *App) Run(logger *zap.SugaredLogger, c *config.ServiceConfig) error {
 		ErrorHandler:          app.errorHandler,
 	})
 
-	// app.Server = &telego.MultiBotWebhookServer{
-	// 	Server: telego.FastHTTPWebhookServer{
-	// 		Server: &fasthttp.Server{
-	// 			Handler: app.Router.Handler,
-	// 		},
-	// 		Router: app.Router,
-	// 	},
-	// }
-
-	// app.BotService = bot.NewBotService(&app.Conf.Bot, app.Server)
+	app.BotService = bot.NewBotService(app.Conf, app.Log)
 
 	app.RedisAuth = redisauth.NewClient(&app.Conf.RedisAuth)
 	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)
@@ -87,9 +78,7 @@ func (app *App) Run(logger *zap.SugaredLogger, c *config.ServiceConfig) error {
 	go func() {
 		<-sigs
 		app.Log.Info("Stopping...")
-		// if err := app.BotService.StopBots(); err != nil {
-		// 	app.Log.Info("bots stop:\n", err)
-		// }
+
 		done <- struct{}{}
 	}()
 

@@ -8,6 +8,7 @@ import (
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/gofiber/fiber/v2"
 )
@@ -36,6 +37,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fiber
 		}
 
 		// check token
+		// TODO: check by tg api
 		token := data.Token
 		if token == nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("token")))
@@ -57,16 +59,14 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fiber
 		}
 
 		// check bot already runnig
-		if ok := bs.CheckBotExist(botId); ok {
-			isRunning, err := bs.BotIsRunnig(botId)
-			if err != nil {
-				log.Error(err)
-				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-			}
+		botStatus, err := db.GetBotStatus(botId, userId)
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
 
-			if isRunning {
-				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNeedsStopped))
-			}
+		if botStatus == model.StatusBotRunning {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNeedsStopped))
 		}
 
 		// check token exists
@@ -114,16 +114,14 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fi
 		}
 
 		// check bot already runnig
-		if ok := bs.CheckBotExist(botId); ok {
-			isRunning, err := bs.BotIsRunnig(botId)
-			if err != nil {
-				log.Error(err)
-				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-			}
+		botStatus, err := db.GetBotStatus(botId, userId)
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
 
-			if isRunning {
-				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNeedsStopped))
-			}
+		if botStatus == model.StatusBotRunning {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNeedsStopped))
 		}
 
 		token := ""

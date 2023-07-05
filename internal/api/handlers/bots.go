@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"strconv"
 	"unicode/utf8"
 
@@ -55,7 +54,7 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 			UserId: userId,
 			Token:  &token,
 			Title:  title,
-			Status: model.StatusBotActive,
+			Status: model.StatusBotStopped,
 		}
 
 		botId, err := db.AddBot(m)
@@ -106,8 +105,6 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	}
 }
 
-var ErrTgAuth401 = errors.New(`telego: health check: telego: getMe(): api: 401 "Unauthorized"`)
-
 func StartBot(
 	db *pgsql.Db,
 	bs *bot.BotService,
@@ -136,6 +133,17 @@ func StartBot(
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
+		// check bot already running
+		botStatus, err := db.GetBotStatus(botId, userId)
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		if botStatus == model.StatusBotRunning {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotAlreadyRunning))
+		}
+
 		token, err := db.GetBotToken(userId, botId)
 		if err != nil {
 			log.Error(err)
@@ -146,32 +154,19 @@ func StartBot(
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenNotFound))
 		}
 
-		if ok := bs.CheckBotExist(botId); !ok {
-			if err = bs.NewBot(token, botId, log, r, db); err != nil {
-				if err.Error() == ErrTgAuth401.Error() {
-					return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
-				}
-
-				log.Error(err)
-				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrNewBot))
+		// WARN: need sync bs & db bot status (on error)
+		if err = bs.StartBot(botId, *token); err != nil {
+			if err.Error() == ErrTgAuth401.Error() {
+				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 			}
-		}
 
-		// check bot already runnig
-		// TODO: move to UP
-		isRunning, err := bs.BotIsRunnig(botId)
-		if err != nil {
-			log.Error(err)
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-		}
-
-		if isRunning {
-			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotAlreadyRunning))
-		}
-
-		if err = bs.StartBot(botId); err != nil {
 			log.Error(err)
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrStartBot))
+		}
+
+		if err = db.SetBotStatus(botId, userId, model.StatusBotRunning); err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
@@ -201,24 +196,41 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) fiber.Han
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
-		if ok := bs.CheckBotExist(botId); !ok {
-			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotAlreadyStopped))
-		}
-
 		// check bot already stopped
-		isRunning, err := bs.BotIsRunnig(botId)
+		botStatus, err := db.GetBotStatus(botId, userId)
 		if err != nil {
 			log.Error(err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		if !isRunning {
+		if botStatus == model.StatusBotStopped {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotAlreadyStopped))
 		}
 
-		if err := bs.StopBot(botId); err != nil {
+		token, err := db.GetBotToken(userId, botId)
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		if token == nil || *token == "" {
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenNotFound))
+		}
+
+		// WARN: need sync bs & db bot status (on error)
+		// TODO: error stopping if token invalid
+		if err := bs.StopBot(*token); err != nil {
+			if err.Error() == ErrTgAuth401.Error() {
+				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
+			}
+
 			log.Error(err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
+		}
+
+		if err = db.SetBotStatus(botId, userId, model.StatusBotStopped); err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
@@ -267,20 +279,37 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 		}
 
-		// stop bot worker
-		if ok := bs.CheckBotExist(botId); ok {
-			// check bot already stopped
-			isRunning, err := bs.BotIsRunnig(botId)
+		// check bot status is running
+		botStatus, err := db.GetBotStatus(botId, userId)
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		if botStatus == model.StatusBotRunning {
+
+			token, err := db.GetBotToken(userId, botId)
 			if err != nil {
 				log.Error(err)
 				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 			}
 
-			if isRunning {
-				if err := bs.StopBot(botId); err != nil {
-					log.Error(err)
-					return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
+			if token == nil || *token == "" {
+				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenNotFound))
+			}
+
+			if err := bs.StopBot(*token); err != nil {
+				if err.Error() == ErrTgAuth401.Error() {
+					return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 				}
+
+				log.Error(err)
+				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
+			}
+
+			if err = db.SetBotStatus(botId, userId, model.StatusBotStopped); err != nil {
+				log.Error(err)
+				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 			}
 		}
 

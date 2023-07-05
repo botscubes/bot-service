@@ -20,9 +20,9 @@ func (db *Db) AddBot(m *model.Bot) (int64, error) {
 
 func (db *Db) CheckBotExist(userId int64, botId int64) (bool, error) {
 	var c bool
-	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2 AND status = $3) AS "exists";`
+	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2 AND (status = $3 OR status = $4)) AS "exists";`
 	if err := db.Pool.QueryRow(
-		context.Background(), query, botId, userId, model.StatusBotActive,
+		context.Background(), query, botId, userId, model.StatusBotStopped, model.StatusBotRunning,
 	).Scan(&c); err != nil {
 		return false, err
 	}
@@ -63,9 +63,9 @@ func (db *Db) SetBotToken(userId int64, botId int64, token *string) error {
 func (db *Db) UserBots(userId int64) (*[]*model.Bot, error) {
 	data := []*model.Bot{}
 
-	query := `SELECT id, title FROM public.bot WHERE status = $1 AND user_id = $2 ORDER BY id;`
+	query := `SELECT id, title FROM public.bot WHERE user_id = $1 AND (status = $2 OR status = $3) ORDER BY id;`
 
-	rows, err := db.Pool.Query(context.Background(), query, model.StatusBotActive, userId)
+	rows, err := db.Pool.Query(context.Background(), query, userId, model.StatusBotStopped, model.StatusBotRunning)
 	if err != nil {
 		return nil, err
 	}
@@ -84,4 +84,22 @@ func (db *Db) UserBots(userId int64) (*[]*model.Bot, error) {
 	}
 
 	return &data, nil
+}
+
+func (db *Db) GetBotStatus(botId int64, userId int64) (model.BotStatus, error) {
+	var data model.BotStatus
+	query := `SELECT status FROM public.bot WHERE id = $1 AND user_id = $2;`
+	if err := db.Pool.QueryRow(
+		context.Background(), query, botId, userId,
+	).Scan(&data); err != nil {
+		return 0, err
+	}
+
+	return data, nil
+}
+
+func (db *Db) SetBotStatus(botId int64, userId int64, status model.BotStatus) error {
+	query := `UPDATE public.bot SET status = $1 WHERE id = $2 AND user_id = $3;`
+	_, err := db.Pool.Exec(context.Background(), query, status, botId, userId)
+	return err
 }

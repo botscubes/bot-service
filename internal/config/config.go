@@ -21,17 +21,13 @@ const (
 )
 
 type ServiceConfig struct {
-	Bot           BotConfig
 	Pg            PostgresConfig
 	RedisAuth     RedisAuthConfig
 	Redis         RedisConfig
+	WebhookBase   string `env:"WEBHOOK_BASE,required"`
 	JWTKey        string `env:"JWT_SECRET_KEY,required"`
 	ListenAddress string `env:"LISTEN_ADDRESS,required"`
 	LoggerType    string `env:"LOGGER_TYPE,required"`
-}
-
-type BotConfig struct {
-	WebhookBase string `env:"WEBHOOK_BASE,required"`
 }
 
 type PostgresConfig struct {

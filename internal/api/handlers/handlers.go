@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrUserIDConvertation = errors.New("userId convertation to int64")
+	ErrTgAuth401          = errors.New(`telego: health check: telego: getMe(): api: 401 "Unauthorized"`)
 )
 
 func Health(ctx *fiber.Ctx) error {
