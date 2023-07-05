@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/botscubes/bot-service/pkg/logger"
 
@@ -10,11 +13,9 @@ import (
 )
 
 func main() {
-	var app a.App
-
 	c, err := config.GetConfig()
 	if err != nil {
-		fmt.Println("Get config: ", err)
+		fmt.Printf("Get config: %v\n", err)
 		return
 	}
 
@@ -22,7 +23,7 @@ func main() {
 		Type: c.LoggerType,
 	})
 	if err != nil {
-		fmt.Println("Create logger: ", err)
+		fmt.Printf("Create logger: %v\n", err)
 		return
 	}
 
@@ -32,9 +33,29 @@ func main() {
 		}
 	}()
 
-	if err := app.Run(log, c); err != nil {
-		log.Error("App run:\n", err)
-	}
+	done := make(chan struct{}, 1)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	app := a.CreateApp(log, c)
+
+	go func() {
+		<-sigs
+		log.Info("Stopping...")
+
+		err = app.Shutdown()
+		if err != nil {
+			log.Fatalw("Shutdown", "error", err)
+		}
+
+		done <- struct{}{}
+	}()
+
+	app.Run()
+
+	log.Info("App started")
+
+	<-done
 
 	log.Info("App Done")
 }

@@ -2,9 +2,6 @@ package app
 
 import (
 	"errors"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/goccy/go-json"
 
@@ -36,72 +33,64 @@ type App struct {
 	Log            *zap.SugaredLogger
 }
 
-func (app *App) Run(logger *zap.SugaredLogger, c *config.ServiceConfig) error {
-	var err error
-	done := make(chan struct{}, 1)
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig) *App {
+	redisAuth := redisauth.NewClient(&c.RedisAuth)
 
-	app.Log = logger
-	app.Conf = c
-	app.Server = fiber.New(fiber.Config{
-		AppName:               "Bot API Server",
-		DisableStartupMessage: true,
-		JSONEncoder:           json.Marshal,
-		JSONDecoder:           json.Unmarshal,
-		ErrorHandler:          app.errorHandler,
-	})
-
-	app.BotService = bot.NewBotService(app.Conf, app.Log)
-
-	app.RedisAuth = redisauth.NewClient(&app.Conf.RedisAuth)
-	app.SessionStorage = token_storage.NewRedisTokenStorage(app.RedisAuth)
-
-	app.Redis = rdb.NewClient(&app.Conf.Redis)
-
-	pgsqlUrl := "postgres://" + app.Conf.Pg.User + ":" + app.Conf.Pg.Pass + "@" + app.Conf.Pg.Host + ":" + app.Conf.Pg.Port + "/" + app.Conf.Pg.Db
-	if app.Db, err = pgsql.OpenConnection(pgsqlUrl); err != nil {
-		return err
+	pgsqlUrl := "postgres://" + c.Pg.User + ":" + c.Pg.Pass + "@" + c.Pg.Host + ":" + c.Pg.Port + "/" + c.Pg.Db
+	db, err := pgsql.OpenConnection(pgsqlUrl)
+	if err != nil {
+		logger.Fatalw("Open PostgreSQL connection", "error", err)
 	}
 
-	defer app.Db.CloseConnection()
+	defer db.CloseConnection()
+
+	app := &App{
+		Log:  logger,
+		Conf: c,
+		Server: fiber.New(fiber.Config{
+			AppName:               "Bot API Server",
+			DisableStartupMessage: true,
+			JSONEncoder:           json.Marshal,
+			JSONDecoder:           json.Unmarshal,
+			ErrorHandler:          errorHandler(logger),
+		}),
+		BotService:     bot.NewBotService(c, logger),
+		RedisAuth:      redisAuth,
+		SessionStorage: token_storage.NewRedisTokenStorage(redisAuth),
+		Redis:          rdb.NewClient(&c.Redis),
+	}
 
 	app.regiterHandlers()
-
-	go func() {
-		if err := app.Server.Listen(app.Conf.ListenAddress); err != nil {
-			app.Log.Error("Start server:", err)
-			sigs <- syscall.SIGTERM
-		}
-	}()
-
-	go func() {
-		<-sigs
-		app.Log.Info("Stopping...")
-
-		done <- struct{}{}
-	}()
-
-	app.Log.Info("App Started")
-
-	<-done
-
-	return nil
+	return app
 }
 
-func (app *App) errorHandler(ctx *fiber.Ctx, err error) error {
-	// Status code defaults to 500
-	code := fiber.StatusInternalServerError
-	errData := e.ErrInternalServer
+func (app *App) Run() {
+	go func() {
+		if err := app.Server.Listen(app.Conf.ListenAddress); err != nil {
+			app.Log.Fatalw("Start server", "error", err)
+		}
+	}()
+}
 
-	// Retrieve the custom status code if it's a *fiber.Error
-	var fiberErr *fiber.Error
-	if errors.As(err, &fiberErr) {
-		code = fiberErr.Code
-		errData = se.New(code, fiberErr.Message)
+func (app *App) Shutdown() error {
+	return app.Server.ShutdownWithTimeout(config.ShutdownTimeout)
+}
+
+func errorHandler(log *zap.SugaredLogger) func(ctx *fiber.Ctx, err error) error {
+	return func(ctx *fiber.Ctx, err error) error {
+		// Status code defaults to 500
+		code := fiber.StatusInternalServerError
+		errData := e.ErrInternalServer
+
+		// Retrieve the custom status code if it's a *fiber.Error
+		var fiberErr *fiber.Error
+		if errors.As(err, &fiberErr) {
+			code = fiberErr.Code
+			errData = se.New(code, fiberErr.Message)
+		}
+
+		log.Errorf("API panic recovered: %v", err)
+
+		return ctx.Status(code).JSON(resp.New(false, nil, errData))
 	}
-
-	app.Log.Errorf("API panic recovered: %v", err)
-
-	return ctx.Status(code).JSON(resp.New(false, nil, errData))
 }

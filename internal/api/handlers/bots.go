@@ -108,7 +108,6 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 func StartBot(
 	db *pgsql.Db,
 	bs *bot.BotService,
-	r *rdb.Rdb,
 	log *zap.SugaredLogger,
 ) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
@@ -287,7 +286,6 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 		}
 
 		if botStatus == model.StatusBotRunning {
-
 			token, err := db.GetBotToken(userId, botId)
 			if err != nil {
 				log.Error(err)

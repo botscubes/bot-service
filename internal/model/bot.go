@@ -3,7 +3,7 @@ package model
 type BotStatus int
 
 var (
-	StatusBotStopped BotStatus = 0
+	StatusBotStopped BotStatus
 	StatusBotRunning BotStatus = 1
 )
 

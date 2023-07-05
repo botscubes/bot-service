@@ -27,13 +27,13 @@ func (app *App) regBotsHandlers() {
 	app.Server.Post("/api/bots", h.NewBot(app.Db, app.Log))
 
 	// Set bot token
-	app.Server.Post("/api/bots/:botId<int>/token", h.SetBotToken(app.Db, app.Log, app.BotService))
+	app.Server.Post("/api/bots/:botId<int>/token", h.SetBotToken(app.Db, app.Log))
 
 	// Delete bot token
-	app.Server.Delete("/api/bots/:botId<int>/token", h.DeleteBotToken(app.Db, app.Log, app.BotService))
+	app.Server.Delete("/api/bots/:botId<int>/token", h.DeleteBotToken(app.Db, app.Log))
 
 	// Start bot
-	app.Server.Patch("/api/bots/:botId<int>/start", h.StartBot(app.Db, app.BotService, app.Redis, app.Log))
+	app.Server.Patch("/api/bots/:botId<int>/start", h.StartBot(app.Db, app.BotService, app.Log))
 
 	// Stop bot
 	app.Server.Patch("/api/bots/:botId<int>/stop", h.StopBot(app.Db, app.BotService, app.Log))

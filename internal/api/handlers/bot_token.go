@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
-	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
@@ -17,7 +16,7 @@ type setBotTokenReq struct {
 	Token *string `json:"token"`
 }
 
-func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fiber.Handler {
+func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
@@ -89,7 +88,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fiber
 	}
 }
 
-func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger, bs *bot.BotService) fiber.Handler {
+func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {

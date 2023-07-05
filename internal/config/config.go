@@ -17,7 +17,8 @@ const (
 	StartComponentPosX = 50
 	StartComponentPosY = 50
 
-	RedisExpire = 1 * time.Hour
+	RedisExpire     = 1 * time.Hour
+	ShutdownTimeout = 1 * time.Minute
 )
 
 type ServiceConfig struct {
