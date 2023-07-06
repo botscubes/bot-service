@@ -3,16 +3,14 @@ name: CI
 on:
   push:
     branches:
-      # - main
-      - remake
+      - main
     paths:
       - '**.go'
       - '*.mod'
 
   pull_request:
     branches:
-      # - main
-      - remake
+      - main
     paths:
       - '**.go'
       - '*.mod'
