@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"unicode/utf8"
 
+	"github.com/goccy/go-json"
+
 	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
@@ -14,6 +16,7 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/gofiber/fiber/v2"
+	"github.com/nats-io/nats.go"
 )
 
 type newBotReq struct {
@@ -24,6 +27,16 @@ type newBotRes struct {
 	BotId     int64            `json:"botId"`
 	Component *model.Component `json:"component"`
 }
+
+type ncPayload struct {
+	BotId int64  `json:"botId"`
+	Token string `json:"token"`
+}
+
+var (
+	ncCodeOk        = "200"
+	ncCodeErrServer = "500"
+)
 
 func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
@@ -109,6 +122,7 @@ func StartBot(
 	db *pgsql.Db,
 	bs *bot.BotService,
 	log *zap.SugaredLogger,
+	nc *nats.Conn,
 ) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
@@ -168,11 +182,33 @@ func StartBot(
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
+		payload, err := json.Marshal(ncPayload{
+			BotId: botId,
+			Token: *token,
+		})
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		res, err := nc.Request("worker.start", payload, config.NatsReqTimeout)
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		switch string(res.Data) {
+		case ncCodeOk:
+			return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
+		case ncCodeErrServer:
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		default:
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
 	}
 }
 
-func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) fiber.Handler {
+func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.Conn) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
@@ -232,7 +268,28 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger) fiber.Han
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
+		payload, err := json.Marshal(ncPayload{
+			BotId: botId,
+		})
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		res, err := nc.Request("worker.stop", payload, config.NatsReqTimeout)
+		if err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		switch string(res.Data) {
+		case ncCodeOk:
+			return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
+		case ncCodeErrServer:
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		default:
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
 	}
 }
 

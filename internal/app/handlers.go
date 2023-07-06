@@ -33,10 +33,10 @@ func (app *App) regBotsHandlers() {
 	app.server.Delete("/api/bots/:botId<int>/token", h.DeleteBotToken(app.db, app.log))
 
 	// Start bot
-	app.server.Patch("/api/bots/:botId<int>/start", h.StartBot(app.db, app.botService, app.log))
+	app.server.Patch("/api/bots/:botId<int>/start", h.StartBot(app.db, app.botService, app.log, app.nc))
 
 	// Stop bot
-	app.server.Patch("/api/bots/:botId<int>/stop", h.StopBot(app.db, app.botService, app.log))
+	app.server.Patch("/api/bots/:botId<int>/stop", h.StopBot(app.db, app.botService, app.log, app.nc))
 
 	// Get user bots
 	app.server.Get("/api/bots", h.GetBots(app.db, app.log))

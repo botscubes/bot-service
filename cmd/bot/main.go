@@ -11,6 +11,8 @@ import (
 	a "github.com/botscubes/bot-service/internal/app"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
+
+	"github.com/nats-io/nats.go"
 )
 
 func main() {
@@ -42,7 +44,13 @@ func main() {
 
 	defer db.CloseConnection()
 
-	app := a.CreateApp(log, c, db)
+	nc, err := nats.Connect(c.NatsURL, nats.MaxReconnects(-1))
+	if err != nil {
+		log.Fatalw("NATS connection", "error", err)
+	}
+	defer nc.Drain()
+
+	app := a.CreateApp(log, c, db, nc)
 
 	done := make(chan struct{}, 1)
 	sigs := make(chan os.Signal, 1)

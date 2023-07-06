@@ -19,6 +19,7 @@ const (
 
 	RedisExpire     = 1 * time.Hour
 	ShutdownTimeout = 1 * time.Minute
+	NatsReqTimeout  = 5 * time.Second
 )
 
 type ServiceConfig struct {
@@ -29,6 +30,7 @@ type ServiceConfig struct {
 	JWTKey        string `env:"JWT_SECRET_KEY,required"`
 	ListenAddress string `env:"LISTEN_ADDRESS,required"`
 	LoggerType    string `env:"LOGGER_TYPE,required"`
+	NatsURL       string `env:"NATS_URL,required"`
 }
 
 type PostgresConfig struct {

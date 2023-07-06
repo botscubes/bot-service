@@ -18,5 +18,5 @@ func Health(ctx *fiber.Ctx) error {
 }
 
 func NotFoundHandler(ctx *fiber.Ctx) error {
-	return ctx.Status(404).JSON(resp.New(false, nil, e.ErrNotFound))
+	return ctx.Status(fiber.StatusNotFound).JSON(resp.New(false, nil, e.ErrNotFound))
 }

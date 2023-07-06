@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/goccy/go-json"
+	"github.com/nats-io/nats.go"
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -31,9 +32,10 @@ type App struct {
 	redisAuth      *redis.Client
 	redis          *rdb.Rdb
 	log            *zap.SugaredLogger
+	nc             *nats.Conn
 }
 
-func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db) *App {
+func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db, nc *nats.Conn) *App {
 	redisAuth := redisauth.NewClient(&c.RedisAuth)
 
 	app := &App{
@@ -51,6 +53,7 @@ func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db)
 		sessionStorage: token_storage.NewRedisTokenStorage(redisAuth),
 		redis:          rdb.NewClient(&c.Redis),
 		db:             db,
+		nc:             nc,
 	}
 
 	app.regiterHandlers()
