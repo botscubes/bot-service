@@ -34,8 +34,7 @@ type ncPayload struct {
 }
 
 var (
-	ncCodeOk        = "200"
-	ncCodeErrServer = "500"
+	ncCodeOk = "200"
 )
 
 func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
@@ -167,21 +166,7 @@ func StartBot(
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenNotFound))
 		}
 
-		// WARN: need sync bs & db bot status (on error)
-		if err = bs.StartBot(botId, *token); err != nil {
-			if err.Error() == ErrTgAuth401.Error() {
-				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
-			}
-
-			log.Error(err)
-			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrStartBot))
-		}
-
-		if err = db.SetBotStatus(botId, userId, model.StatusBotRunning); err != nil {
-			log.Error(err)
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-		}
-
+		// starting worker
 		payload, err := json.Marshal(ncPayload{
 			BotId: botId,
 			Token: *token,
@@ -197,14 +182,28 @@ func StartBot(
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		switch string(res.Data) {
-		case ncCodeOk:
-			return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
-		case ncCodeErrServer:
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-		default:
+		if string(res.Data) != ncCodeOk {
+			log.Error(string(res.Data))
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
+
+		// set webhook
+		if err = bs.StartBot(botId, *token); err != nil {
+			if err.Error() == ErrTgAuth401.Error() {
+				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
+			}
+
+			log.Error(err)
+			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrStartBot))
+		}
+
+		// upd status in db
+		if err = db.SetBotStatus(botId, userId, model.StatusBotRunning); err != nil {
+			log.Error(err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 
@@ -252,8 +251,7 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenNotFound))
 		}
 
-		// WARN: need sync bs & db bot status (on error)
-		// TODO: error stopping if token invalid
+		// delete webhook
 		if err := bs.StopBot(*token); err != nil {
 			if err.Error() == ErrTgAuth401.Error() {
 				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
@@ -263,33 +261,34 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
 		}
 
+		// update status in db
 		if err = db.SetBotStatus(botId, userId, model.StatusBotStopped); err != nil {
 			log.Error(err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
-		payload, err := json.Marshal(ncPayload{
-			BotId: botId,
-		})
-		if err != nil {
-			log.Error(err)
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-		}
+		// stop worker in the background
+		go func() {
+			payload, err := json.Marshal(ncPayload{
+				BotId: botId,
+			})
+			if err != nil {
+				log.Error(err)
+				return
+			}
 
-		res, err := nc.Request("worker.stop", payload, config.NatsReqTimeout)
-		if err != nil {
-			log.Error(err)
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-		}
+			res, err := nc.Request("worker.stop", payload, config.NatsReqTimeout)
+			if err != nil {
+				log.Error(err)
+				return
+			}
 
-		switch string(res.Data) {
-		case ncCodeOk:
-			return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
-		case ncCodeErrServer:
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-		default:
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-		}
+			if string(res.Data) != ncCodeOk {
+				log.Error(string(res.Data))
+			}
+		}()
+
+		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 	}
 }
 

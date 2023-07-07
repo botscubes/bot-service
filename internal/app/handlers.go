@@ -7,11 +7,13 @@ import (
 )
 
 func (app *App) regiterHandlers() {
-	// Middlewares
-	app.server.Use(recover.New())
-	app.server.Use(m.Auth(&app.sessionStorage, &app.conf.JWTKey, app.log))
-
 	app.server.Get("/api/bots/health", h.Health)
+
+	// panic recover
+	app.server.Use(recover.New())
+
+	// Auth middleware
+	app.server.Use(m.Auth(&app.sessionStorage, &app.conf.JWTKey, app.log))
 
 	app.regBotsHandlers()
 	app.regComponentsHandlers()
