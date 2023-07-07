@@ -23,6 +23,7 @@ func NewBotService(c *config.ServiceConfig, l *zap.SugaredLogger) *BotService {
 func (bs *BotService) StartBot(botId int64, token string) error {
 	bot, err := telego.NewBot(token, telego.WithHealthCheck())
 	if err != nil {
+		bs.log.Errorw("failed telego newBot", "error", err)
 		return err
 	}
 
@@ -34,6 +35,7 @@ func (bs *BotService) StartBot(botId int64, token string) error {
 func (bs *BotService) StopBot(token string) error {
 	bot, err := telego.NewBot(token, telego.WithHealthCheck())
 	if err != nil {
+		bs.log.Errorw("failed telego newBot", "error", err)
 		return err
 	}
 

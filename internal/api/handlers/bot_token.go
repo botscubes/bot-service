@@ -20,7 +20,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -30,7 +30,6 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		}
 
 		data := new(setBotTokenReq)
-
 		if err := ctx.BodyParser(data); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
@@ -49,7 +48,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -60,7 +59,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		// check bot already runnig
 		botStatus, err := db.GetBotStatus(botId, userId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get bot status", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -71,7 +70,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		// check token exists
 		existToken, err := db.CheckBotTokenExist(token)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot token exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -80,7 +79,7 @@ func SetBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		}
 
 		if err = db.SetBotToken(userId, botId, token); err != nil {
-			log.Error(err)
+			log.Errorw("failed set bot token", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -92,7 +91,7 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -104,7 +103,7 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -115,7 +114,7 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		// check bot already runnig
 		botStatus, err := db.GetBotStatus(botId, userId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get bot status", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -126,7 +125,7 @@ func DeleteBotToken(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 		token := ""
 
 		if err = db.SetBotToken(userId, botId, &token); err != nil {
-			log.Error(err)
+			log.Errorw("failed set bot token (delete token)", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 

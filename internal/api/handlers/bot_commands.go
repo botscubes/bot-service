@@ -26,7 +26,7 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -46,7 +46,6 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		}
 
 		reqData := new(addCommandReq)
-
 		if err := ctx.BodyParser(reqData); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
@@ -58,7 +57,7 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -69,7 +68,7 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check component exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -87,13 +86,13 @@ func AddCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 
 		commandId, err := db.AddCommand(botId, m)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed add command", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
 		if err = r.DelComponent(botId, compId); err != nil {
-			log.Error(err)
+			log.Errorw("failed delete component from cache", "error", err)
 		}
 
 		dataRes := &addCommandRes{
@@ -108,7 +107,7 @@ func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -130,7 +129,7 @@ func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -141,7 +140,7 @@ func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check component exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -152,7 +151,7 @@ func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check command exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -161,13 +160,13 @@ func DelCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		}
 
 		if err = db.DelCommand(botId, commandId); err != nil {
-			log.Error(err)
+			log.Errorw("failed delete command", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
 		if err = r.DelComponent(botId, compId); err != nil {
-			log.Error(err)
+			log.Errorw("failed delete component from cache", "error", err)
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
@@ -182,7 +181,7 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -202,7 +201,6 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		}
 
 		reqData := new(setNextStepCommandReq)
-
 		if err := ctx.BodyParser(reqData); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
@@ -220,7 +218,7 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -231,7 +229,7 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		// check bot component exists
 		existInitialComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check initial component exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -242,7 +240,7 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		// Check next component exists
 		existNextComp, err := db.CheckComponentExist(botId, *nextComponentId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check next component exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -253,7 +251,7 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check command exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -262,13 +260,13 @@ func SetNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		}
 
 		if err = db.SetNextStepCommand(botId, commandId, *nextComponentId); err != nil {
-			log.Error(err)
+			log.Errorw("failed set next step command", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
 		if err = r.DelComponent(botId, compId); err != nil {
-			log.Error(err)
+			log.Errorw("failed delete component from cache", "error", err)
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
@@ -279,7 +277,7 @@ func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -301,7 +299,7 @@ func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -312,7 +310,7 @@ func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check component exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -323,7 +321,7 @@ func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check command exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -332,13 +330,13 @@ func DelNextStepCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.
 		}
 
 		if err = db.DelNextStepCommand(botId, commandId); err != nil {
-			log.Error(err)
+			log.Errorw("failed delete next step from command", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
 		if err = r.DelComponent(botId, compId); err != nil {
-			log.Error(err)
+			log.Errorw("failed delete component from cache", "error", err)
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
@@ -354,7 +352,7 @@ func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -374,7 +372,6 @@ func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		}
 
 		reqData := new(updCommandReq)
-
 		if err := ctx.BodyParser(reqData); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
@@ -386,7 +383,7 @@ func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -397,7 +394,7 @@ func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// check bot component exists
 		existComp, err := db.CheckComponentExist(botId, compId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check component exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -408,7 +405,7 @@ func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 		// Check command exists
 		existCommand, err := db.CheckCommandExist(botId, compId, commandId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check command exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -418,13 +415,13 @@ func UpdCommand(db *pgsql.Db, r *rdb.Rdb, log *zap.SugaredLogger) fiber.Handler 
 
 		err = db.UpdCommand(botId, commandId, reqData.Type, reqData.Data)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed update command", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// Invalidate component cache
 		if err = r.DelComponent(botId, compId); err != nil {
-			log.Error(err)
+			log.Errorw("failed delete component from cache", "error", err)
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))

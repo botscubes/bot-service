@@ -41,12 +41,11 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		data := new(newBotReq)
-
 		if err := ctx.BodyParser(data); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
@@ -58,6 +57,7 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("title")))
 		}
 
+		// check title max length
 		if utf8.RuneCountInString(*title) > config.MaxTitleLen {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidTitleLength))
 		}
@@ -71,12 +71,12 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 
 		botId, err := db.AddBot(m)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed add bot", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if err := db.CreateBotSchema(botId); err != nil {
-			log.Error(err)
+			log.Errorw("failed create bot schema", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -101,7 +101,7 @@ func NewBot(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 
 		compId, err := db.AddComponent(botId, mc)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed add component", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -126,7 +126,7 @@ func StartBot(
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -135,9 +135,10 @@ func StartBot(
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
+		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -148,7 +149,7 @@ func StartBot(
 		// check bot already running
 		botStatus, err := db.GetBotStatus(botId, userId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get bot status", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -158,7 +159,7 @@ func StartBot(
 
 		token, err := db.GetBotToken(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get bot token", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -172,18 +173,18 @@ func StartBot(
 			Token: *token,
 		})
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed json marshal", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		res, err := nc.Request("worker.start", payload, config.NatsReqTimeout)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed nats make req: worker.start", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if string(res.Data) != ncCodeOk {
-			log.Error(string(res.Data))
+			log.Errorw("failed nats get res: worker.start", "error", string(res.Data))
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -193,13 +194,13 @@ func StartBot(
 				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 			}
 
-			log.Error(err)
+			log.Errorw("failed start bot (set webhook)", "error", err)
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrStartBot))
 		}
 
 		// upd status in db
 		if err = db.SetBotStatus(botId, userId, model.StatusBotRunning); err != nil {
-			log.Error(err)
+			log.Errorw("failed update bot status", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -211,7 +212,7 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -220,9 +221,10 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 		}
 
+		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -233,7 +235,7 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 		// check bot already stopped
 		botStatus, err := db.GetBotStatus(botId, userId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get bot status", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -243,7 +245,7 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 
 		token, err := db.GetBotToken(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get bot token", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -257,13 +259,13 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 			}
 
-			log.Error(err)
+			log.Errorw("failed stop bot (delete webhook)", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
 		}
 
 		// update status in db
 		if err = db.SetBotStatus(botId, userId, model.StatusBotStopped); err != nil {
-			log.Error(err)
+			log.Errorw("failed update bot status", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -273,18 +275,18 @@ func StopBot(db *pgsql.Db, bs *bot.BotService, log *zap.SugaredLogger, nc *nats.
 				BotId: botId,
 			})
 			if err != nil {
-				log.Error(err)
+				log.Errorw("failed json marshal", "error", err)
 				return
 			}
 
 			res, err := nc.Request("worker.stop", payload, config.NatsReqTimeout)
 			if err != nil {
-				log.Error(err)
+				log.Errorw("failed nats make req: worker.stop", "error", err)
 				return
 			}
 
 			if string(res.Data) != ncCodeOk {
-				log.Error(string(res.Data))
+				log.Errorw("failed nats get res: worker.stop", "error", string(res.Data))
 			}
 		}()
 
@@ -296,13 +298,13 @@ func GetBots(db *pgsql.Db, log *zap.SugaredLogger) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		bots, err := db.UserBots(userId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get list user bots", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -314,7 +316,7 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 	return func(ctx *fiber.Ctx) error {
 		userId, ok := ctx.Locals("userId").(int64)
 		if !ok {
-			log.Error(ErrUserIDConvertation)
+			log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -326,7 +328,7 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 		// check bot exists
 		existBot, err := db.CheckBotExist(userId, botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check bot exist", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
@@ -337,14 +339,14 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 		// check bot status is running
 		botStatus, err := db.GetBotStatus(botId, userId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed get bot status", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		if botStatus == model.StatusBotRunning {
 			token, err := db.GetBotToken(userId, botId)
 			if err != nil {
-				log.Error(err)
+				log.Errorw("failed get bot token", "error", err)
 				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 			}
 
@@ -357,40 +359,41 @@ func WipeBot(db *pgsql.Db, r *rdb.Rdb, bs *bot.BotService, log *zap.SugaredLogge
 					return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 				}
 
-				log.Error(err)
+				log.Errorw("failed stop bot (delete webhook)", "error", err)
 				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrStopBot))
 			}
 
 			if err = db.SetBotStatus(botId, userId, model.StatusBotStopped); err != nil {
-				log.Error(err)
+				log.Errorw("failed set bot status", "error", err)
 				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 			}
 		}
 
+		// TODO: create transaction
 		// remove components
 		err = db.DelAllComponents(botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed delete all components of bot", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// remove commands
 		err = db.DelAllCommands(botId)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed delete all commands of bot", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// remove next step from main component
 		if err = db.DelNextStepComponent(botId, config.MainComponentId); err != nil {
-			log.Error(err)
+			log.Errorw("failed next step from main component", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
 		// remove token
 		token := ""
 		if err = db.SetBotToken(userId, botId, &token); err != nil {
-			log.Error(err)
+			log.Errorw("failed set bot token (delete token)", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 

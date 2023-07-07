@@ -26,7 +26,7 @@ func Auth(st *token_storage.TokenStorage, jwtKey *string, log *zap.SugaredLogger
 		token := strings.TrimPrefix(auth, prefix)
 		exists, err := (*st).CheckToken(context.Background(), token)
 		if err != nil {
-			log.Error(err)
+			log.Errorw("failed check JWT exists (auth)", "errror", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
 
