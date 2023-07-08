@@ -2,20 +2,54 @@ package pgsql
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-func (db *Db) AddBot(m *model.Bot) (int64, error) {
-	var id int64
-	query := `INSERT INTO public.bot (user_id, token, title, status) VALUES ($1, $2, $3, $4) RETURNING id;`
-	if err := db.Pool.QueryRow(
-		context.Background(), query, m.UserId, m.Token, m.Title, m.Status,
-	).Scan(&id); err != nil {
-		return 0, err
+func (db *Db) CreateBot(m *model.Bot, mc *model.Component) (int64, int64, error) {
+	var botId int64
+	var componentId int64
+	var err error
+	ctx := context.Background()
+
+	tx, err := db.Pool.Begin(ctx)
+	if err != nil {
+		return 0, 0, err
 	}
 
-	return id, nil
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}()
+
+	// create bot
+	query := `INSERT INTO public.bot (user_id, token, title, status) VALUES ($1, $2, $3, $4) RETURNING id;`
+	if err = tx.QueryRow(
+		ctx, query, m.UserId, m.Token, m.Title, m.Status,
+	).Scan(&botId); err != nil {
+		return 0, 0, err
+	}
+
+	// create schema for bot
+	query = `CALL create_bot_schema(` + strconv.FormatInt(botId, 10) + `);`
+	if _, err = tx.Exec(ctx, query); err != nil {
+		return 0, 0, err
+	}
+
+	// add component
+	query = `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
+			("data", keyboard, next_step_id, is_main, position, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
+	if err = tx.QueryRow(
+		ctx, query, mc.Data, mc.Keyboard, mc.NextStepId, mc.IsMain, mc.Position, mc.Status,
+	).Scan(&componentId); err != nil {
+		return 0, 0, err
+	}
+
+	return botId, componentId, nil
 }
 
 func (db *Db) CheckBotExist(userId int64, botId int64) (bool, error) {

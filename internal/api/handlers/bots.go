@@ -62,17 +62,6 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 		Status: model.StatusBotStopped,
 	}
 
-	botId, err := h.db.AddBot(m)
-	if err != nil {
-		h.log.Errorw("failed add bot", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-	}
-
-	if err := h.db.CreateBotSchema(botId); err != nil {
-		h.log.Errorw("failed create bot schema", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-	}
-
 	dataType := "start"
 
 	mc := &model.Component{
@@ -92,9 +81,9 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 		Status: model.StatusComponentActive,
 	}
 
-	compId, err := h.db.AddComponent(botId, mc)
+	botId, compId, err := h.db.CreateBot(m, mc)
 	if err != nil {
-		h.log.Errorw("failed add component", "error", err)
+		h.log.Errorw("failed create bot", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 

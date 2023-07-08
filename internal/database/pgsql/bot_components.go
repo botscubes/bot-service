@@ -95,14 +95,6 @@ func (db *Db) DelNextStepComponentByNS(botId int64, nextStep int64) error {
 	return err
 }
 
-func (db *Db) DelNextStepsComponentByNS(botId int64, nextSteps *[]int64) error {
-	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
-			SET next_step_id = null WHERE next_step_id = ANY($1::bigint[]);`
-
-	_, err := db.Pool.Exec(context.Background(), query, nextSteps)
-	return err
-}
-
 func (db *Db) DelComponent(botId int64, compId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET status = $1 WHERE id = $2;`
@@ -112,10 +104,50 @@ func (db *Db) DelComponent(botId int64, compId int64) error {
 }
 
 func (db *Db) DelSetOfComponents(botId int64, data *[]int64) error {
+	var err error
+	ctx := context.Background()
+
+	tx, err := db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}()
+
+	// delete components
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET status = $1 WHERE id = ANY($2::bigint[]);`
+	if _, err = tx.Exec(ctx, query, model.StatusComponentDel, data); err != nil {
+		return err
+	}
 
-	_, err := db.Pool.Exec(context.Background(), query, model.StatusComponentDel, data)
+	// delete component commands
+	query = `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET status = $1 WHERE component_id = ANY($2::bigint[]);`
+	if _, err = tx.Exec(ctx, query, model.StatusCommandDel, data); err != nil {
+		return err
+	}
+
+	// delete component next steps, that reference these components
+	query = `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
+			SET next_step_id = null WHERE next_step_id = ANY($1::bigint[]);`
+	if _, err = tx.Exec(ctx, query, data); err != nil {
+		return err
+	}
+
+	// delete command next steps, that reference these components
+	query = `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
+			SET next_step_id = null WHERE next_step_id = ANY($1::bigint[]);`
+	if _, err = tx.Exec(ctx, query, data); err != nil {
+		return err
+	}
+
 	return err
 }
 

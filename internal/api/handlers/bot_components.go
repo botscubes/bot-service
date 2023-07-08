@@ -383,24 +383,6 @@ func (h *ApiHandler) DelSetOfComponents(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
-	// delete component commands
-	if err = h.db.DelCommandsByCompIds(botId, reqData.Data); err != nil {
-		h.log.Errorw("failed delete commands by component ids", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-	}
-
-	// delete component next steps, that reference these components
-	if err = h.db.DelNextStepsComponentByNS(botId, reqData.Data); err != nil {
-		h.log.Errorw("failed delete component next steps, that reference these components", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-	}
-
-	// delete command next steps, that reference these components
-	if err = h.db.DelNextStepsCommandByNS(botId, reqData.Data); err != nil {
-		h.log.Errorw("failed delete command next steps, that reference these components", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-	}
-
 	// Invalidate component cache
 	for _, v := range *reqData.Data {
 		if err = h.r.DelComponent(botId, v); err != nil {
