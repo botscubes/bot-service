@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
+	h "github.com/botscubes/bot-service/internal/api/handlers"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	se "github.com/botscubes/user-service/pkg/service_error"
 
@@ -56,7 +57,15 @@ func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db,
 		nc:             nc,
 	}
 
-	app.regiterHandlers()
+	apiHandlers := h.NewApiHandler(
+		app.db,
+		app.log,
+		app.botService,
+		app.nc,
+		app.redis,
+	)
+
+	app.regiterHandlers(apiHandlers)
 	return app
 }
 
