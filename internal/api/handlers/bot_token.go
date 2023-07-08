@@ -31,7 +31,6 @@ func (h *ApiHandler) SetBotToken(ctx *fiber.Ctx) error {
 	}
 
 	// check token
-	// TODO: check by tg api
 	token := data.Token
 	if token == nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("token")))
@@ -39,6 +38,16 @@ func (h *ApiHandler) SetBotToken(ctx *fiber.Ctx) error {
 
 	if !validateToken(*token) {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrIncorrectTokenFormat))
+	}
+
+	ok, err = h.bs.TokenHealthCheck(*token)
+	if err != nil {
+		h.log.Errorw("failed check token health", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+	}
+
+	if !ok {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 	}
 
 	// check bot exists

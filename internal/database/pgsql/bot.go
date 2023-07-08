@@ -7,10 +7,7 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-func (db *Db) CreateBot(m *model.Bot, mc *model.Component) (int64, int64, error) {
-	var botId int64
-	var componentId int64
-	var err error
+func (db *Db) CreateBot(m *model.Bot, mc *model.Component) (botId int64, componentId int64, err error) {
 	ctx := context.Background()
 
 	tx, err := db.Pool.Begin(ctx)
@@ -20,9 +17,9 @@ func (db *Db) CreateBot(m *model.Bot, mc *model.Component) (int64, int64, error)
 
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			_ = tx.Rollback(ctx)
 		} else {
-			tx.Commit(ctx)
+			_ = tx.Commit(ctx)
 		}
 	}()
 

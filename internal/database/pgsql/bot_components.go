@@ -114,9 +114,9 @@ func (db *Db) DelSetOfComponents(botId int64, data *[]int64) error {
 
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			_ = tx.Rollback(ctx)
 		} else {
-			tx.Commit(ctx)
+			_ = tx.Commit(ctx)
 		}
 	}()
 

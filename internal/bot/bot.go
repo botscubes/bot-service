@@ -41,3 +41,16 @@ func (bs *BotService) StopBot(token string) error {
 
 	return bot.DeleteWebhook(nil)
 }
+
+func (bs *BotService) TokenHealthCheck(token string) (bool, error) {
+	_, err := telego.NewBot(token, telego.WithHealthCheck())
+	if err != nil {
+		if err.Error() == ErrTgAuth401.Error() {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}

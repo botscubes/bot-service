@@ -7,6 +7,7 @@ import (
 	"github.com/goccy/go-json"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
+	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/model"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
@@ -165,7 +166,7 @@ func (h *ApiHandler) StartBot(ctx *fiber.Ctx) error {
 
 	// set webhook
 	if err = h.bs.StartBot(botId, *token); err != nil {
-		if err.Error() == ErrTgAuth401.Error() {
+		if err.Error() == bot.ErrTgAuth401.Error() {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 		}
 
@@ -228,7 +229,7 @@ func (h *ApiHandler) StopBot(ctx *fiber.Ctx) error {
 
 	// delete webhook
 	if err := h.bs.StopBot(*token); err != nil {
-		if err.Error() == ErrTgAuth401.Error() {
+		if err.Error() == bot.ErrTgAuth401.Error() {
 			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 		}
 
@@ -324,7 +325,7 @@ func (h *ApiHandler) WipeBot(ctx *fiber.Ctx) error {
 		}
 
 		if err := h.bs.StopBot(*token); err != nil {
-			if err.Error() == ErrTgAuth401.Error() {
+			if err.Error() == bot.ErrTgAuth401.Error() {
 				return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 			}
 
