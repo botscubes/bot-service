@@ -13,16 +13,9 @@ var (
 	StatusComponentDel    ComponentStatus = 1
 )
 
-type CommandStatus int
-
-var (
-	StatusCommandActive CommandStatus
-	StatusCommandDel    CommandStatus = 1
-)
-
 type Component struct {
 	Id         int64           `json:"id"`
-	Data       *Data           `json:"data"`
+	Data       *ComponentData  `json:"data"`
 	Keyboard   *Keyboard       `json:"keyboard"`
 	Commands   *Commands       `json:"commands"`
 	NextStepId *int64          `json:"nextStepId"`
@@ -31,9 +24,7 @@ type Component struct {
 	Status     ComponentStatus `json:"-"`
 }
 
-type Commands []*Command
-
-type Data struct {
+type ComponentData struct {
 	Type    *string     `json:"type"`
 	Content *[]*Content `json:"content"`
 }
@@ -44,15 +35,6 @@ type Content struct {
 
 type Keyboard struct {
 	Buttons [][]*int64 `json:"buttons"`
-}
-
-type Command struct {
-	Id          *int64        `json:"id"`
-	Type        *string       `json:"type"`
-	Data        *string       `json:"data"`
-	ComponentId *int64        `json:"componentId"`
-	NextStepId  *int64        `json:"nextStepId"`
-	Status      CommandStatus `json:"status"`
 }
 
 type Point struct {
@@ -71,7 +53,7 @@ func (p *Point) ScanPoint(v pgtype.Point) error {
 	return nil
 }
 
-// Encode point strcut to pgx point type
+// Encode point struct to pgx point type
 func (p Point) PointValue() (pgtype.Point, error) {
 	return pgtype.Point{
 		P:     pgtype.Vec2{X: p.X, Y: p.Y},
@@ -87,4 +69,23 @@ func (c *Component) MarshalBinary() ([]byte, error) {
 // Decode component from binary format to struct (fo redis)
 func (c *Component) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &c)
+}
+
+type AddComponentReq struct {
+	Data     *ComponentData `json:"data"`
+	Commands *CommandsParam `json:"commands"`
+	Position *Point         `json:"position"`
+}
+
+type SetNextStepComponentReq struct {
+	NextStepId *int64 `json:"nextStepId"`
+}
+
+type DelSetComponentsReq struct {
+	Data *[]int64 `json:"data"`
+}
+
+type UpdComponentReq struct {
+	Data     *ComponentData `json:"data"`
+	Position *Point         `json:"position"`
 }

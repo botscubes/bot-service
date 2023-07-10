@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"strconv"
-	"unicode/utf8"
 
 	"github.com/goccy/go-json"
 
@@ -13,10 +12,6 @@ import (
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/gofiber/fiber/v2"
 )
-
-type newBotReq struct {
-	Title *string `json:"title"`
-}
 
 type newBotRes struct {
 	BotId     int64            `json:"botId"`
@@ -39,7 +34,7 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
-	data := new(newBotReq)
+	data := new(model.NewBotReq)
 	if err := ctx.BodyParser(data); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
@@ -47,13 +42,8 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 	title := data.Title
 	token := ""
 
-	if title == nil || *title == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("title")))
-	}
-
-	// check title max length
-	if utf8.RuneCountInString(*title) > config.MaxTitleLen {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidTitleLength))
+	if err := data.Validate(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
 	m := &model.Bot{
@@ -63,11 +53,11 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 		Status: model.StatusBotStopped,
 	}
 
-	dataType := "start"
+	componentType := "start"
 
 	mc := &model.Component{
-		Data: &model.Data{
-			Type:    &dataType,
+		Data: &model.ComponentData{
+			Type:    &componentType,
 			Content: &[]*model.Content{},
 		},
 		Keyboard: &model.Keyboard{
@@ -141,6 +131,17 @@ func (h *ApiHandler) StartBot(ctx *fiber.Ctx) error {
 
 	if token == nil || *token == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenNotFound))
+	}
+
+	// token health check
+	ok, err = h.bs.TokenHealthCheck(*token)
+	if err != nil {
+		h.log.Errorw("failed check token health", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+	}
+
+	if !ok {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidToken))
 	}
 
 	// starting worker

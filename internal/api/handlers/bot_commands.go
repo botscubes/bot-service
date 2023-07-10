@@ -10,12 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type addCommandReq struct {
-	Type *string `json:"type"`
-	Data *string `json:"data"`
-}
-
-type addCommandRes struct {
+type AddCommandRes struct {
 	Id int64 `json:"id"`
 }
 
@@ -41,12 +36,12 @@ func (h *ApiHandler) AddCommand(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrMainComponent))
 	}
 
-	reqData := new(addCommandReq)
+	reqData := new(model.AddCommandReq)
 	if err := ctx.BodyParser(reqData); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	if err := model.ValidateCommand(reqData.Type, reqData.Data); err != nil {
+	if err := reqData.Validate(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
@@ -72,6 +67,18 @@ func (h *ApiHandler) AddCommand(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 	}
 
+	commandsCount, err := h.db.GetCountCommandsInComponent(botId, compId)
+	if err != nil {
+		h.log.Errorw("failed get count command in the component", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+	}
+
+	if commandsCount == model.MaxCommandsCount {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTooManyCommands))
+	}
+
+	h.log.Debug(commandsCount)
+
 	m := &model.Command{
 		Type:        reqData.Type,
 		Data:        reqData.Data,
@@ -91,7 +98,7 @@ func (h *ApiHandler) AddCommand(ctx *fiber.Ctx) error {
 		h.log.Errorw("failed delete component from cache", "error", err)
 	}
 
-	dataRes := &addCommandRes{
+	dataRes := &AddCommandRes{
 		Id: commandId,
 	}
 
@@ -166,10 +173,6 @@ func (h *ApiHandler) DelCommand(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 }
 
-type setNextStepCommandReq struct {
-	NextStepId *int64 `json:"nextStepId"`
-}
-
 func (h *ApiHandler) SetNextStepCommand(ctx *fiber.Ctx) error {
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
@@ -192,18 +195,16 @@ func (h *ApiHandler) SetNextStepCommand(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	reqData := new(setNextStepCommandReq)
+	reqData := new(model.SetNextStepCommandReq)
 	if err := ctx.BodyParser(reqData); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	if reqData.NextStepId == nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("nextStepId")))
+	if err := reqData.Validate(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
-	nextComponentId := reqData.NextStepId
-
-	if *nextComponentId == compId {
+	if *reqData.NextStepId == compId {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.InvalidParam("nextStepId")))
 	}
 
@@ -230,7 +231,7 @@ func (h *ApiHandler) SetNextStepCommand(ctx *fiber.Ctx) error {
 	}
 
 	// Check next component exists
-	existNextComp, err := h.db.CheckComponentExist(botId, *nextComponentId)
+	existNextComp, err := h.db.CheckComponentExist(botId, *reqData.NextStepId)
 	if err != nil {
 		h.log.Errorw("failed check next component exist", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
@@ -251,7 +252,7 @@ func (h *ApiHandler) SetNextStepCommand(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrCommandNotFound))
 	}
 
-	if err = h.db.SetNextStepCommand(botId, commandId, *nextComponentId); err != nil {
+	if err = h.db.SetNextStepCommand(botId, commandId, *reqData.NextStepId); err != nil {
 		h.log.Errorw("failed set next step command", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
@@ -332,11 +333,6 @@ func (h *ApiHandler) DelNextStepCommand(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 }
 
-type updCommandReq struct {
-	Type *string `json:"type"`
-	Data *string `json:"data"`
-}
-
 func (h *ApiHandler) UpdCommand(ctx *fiber.Ctx) error {
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
@@ -359,12 +355,12 @@ func (h *ApiHandler) UpdCommand(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	reqData := new(updCommandReq)
+	reqData := new(model.UpdCommandReq)
 	if err := ctx.BodyParser(reqData); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	if err := model.ValidateCommand(reqData.Type, reqData.Data); err != nil {
+	if err := reqData.Validate(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 

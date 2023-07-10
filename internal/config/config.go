@@ -8,12 +8,7 @@ import (
 )
 
 const (
-	// Max bot title length
-	MaxTitleLen = 50
-
 	MainComponentId    = 1
-	MaxPositionX       = 10000
-	MaxPositionY       = 10000
 	StartComponentPosX = 50
 	StartComponentPosY = 50
 

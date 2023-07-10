@@ -14,3 +14,11 @@ type Bot struct {
 	Token  *string   `json:"-"`
 	Status BotStatus `json:"-"`
 }
+
+type NewBotReq struct {
+	Title *string `json:"title"`
+}
+
+type SetBotTokenReq struct {
+	Token *string `json:"token"`
+}

@@ -11,13 +11,7 @@ import (
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 )
 
-type addComponentReq struct {
-	Data     *model.Data     `json:"data"`
-	Commands *model.Commands `json:"commands"`
-	Position *model.Point    `json:"position"`
-}
-
-type addComponentRes struct {
+type AddComponentRes struct {
 	Id int64 `json:"id"`
 }
 
@@ -33,14 +27,12 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
-	reqData := new(addComponentReq)
+	reqData := new(model.AddComponentReq)
 	if err := ctx.BodyParser(reqData); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	// TODO: check fields limits:
-	// eg. data.commands._.data max size, check commands max count
-	if err := model.ValidateComponent(reqData.Data, reqData.Commands, reqData.Position); err != nil {
+	if err := reqData.Validate(); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
@@ -55,6 +47,7 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 	}
 
+	// TODO: ToTx
 	component := &model.Component{
 		Data: reqData.Data,
 		Keyboard: &model.Keyboard{
@@ -88,15 +81,11 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 		}
 	}
 
-	dataRes := &addComponentRes{
+	dataRes := &AddComponentRes{
 		Id: compId,
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(resp.New(true, dataRes, nil))
-}
-
-type setNextStepComponentReq struct {
-	NextStepId *int64 `json:"nextStepId"`
 }
 
 func (h *ApiHandler) SetNextStepComponent(ctx *fiber.Ctx) error {
@@ -116,18 +105,16 @@ func (h *ApiHandler) SetNextStepComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	reqData := new(setNextStepComponentReq)
+	reqData := new(model.SetNextStepComponentReq)
 	if err := ctx.BodyParser(reqData); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	if reqData.NextStepId == nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("nextStepId")))
+	if err := reqData.Validate(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
-	nextComponentId := reqData.NextStepId
-
-	if *nextComponentId == compId {
+	if *reqData.NextStepId == compId {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.InvalidParam("nextStepId")))
 	}
 
@@ -154,7 +141,7 @@ func (h *ApiHandler) SetNextStepComponent(ctx *fiber.Ctx) error {
 	}
 
 	// check bot next component exists
-	existNextComp, err := h.db.CheckComponentExist(botId, *nextComponentId)
+	existNextComp, err := h.db.CheckComponentExist(botId, *reqData.NextStepId)
 	if err != nil {
 		h.log.Errorw("failed check next component exist", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
@@ -164,7 +151,7 @@ func (h *ApiHandler) SetNextStepComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrNextComponentNotFound))
 	}
 
-	if err = h.db.SetNextStepComponent(botId, compId, *nextComponentId); err != nil {
+	if err = h.db.SetNextStepComponent(botId, compId, *reqData.NextStepId); err != nil {
 		h.log.Errorw("failed set next step for component", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
@@ -330,10 +317,6 @@ func (h *ApiHandler) DelComponent(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 }
 
-type delSetComponentsReq struct {
-	Data *[]int64 `json:"data"`
-}
-
 func (h *ApiHandler) DelSetOfComponents(ctx *fiber.Ctx) error {
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
@@ -346,24 +329,13 @@ func (h *ApiHandler) DelSetOfComponents(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	reqData := new(delSetComponentsReq)
+	reqData := new(model.DelSetComponentsReq)
 	if err := ctx.BodyParser(reqData); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	if reqData.Data == nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
-	}
-
-	if len(*reqData.Data) == 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrInvalidParam))
-	}
-
-	// check exist main component
-	for _, v := range *reqData.Data {
-		if v == config.MainComponentId {
-			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrMainComponent))
-		}
+	if err := reqData.Validate(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
 	// check bot exists
@@ -393,11 +365,6 @@ func (h *ApiHandler) DelSetOfComponents(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))
 }
 
-type updComponentReq struct {
-	Data     *model.Data  `json:"data"`
-	Position *model.Point `json:"position"`
-}
-
 func (h *ApiHandler) UpdComponent(ctx *fiber.Ctx) error {
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
@@ -415,25 +382,13 @@ func (h *ApiHandler) UpdComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	reqData := new(updComponentReq)
+	reqData := new(model.UpdComponentReq)
 	if err := ctx.BodyParser(reqData); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	if reqData.Data == nil && reqData.Position == nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
-	}
-
-	if reqData.Data != nil {
-		if err := reqData.Data.Validate(); err != nil {
-			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
-		}
-	}
-
-	if reqData.Position != nil {
-		if err := reqData.Position.Validate(); err != nil {
-			return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
-		}
+	if err := reqData.Validate(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
 	// check bot exists
@@ -458,6 +413,8 @@ func (h *ApiHandler) UpdComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 	}
 
+	delCache := false
+
 	if reqData.Position != nil {
 		err = h.db.UpdComponentPosition(botId, compId, reqData.Position)
 		if err != nil {
@@ -472,11 +429,14 @@ func (h *ApiHandler) UpdComponent(ctx *fiber.Ctx) error {
 			h.log.Errorw("failed update component data", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 		}
+		delCache = true
 	}
 
-	// Invalidate component cache
-	if err = h.r.DelComponent(botId, compId); err != nil {
-		h.log.Errorw("failed delete component from cache", "error", err)
+	if delCache {
+		// Invalidate component cache
+		if err = h.r.DelComponent(botId, compId); err != nil {
+			h.log.Errorw("failed delete component from cache", "error", err)
+		}
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(resp.New(true, nil, nil))

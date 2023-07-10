@@ -82,3 +82,16 @@ func (db *Db) DelAllCommands(botId int64) error {
 	_, err := db.Pool.Exec(context.Background(), query, model.StatusCommandDel)
 	return err
 }
+
+func (db *Db) GetCountCommandsInComponent(botId int64, compId int64) (int64, error) {
+	var data int64
+	query := `SELECT count(id) FROM ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
+				WHERE component_id = $1 AND status = $2;`
+	if err := db.Pool.QueryRow(
+		context.Background(), query, compId, model.StatusCommandActive,
+	).Scan(&data); err != nil {
+		return 0, err
+	}
+
+	return data, nil
+}

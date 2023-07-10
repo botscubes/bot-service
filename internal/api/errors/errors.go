@@ -27,7 +27,7 @@ var (
 var (
 	ErrIncorrectTokenFormat  = err.New(100, "Token has an incorrect format")
 	ErrInvalidToken          = err.New(101, "Invalid token")
-	ErrInvalidTitleLength    = err.New(102, "Title is too long")
+	ErrTitleTooLong          = err.New(102, "Title is too long")
 	ErrBotNotFound           = err.New(103, "Bot not found")
 	ErrTokenAlreadyInstalled = err.New(104, "The bot already has a token")
 	ErrTokenAlreadyExists    = err.New(105, "Token already exists in system")
@@ -44,6 +44,10 @@ var (
 	ErrBotAlreadyRunning     = err.New(116, "The bot already running")
 	ErrBotNeedsStopped       = err.New(117, "Bot needs to be stopped")
 	ErrNewBot                = err.New(118, "Create bot error")
+	ErrTitleTooShort         = err.New(119, "Title is too short")
+	ErrComponentTextTooShort = err.New(120, "Text is too short")
+	ErrComponentTextTooLong  = err.New(121, "Text is too long")
+	ErrTooManyCommands       = err.New(122, "Too many commands")
 )
 
 func InvalidParam(mes string) *err.ServiceError {

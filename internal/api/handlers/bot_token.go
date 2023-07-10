@@ -9,10 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type setBotTokenReq struct {
-	Token *string `json:"token"`
-}
-
 func (h *ApiHandler) SetBotToken(ctx *fiber.Ctx) error {
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
@@ -25,22 +21,17 @@ func (h *ApiHandler) SetBotToken(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	data := new(setBotTokenReq)
+	data := new(model.SetBotTokenReq)
 	if err := ctx.BodyParser(data); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
 	// check token
-	token := data.Token
-	if token == nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.MissingParam("token")))
+	if err := data.Validate(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
 	}
 
-	if !validateToken(*token) {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrIncorrectTokenFormat))
-	}
-
-	ok, err = h.bs.TokenHealthCheck(*token)
+	ok, err = h.bs.TokenHealthCheck(*data.Token)
 	if err != nil {
 		h.log.Errorw("failed check token health", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
@@ -61,7 +52,7 @@ func (h *ApiHandler) SetBotToken(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 	}
 
-	// check bot already runnig
+	// check bot runnig
 	botStatus, err := h.db.GetBotStatus(botId, userId)
 	if err != nil {
 		h.log.Errorw("failed get bot status", "error", err)
@@ -73,7 +64,7 @@ func (h *ApiHandler) SetBotToken(ctx *fiber.Ctx) error {
 	}
 
 	// check token exists
-	existToken, err := h.db.CheckBotTokenExist(token)
+	existToken, err := h.db.CheckBotTokenExist(data.Token)
 	if err != nil {
 		h.log.Errorw("failed check bot token exist", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
@@ -83,7 +74,7 @@ func (h *ApiHandler) SetBotToken(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTokenAlreadyExists))
 	}
 
-	if err = h.db.SetBotToken(userId, botId, token); err != nil {
+	if err = h.db.SetBotToken(userId, botId, data.Token); err != nil {
 		h.log.Errorw("failed set bot token", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
@@ -114,7 +105,7 @@ func (h *ApiHandler) DeleteBotToken(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 	}
 
-	// check bot already runnig
+	// check bot runnig
 	botStatus, err := h.db.GetBotStatus(botId, userId)
 	if err != nil {
 		h.log.Errorw("failed get bot status", "error", err)
