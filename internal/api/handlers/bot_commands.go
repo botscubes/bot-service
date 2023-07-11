@@ -73,7 +73,7 @@ func (h *ApiHandler) AddCommand(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
-	if commandsCount == model.MaxCommandsCount {
+	if commandsCount >= model.MaxCommandsCount {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTooManyCommands))
 	}
 

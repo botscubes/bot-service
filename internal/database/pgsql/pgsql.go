@@ -3,6 +3,7 @@ package pgsql
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,4 +24,13 @@ func OpenConnection(url string) (*Db, error) {
 
 func (db *Db) CloseConnection() {
 	db.Pool.Close()
+}
+
+func (db *Db) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	tx, err := db.Pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
 }

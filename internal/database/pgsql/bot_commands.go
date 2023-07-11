@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/botscubes/bot-service/internal/model"
+	"github.com/jackc/pgx/v5"
 )
 
 func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
@@ -14,6 +15,20 @@ func (db *Db) AddCommand(botId int64, m *model.Command) (int64, error) {
 
 	if err := db.Pool.QueryRow(
 		context.Background(), query, m.Type, m.Data, m.ComponentId, m.NextStepId, m.Status,
+	).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (db *Db) AddCommandTx(ctx context.Context, tx pgx.Tx, botId int64, m *model.Command) (int64, error) {
+	var id int64
+	query := `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
+			("type", "data", component_id, next_step_id, status) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+
+	if err := tx.QueryRow(
+		ctx, query, m.Type, m.Data, m.ComponentId, m.NextStepId, m.Status,
 	).Scan(&id); err != nil {
 		return 0, err
 	}
@@ -51,11 +66,11 @@ func (db *Db) DelNextStepCommand(botId int64, commandId int64) error {
 	return err
 }
 
-func (db *Db) DelCommandsByCompId(botId int64, compId int64) error {
+func (db *Db) DelCommandsByCompIdTx(ctx context.Context, tx pgx.Tx, botId int64, compId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.command
 			SET status = $1 WHERE component_id = $2;`
 
-	_, err := db.Pool.Exec(context.Background(), query, model.StatusCommandDel, compId)
+	_, err := tx.Exec(ctx, query, model.StatusCommandDel, compId)
 	return err
 }
 

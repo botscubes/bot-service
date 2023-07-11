@@ -16,6 +16,7 @@ type AddComponentRes struct {
 }
 
 func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
+	var err error
 	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
@@ -32,8 +33,8 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBadRequest))
 	}
 
-	if err := reqData.Validate(); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, err))
+	if errValidate := reqData.Validate(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, errValidate))
 	}
 
 	// check bot exists
@@ -47,7 +48,6 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrBotNotFound))
 	}
 
-	// TODO: ToTx
 	component := &model.Component{
 		Data: reqData.Data,
 		Keyboard: &model.Keyboard{
@@ -59,7 +59,21 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 		Status:     model.StatusComponentActive,
 	}
 
-	compId, err := h.db.AddComponent(botId, component)
+	tx, err := h.db.BeginTx(ctx.Context())
+	if err != nil {
+		h.log.Errorw("failed begin db transaction", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx.Context())
+		} else {
+			_ = tx.Commit(ctx.Context())
+		}
+	}()
+
+	compId, err := h.db.AddComponentTx(ctx.Context(), tx, botId, component)
 	if err != nil {
 		h.log.Errorw("failed add component", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
@@ -75,7 +89,7 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 				Status:      model.StatusCommandActive,
 			}
 
-			_, err := h.db.AddCommand(botId, mc)
+			_, err = h.db.AddCommandTx(ctx.Context(), tx, botId, mc)
 			if err != nil {
 				h.log.Errorw("failed add command", "error", err)
 				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
@@ -251,6 +265,7 @@ func (h *ApiHandler) DelNextStepComponent(ctx *fiber.Ctx) error {
 }
 
 func (h *ApiHandler) DelComponent(ctx *fiber.Ctx) error {
+	var err error
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
 		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
@@ -294,19 +309,34 @@ func (h *ApiHandler) DelComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrComponentNotFound))
 	}
 
-	if err = h.db.DelComponent(botId, compId); err != nil {
+	tx, err := h.db.BeginTx(ctx.Context())
+	if err != nil {
+		h.log.Errorw("failed begin db transaction", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx.Context())
+		} else {
+			_ = tx.Commit(ctx.Context())
+		}
+	}()
+
+	// delete component
+	if err = h.db.DelComponentTx(ctx.Context(), tx, botId, compId); err != nil {
 		h.log.Errorw("failed delete component", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
 	// delete component commands
-	if err = h.db.DelCommandsByCompId(botId, compId); err != nil {
+	if err = h.db.DelCommandsByCompIdTx(ctx.Context(), tx, botId, compId); err != nil {
 		h.log.Errorw("failed delete commands by component id", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
 	// delete component next steps, that reference these component
-	if err = h.db.DelNextStepComponentByNS(botId, compId); err != nil {
+	if err = h.db.DelNextStepComponentByNsTx(ctx.Context(), tx, botId, compId); err != nil {
 		h.log.Errorw("failed delete component next steps, that reference these component", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}

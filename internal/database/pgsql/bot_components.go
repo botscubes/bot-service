@@ -6,15 +6,16 @@ import (
 
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/model"
+	"github.com/jackc/pgx/v5"
 )
 
-func (db *Db) AddComponent(botId int64, m *model.Component) (int64, error) {
+func (db *Db) AddComponentTx(ctx context.Context, tx pgx.Tx, botId int64, m *model.Component) (int64, error) {
 	var id int64
 	query := `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			("data", keyboard, next_step_id, is_main,"position", status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
 
-	if err := db.Pool.QueryRow(
-		context.Background(), query, m.Data, m.Keyboard, m.NextStepId, m.IsMain, m.Position, m.Status,
+	if err := tx.QueryRow(
+		ctx, query, m.Data, m.Keyboard, m.NextStepId, m.IsMain, m.Position, m.Status,
 	).Scan(&id); err != nil {
 		return 0, err
 	}
@@ -87,19 +88,19 @@ func (db *Db) DelNextStepComponent(botId int64, compId int64) error {
 	return err
 }
 
-func (db *Db) DelNextStepComponentByNS(botId int64, nextStep int64) error {
+func (db *Db) DelNextStepComponentByNsTx(ctx context.Context, tx pgx.Tx, botId int64, nextStep int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET next_step_id = null WHERE next_step_id = $1;`
 
-	_, err := db.Pool.Exec(context.Background(), query, nextStep)
+	_, err := tx.Exec(ctx, query, nextStep)
 	return err
 }
 
-func (db *Db) DelComponent(botId int64, compId int64) error {
+func (db *Db) DelComponentTx(ctx context.Context, tx pgx.Tx, botId int64, compId int64) error {
 	query := `UPDATE ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
 			SET status = $1 WHERE id = $2;`
 
-	_, err := db.Pool.Exec(context.Background(), query, model.StatusComponentDel, compId)
+	_, err := tx.Exec(ctx, query, model.StatusComponentDel, compId)
 	return err
 }
 
