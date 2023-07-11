@@ -63,17 +63,17 @@ POST /api/bots/{botId}/components
 }
 ```
 
-Поле              | Тип                       | Описание
-------------------|---------------------------|-----------------------------------------------------------
-`data`            | object                    | Данные компонента
-`data.type`       | string                    | Тип компонента
-`data.content`    | [content][type_content][] | Список c данными, специфичными для каждого типа компонента
-`commands`        | [command][type_command][] | Список команд
-`commands[].type` | string                    | Тип команды
-`commands[].data` | string                    | Текст команды
-`position`        | object                    | Координаты компонента на поле редактора
-`position.x`      | integer                   | Координата X
-`position.y`      | integer                   | Координата Y
+Поле              | Тип                       | Обязательное | Описание
+------------------|---------------------------|--------------|-----------------------------------------------------------
+`data`            | object                    | Да           | Данные компонента
+`data.type`       | string                    | Да           | Тип компонента
+`data.content`    | [content][type_content][] | Да           | Список c данными, специфичными для каждого типа компонента
+`commands`        | [command][type_command][] | Нет          | Список команд
+`commands[].type` | string                    | Да           | Тип команды
+`commands[].data` | string                    | Да           | Текст команды
+`position`        | object                    | Да           | Координаты компонента на поле редактора
+`position.x`      | integer                   | Да           | Координата X
+`position.y`      | integer                   | Да           | Координата Y
 
 #### Ответ
 

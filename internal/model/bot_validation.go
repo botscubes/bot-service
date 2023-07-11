@@ -32,7 +32,6 @@ func (r *NewBotReq) Validate() *se.ServiceError {
 }
 
 func (r *SetBotTokenReq) Validate() *se.ServiceError {
-
 	if r.Token == nil {
 		return e.MissingParam("token")
 	}

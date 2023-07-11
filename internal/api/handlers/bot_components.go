@@ -65,19 +65,21 @@ func (h *ApiHandler) AddComponent(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
-	for _, v := range *reqData.Commands {
-		mc := &model.Command{
-			Type:        v.Type,
-			Data:        v.Data,
-			ComponentId: &compId,
-			NextStepId:  nil,
-			Status:      model.StatusCommandActive,
-		}
+	if reqData.Commands != nil {
+		for _, v := range *reqData.Commands {
+			mc := &model.Command{
+				Type:        v.Type,
+				Data:        v.Data,
+				ComponentId: &compId,
+				NextStepId:  nil,
+				Status:      model.StatusCommandActive,
+			}
 
-		_, err := h.db.AddCommand(botId, mc)
-		if err != nil {
-			h.log.Errorw("failed add command", "error", err)
-			return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+			_, err := h.db.AddCommand(botId, mc)
+			if err != nil {
+				h.log.Errorw("failed add command", "error", err)
+				return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
+			}
 		}
 	}
 

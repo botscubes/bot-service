@@ -77,8 +77,6 @@ func (h *ApiHandler) AddCommand(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(resp.New(false, nil, e.ErrTooManyCommands))
 	}
 
-	h.log.Debug(commandsCount)
-
 	m := &model.Command{
 		Type:        reqData.Type,
 		Data:        reqData.Data,

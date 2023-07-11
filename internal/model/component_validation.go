@@ -52,19 +52,21 @@ func (p *Point) Validate() *se.ServiceError {
 	return nil
 }
 
-func (c *AddComponentReq) Validate() *se.ServiceError {
+func (r *AddComponentReq) Validate() *se.ServiceError {
 	// validate data
-	if err := c.Data.Validate(); err != nil {
+	if err := r.Data.Validate(); err != nil {
 		return err
 	}
 
 	// Validate commands
-	if err := c.Commands.Validate(); err != nil {
-		return err
+	if r.Commands != nil {
+		if err := r.Commands.Validate(); err != nil {
+			return err
+		}
 	}
 
 	// Validate position
-	return c.Position.Validate()
+	return r.Position.Validate()
 }
 
 func (r *SetNextStepComponentReq) Validate() *se.ServiceError {
