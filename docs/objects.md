@@ -21,14 +21,23 @@
 {
     "id": "integer",
     "title": "string",
+    "status": "integer",
 }
 ```
 
-| Поле    | Тип     | Описание   |
-|---------|---------|------------|
-| `id`    | integer | id команды |
-| `title` | string  | Название   |
+| Поле     | Тип     | Описание   |
+|----------|---------|------------|
+| `id`     | integer | id команды |
+| `title`  | string  | Название   |
+| `status` | integer | Статус     |
 
+
+<details>
+    <summary> Статусы</summary>
+
+- 0 - Бот остановлен
+- 1 - Бот запущен
+</details>
 
 <details>
     <summary>Примеры</summary>

@@ -94,7 +94,7 @@ func (db *Db) SetBotToken(userId int64, botId int64, token *string) error {
 func (db *Db) UserBots(userId int64) (*[]*model.Bot, error) {
 	data := []*model.Bot{}
 
-	query := `SELECT id, title FROM public.bot WHERE user_id = $1 AND (status = $2 OR status = $3) ORDER BY id;`
+	query := `SELECT id, title, status FROM public.bot WHERE user_id = $1 AND (status = $2 OR status = $3) ORDER BY id;`
 
 	rows, err := db.Pool.Query(context.Background(), query, userId, model.StatusBotStopped, model.StatusBotRunning)
 	if err != nil {
@@ -103,7 +103,7 @@ func (db *Db) UserBots(userId int64) (*[]*model.Bot, error) {
 
 	for rows.Next() {
 		var r model.Bot
-		if err = rows.Scan(&r.Id, &r.Title); err != nil {
+		if err = rows.Scan(&r.Id, &r.Title, &r.Status); err != nil {
 			return nil, err
 		}
 

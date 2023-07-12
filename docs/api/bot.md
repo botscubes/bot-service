@@ -164,15 +164,18 @@ GET /api/bots
     "data": [
         {
             "id": 79,
-            "title": "qwerty"
+            "title": "qwerty",
+            "status": 1
         },
         {
             "id": 80,
-            "title": "qwerty"
+            "title": "qwerty",
+            "status": 0
         },
         {
             "id": 124,
-            "title": "--"
+            "title": "--",
+            "status": 1
         }
     ]
 }

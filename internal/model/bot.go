@@ -12,7 +12,7 @@ type Bot struct {
 	UserId int64     `json:"userId,omitempty"`
 	Title  *string   `json:"title"`
 	Token  *string   `json:"-"`
-	Status BotStatus `json:"-"`
+	Status BotStatus `json:"status"`
 }
 
 type NewBotReq struct {
