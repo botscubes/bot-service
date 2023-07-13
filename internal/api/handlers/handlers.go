@@ -5,11 +5,11 @@ import (
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
+	mb "github.com/botscubes/bot-service/internal/broker"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/gofiber/fiber/v2"
-	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +21,7 @@ type ApiHandler struct {
 	db  *pgsql.Db
 	log *zap.SugaredLogger
 	bs  *bot.BotService
-	nc  *nats.Conn
+	mb  mb.Broker
 	r   *rdb.Rdb
 }
 
@@ -29,14 +29,14 @@ func NewApiHandler(
 	db *pgsql.Db,
 	log *zap.SugaredLogger,
 	bs *bot.BotService,
-	nc *nats.Conn,
+	b mb.Broker,
 	r *rdb.Rdb,
 ) *ApiHandler {
 	return &ApiHandler{
 		db:  db,
 		log: log,
 		bs:  bs,
-		nc:  nc,
+		mb:  b,
 		r:   r,
 	}
 }

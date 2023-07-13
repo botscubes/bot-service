@@ -9,10 +9,9 @@ import (
 	"github.com/botscubes/bot-service/pkg/logger"
 
 	a "github.com/botscubes/bot-service/internal/app"
+	"github.com/botscubes/bot-service/internal/broker"
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
-
-	"github.com/nats-io/nats.go"
 )
 
 func main() {
@@ -44,11 +43,11 @@ func main() {
 
 	defer db.CloseConnection()
 
-	nc, err := nats.Connect(c.NatsURL, nats.MaxReconnects(-1))
+	nc, err := broker.NewNatsBroker(c.NatsURL)
 	if err != nil {
 		log.Fatalw("NATS connection", "error", err)
 	}
-	defer nc.Drain() //nolint:errcheck
+	defer nc.CloseConnection()
 
 	app := a.CreateApp(log, c, db, nc)
 

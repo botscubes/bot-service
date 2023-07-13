@@ -3,8 +3,6 @@ package handlers
 import (
 	"strconv"
 
-	"github.com/goccy/go-json"
-
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
@@ -145,23 +143,8 @@ func (h *ApiHandler) StartBot(ctx *fiber.Ctx) error {
 	}
 
 	// starting worker
-	payload, err := json.Marshal(ncPayload{
-		BotId: botId,
-		Token: *token,
-	})
-	if err != nil {
-		h.log.Errorw("failed json marshal", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-	}
-
-	res, err := h.nc.Request("worker.start", payload, config.NatsReqTimeout)
-	if err != nil {
-		h.log.Errorw("failed nats make req: worker.start", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
-	}
-
-	if string(res.Data) != ncCodeOk {
-		h.log.Errorw("failed nats get res: worker.start", "error", string(res.Data))
+	if err := h.mb.StartBot(botId, *token); err != nil {
+		h.log.Errorw("failed broker: start bot", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(resp.New(false, nil, e.ErrInternalServer))
 	}
 
@@ -246,22 +229,9 @@ func (h *ApiHandler) StopBot(ctx *fiber.Ctx) error {
 
 	// stop worker in the background
 	go func() {
-		payload, err := json.Marshal(ncPayload{
-			BotId: botId,
-		})
-		if err != nil {
-			h.log.Errorw("failed json marshal", "error", err)
+		if err := h.mb.StopBot(botId); err != nil {
+			h.log.Errorw("failed broker: stop bot", "error", err)
 			return
-		}
-
-		res, err := h.nc.Request("worker.stop", payload, config.NatsReqTimeout)
-		if err != nil {
-			h.log.Errorw("failed nats make req: worker.stop", "error", err)
-			return
-		}
-
-		if string(res.Data) != ncCodeOk {
-			h.log.Errorw("failed nats get res: worker.stop", "error", string(res.Data))
 		}
 	}()
 

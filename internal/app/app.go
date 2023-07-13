@@ -4,13 +4,13 @@ import (
 	"errors"
 
 	"github.com/goccy/go-json"
-	"github.com/nats-io/nats.go"
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	h "github.com/botscubes/bot-service/internal/api/handlers"
+	mb "github.com/botscubes/bot-service/internal/broker"
 	resp "github.com/botscubes/bot-service/pkg/api_response"
 	se "github.com/botscubes/user-service/pkg/service_error"
 
@@ -33,10 +33,10 @@ type App struct {
 	redisAuth      *redis.Client
 	redis          *rdb.Rdb
 	log            *zap.SugaredLogger
-	nc             *nats.Conn
+	mb             mb.Broker
 }
 
-func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db, nc *nats.Conn) *App {
+func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db, b mb.Broker) *App {
 	redisAuth := redisauth.NewClient(&c.RedisAuth)
 
 	app := &App{
@@ -54,14 +54,14 @@ func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db,
 		sessionStorage: token_storage.NewRedisTokenStorage(redisAuth),
 		redis:          rdb.NewClient(&c.Redis),
 		db:             db,
-		nc:             nc,
+		mb:             b,
 	}
 
 	apiHandlers := h.NewApiHandler(
 		app.db,
 		app.log,
 		app.botService,
-		app.nc,
+		app.mb,
 		app.redis,
 	)
 
