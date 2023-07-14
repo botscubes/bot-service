@@ -16,15 +16,6 @@ type newBotRes struct {
 	Component *model.Component `json:"component"`
 }
 
-type ncPayload struct {
-	BotId int64  `json:"botId"`
-	Token string `json:"token"`
-}
-
-var (
-	ncCodeOk = "200"
-)
-
 func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {

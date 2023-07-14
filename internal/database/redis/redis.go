@@ -1,8 +1,14 @@
 package redis
 
 import (
+	"errors"
+
 	"github.com/botscubes/bot-service/internal/config"
 	"github.com/redis/go-redis/v9"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 type Rdb struct {

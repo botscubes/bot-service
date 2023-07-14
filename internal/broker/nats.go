@@ -16,8 +16,8 @@ var (
 	natsCodeOk = "200"
 )
 
-func NewNatsBroker(NatsURL string) (*NatsBroker, error) {
-	nc, err := nats.Connect(NatsURL, nats.MaxReconnects(-1))
+func NewNatsBroker(natsURL string) (*NatsBroker, error) {
+	nc, err := nats.Connect(natsURL, nats.MaxReconnects(-1))
 	if err != nil {
 		return nil, err
 	}
@@ -25,6 +25,10 @@ func NewNatsBroker(NatsURL string) (*NatsBroker, error) {
 	return &NatsBroker{
 		nc: nc,
 	}, nil
+}
+
+func (b *NatsBroker) CloseConnection() {
+	b.nc.Drain() //nolint:errcheck
 }
 
 type startBotPayload struct {
@@ -75,8 +79,4 @@ func (b *NatsBroker) StopBot(botId int64) error {
 	}
 
 	return nil
-}
-
-func (b *NatsBroker) CloseConnection() {
-	b.nc.Drain() //nolint:errcheck
 }
