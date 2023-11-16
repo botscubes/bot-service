@@ -21,7 +21,8 @@ type ServiceConfig struct {
 	Pg            PostgresConfig
 	RedisAuth     RedisAuthConfig
 	Redis         RedisConfig
-	WebhookBase   string `env:"WEBHOOK_BASE,required"`
+	WebhookDomain string `env:"WEBHOOK_DOMAIN,required"`
+	WebhookPath   string `env:"WEBHOOK_PATH,required"`
 	JWTKey        string `env:"JWT_SECRET_KEY,required"`
 	ListenAddress string `env:"LISTEN_ADDRESS,required"`
 	LoggerType    string `env:"LOGGER_TYPE,required"`

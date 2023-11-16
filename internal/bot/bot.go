@@ -27,8 +27,10 @@ func (bs *BotService) StartBot(botId int64, token string) error {
 		return err
 	}
 
+	// Add remove already exists webhook
+
 	return bot.SetWebhook(&telego.SetWebhookParams{
-		URL: bs.conf.WebhookBase + strconv.FormatInt(botId, 10),
+		URL: "https://" + bs.conf.WebhookDomain + bs.conf.WebhookPath + strconv.FormatInt(botId, 10),
 	})
 }
 
