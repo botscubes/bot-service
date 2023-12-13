@@ -2,6 +2,8 @@ github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/
 github.com/andybalholm/brotli v1.0.5/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/botscubes/user-service v0.0.0-20230518151626-80acbd92cf57 h1:+kfprpSb3t9pVdzK62Qh4wORyvu7iEMvViz47MnGQrU=
 github.com/botscubes/user-service v0.0.0-20230518151626-80acbd92cf57/go.mod h1:ZC+8i2ElQ00t6UqcO5gt3cZVpVbnpwFXe4vlPk+AuSY=
+github.com/botscubes/user-service v0.0.0-20231202181918-52d3bdd636e0 h1:GaH8Crf4qYiuuSqnxOw25PdV1CbZellm/MvAOO/6GLU=
+github.com/botscubes/user-service v0.0.0-20231202181918-52d3bdd636e0/go.mod h1:ZC+8i2ElQ00t6UqcO5gt3cZVpVbnpwFXe4vlPk+AuSY=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=

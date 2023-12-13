@@ -3,7 +3,7 @@ module github.com/botscubes/bot-service
 go 1.20
 
 require (
-	github.com/botscubes/user-service v0.0.0-20230518151626-80acbd92cf57
+	github.com/botscubes/user-service v0.0.0-20231202181918-52d3bdd636e0
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/jackc/pgx/v5 v5.4.3
