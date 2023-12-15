@@ -40,21 +40,13 @@ POST /api/bots
 
 #### Ответ
 
-Включает только одно из полей: `data`, `error`  
 После создания бот включает в свою структуру стартовый компонент
 
 ```json
 {
-    "ok": "bool",
-    "data": {
-        "botId": "integer",
-        "component": "component"
-    },
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
+    "botId": "integer",
+    "component": "component"
+},
 ```
 
 _data_
@@ -85,25 +77,22 @@ POST /api/bots
 
 ```json
 {
-    "ok": true,
-    "data": {
-        "botId": 66,
-        "component": {
-            "id": 1,
-            "data": {
-                "type": "start",
-                "content": []
-            },
-            "keyboard": {
-                "buttons": []
-            },
-            "commands": [],
-            "nextStepId": null,
-            "isMain": true,
-            "position": {
-                "x": 50,
-                "y": 50
-            }
+    "botId": 66,
+    "component": {
+        "id": 1,
+        "data": {
+            "type": "start",
+            "content": []
+        },
+        "keyboard": {
+            "buttons": []
+        },
+        "commands": [],
+        "nextStepId": null,
+        "isMain": true,
+        "position": {
+            "x": 50,
+            "y": 50
         }
     }
 }
@@ -126,20 +115,12 @@ GET /api/bots
 
 #### Ответ
 
-Включает только одно из полей: `data`, `error`  
 После создания бот включает в свою структуру стартовый компонент
 
 ```json
-{
-    "ok": "bool",
-    "data": [
-        "bot"
-    ],
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
+[
+    "bot"
+],
 ```
 
 Поле   | Тип             | Описание
@@ -159,26 +140,24 @@ GET /api/bots
 `Ответ` 
 
 ```json
-{
-    "ok": true,
-    "data": [
-        {
-            "id": 79,
-            "title": "qwerty",
-            "status": 1
-        },
-        {
-            "id": 80,
-            "title": "qwerty",
-            "status": 0
-        },
-        {
-            "id": 124,
-            "title": "--",
-            "status": 1
-        }
-    ]
-}
+[
+    {
+        "id": 79,
+        "title": "qwerty",
+        "status": 1
+    },
+    {
+        "id": 80,
+        "title": "qwerty",
+        "status": 0
+    },
+    {
+        "id": 124,
+        "title": "--",
+        "status": 1
+    }
+]
+
 ```
 </details>
 
@@ -216,17 +195,8 @@ POST /api/bots/{botId}/token
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
+В случае успеха http статус 204 без тела ответа.
 
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
 
 
 - - -
@@ -250,17 +220,8 @@ DELETE /api/bots/{botId}/token
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
+В случае успеха http статус 204 без тела ответа.
 
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
 
 
 - - -
@@ -284,17 +245,8 @@ PATCH /api/bots/{botId}/start
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
+В случае успеха http статус 204 без тела ответа.
 
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
 
 
 - - -
@@ -318,17 +270,7 @@ PATCH /api/bots/{botId}/stop
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
+В случае успеха http статус 204 без тела ответа.
 
 
 - - -
@@ -355,17 +297,8 @@ PATCH /api/bots/{botId}/wipe
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
+В случае успеха http статус 204 без тела ответа.
 
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
 
 [//]: # (LINKS)
 [type_component]: ../objects.md#component
