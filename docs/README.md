@@ -5,6 +5,7 @@
 - [API управления компонентами](./api/components.md)
 - [Описание объектов](./objects.md)
 - [Список компонентов](./components.md)
+- [Коды http ответов](./http_codes.md)
 
 - - -
 
