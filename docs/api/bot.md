@@ -46,7 +46,7 @@ POST /api/bots
 {
     "botId": "integer",
     "component": "component"
-},
+}
 ```
 
 _data_
@@ -120,7 +120,7 @@ GET /api/bots
 ```json
 [
     "bot"
-],
+]
 ```
 
 Поле   | Тип             | Описание
