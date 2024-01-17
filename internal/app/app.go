@@ -20,6 +20,7 @@ import (
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
 	"github.com/botscubes/bot-service/internal/database/redisauth"
 	"github.com/botscubes/user-service/pkg/token_storage"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -64,6 +65,9 @@ func CreateApp(logger *zap.SugaredLogger, c *config.ServiceConfig, db *pgsql.Db,
 		app.mb,
 		app.redis,
 	)
+
+	// CORS
+	app.server.Use(cors.New())
 
 	app.regiterHandlers(apiHandlers)
 	return app
