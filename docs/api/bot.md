@@ -6,6 +6,7 @@
 
 - [New bot](#new-bot)
 - [Get bots](#get-bots)
+- [Delete bot](#delete-bot)
 - [Set token](#set-token)
 - [Delete token](#delete-token)
 - [Start](#start)
