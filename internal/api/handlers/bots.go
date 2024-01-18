@@ -76,6 +76,59 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(dataRes)
 }
+func (h *ApiHandler) DeleteBot(ctx *fiber.Ctx) error {
+	userId, ok := ctx.Locals("userId").(int64)
+	if !ok {
+		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+	if err != nil {
+		return ctx.SendStatus(fiber.StatusBadRequest)
+	}
+	existBot, err := h.db.CheckBotExist(userId, botId)
+	if err != nil {
+		h.log.Errorw("failed check bot exist", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	if !existBot {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrBotNotFound)
+	}
+
+	// check bot status is running
+	botStatus, err := h.db.GetBotStatus(botId, userId)
+	if err != nil {
+		h.log.Errorw("failed get bot status", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	if botStatus == model.StatusBotRunning {
+		token, err := h.db.GetBotToken(userId, botId)
+		if err != nil {
+			h.log.Errorw("failed get bot token", "error", err)
+			return ctx.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		if token == nil || *token == "" {
+			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrTokenNotFound)
+		}
+
+		if err := h.bs.StopBot(*token); err != nil {
+			if err.Error() == bot.ErrTgAuth401.Error() {
+				return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrInvalidToken)
+			}
+
+			h.log.Errorw("failed stop bot (delete webhook)", "error", err)
+			return ctx.SendStatus(fiber.StatusInternalServerError)
+		}
+
+	}
+	if err := h.db.DeleteBot(userId, botId); err != nil {
+		h.log.Errorw("failed delete bot", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
 
 func (h *ApiHandler) StartBot(ctx *fiber.Ctx) error {
 	userId, ok := ctx.Locals("userId").(int64)

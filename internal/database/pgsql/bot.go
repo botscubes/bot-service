@@ -49,6 +49,34 @@ func (db *Db) CreateBot(m *model.Bot, mc *model.Component) (botId int64, compone
 	return botId, componentId, nil
 }
 
+func (db *Db) DeleteBot(userId int64, botId int64) error {
+	ctx := context.Background()
+
+	tx, err := db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		} else {
+			_ = tx.Commit(ctx)
+		}
+	}()
+	query := `DELETE FROM public.bot WHERE id = $1 AND user_id = $2;`
+	_, err = db.Pool.Exec(ctx, query, botId, userId)
+	if err != nil {
+		return err
+	}
+	query = `DROP SCHEMA IF EXISTS bot_` + strconv.FormatInt(botId, 10) + ` CASCADE;`
+	_, err = db.Pool.Exec(ctx, query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (db *Db) CheckBotExist(userId int64, botId int64) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE id = $1 AND user_id = $2 AND (status = $3 OR status = $4)) AS "exists";`

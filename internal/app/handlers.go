@@ -28,6 +28,9 @@ func (app *App) regBotsHandlers(h *handlers.ApiHandler) {
 	// Create new bot
 	app.server.Post("/api/bots", h.NewBot)
 
+	// Delete bot
+	app.server.Delete("/api/bots/:botId<int>", h.DeleteBot)
+
 	// Set bot token
 	app.server.Post("/api/bots/:botId<int>/token", h.SetBotToken)
 
