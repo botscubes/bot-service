@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/botscubes/bot-components/components"
 	"github.com/goccy/go-json"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -14,14 +15,9 @@ var (
 )
 
 type Component struct {
-	Id         int64           `json:"id"`
-	Data       *ComponentData  `json:"data"`
-	Keyboard   *Keyboard       `json:"keyboard"`
-	Commands   *Commands       `json:"commands"`
-	NextStepId *int64          `json:"nextStepId"`
-	IsMain     bool            `json:"isMain"`
-	Position   *Point          `json:"position"`
-	Status     ComponentStatus `json:"-"`
+	components.ComponentData
+	Id       int64  `json:"id"`
+	Position *Point `json:"position"`
 }
 
 type ComponentData struct {

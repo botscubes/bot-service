@@ -3,6 +3,7 @@ package handlers
 import (
 	"strconv"
 
+	"github.com/botscubes/bot-components/components"
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
 	"github.com/botscubes/bot-service/internal/config"
@@ -44,20 +45,16 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 	componentType := "start"
 
 	mc := &model.Component{
-		Data: &model.ComponentData{
-			Type:    &componentType,
-			Content: &[]*model.Content{},
+
+		ComponentData: components.ComponentData{
+			ComponentTypeData: components.ComponentTypeData{
+				Type: componentType,
+			},
 		},
-		Keyboard: &model.Keyboard{
-			Buttons: [][]*int64{},
-		},
-		NextStepId: nil,
-		IsMain:     true,
 		Position: &model.Point{
 			X: float64(config.StartComponentPosX), Y: float64(config.StartComponentPosY),
 			Valid: true,
 		},
-		Status: model.StatusComponentActive,
 	}
 
 	botId, compId, err := h.db.CreateBot(m, mc)
@@ -67,7 +64,6 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 	}
 
 	mc.Id = compId
-	mc.Commands = new(model.Commands)
 
 	dataRes := &newBotRes{
 		BotId:     botId,
@@ -297,92 +293,92 @@ func (h *ApiHandler) GetBots(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(bots)
 }
 
-func (h *ApiHandler) WipeBot(ctx *fiber.Ctx) error {
-	userId, ok := ctx.Locals("userId").(int64)
-	if !ok {
-		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
-	}
-
-	// check bot exists
-	existBot, err := h.db.CheckBotExist(userId, botId)
-	if err != nil {
-		h.log.Errorw("failed check bot exist", "error", err)
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	if !existBot {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrBotNotFound)
-	}
-
-	// check bot status is running
-	botStatus, err := h.db.GetBotStatus(botId, userId)
-	if err != nil {
-		h.log.Errorw("failed get bot status", "error", err)
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	if botStatus == model.StatusBotRunning {
-		token, err := h.db.GetBotToken(userId, botId)
-		if err != nil {
-			h.log.Errorw("failed get bot token", "error", err)
-			return ctx.SendStatus(fiber.StatusInternalServerError)
-		}
-
-		if token == nil || *token == "" {
-			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrTokenNotFound)
-		}
-
-		if err := h.bs.StopBot(*token); err != nil {
-			if err.Error() == bot.ErrTgAuth401.Error() {
-				return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrInvalidToken)
-			}
-
-			h.log.Errorw("failed stop bot (delete webhook)", "error", err)
-			return ctx.SendStatus(fiber.StatusInternalServerError)
-		}
-
-		if err = h.db.SetBotStatus(botId, userId, model.StatusBotStopped); err != nil {
-			h.log.Errorw("failed set bot status", "error", err)
-			return ctx.SendStatus(fiber.StatusInternalServerError)
-		}
-	}
-
-	// TODO: create transaction
-	// remove components
-	err = h.db.DelAllComponents(botId)
-	if err != nil {
-		h.log.Errorw("failed delete all components of bot", "error", err)
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	// remove commands
-	err = h.db.DelAllCommands(botId)
-	if err != nil {
-		h.log.Errorw("failed delete all commands of bot", "error", err)
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	// remove next step from main component
-	if err = h.db.DelNextStepComponent(botId, config.MainComponentId); err != nil {
-		h.log.Errorw("failed next step from main component", "error", err)
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	// remove token
-	token := ""
-	if err = h.db.SetBotToken(userId, botId, &token); err != nil {
-		h.log.Errorw("failed set bot token (delete token)", "error", err)
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	// Invalidate bot cache
-	h.r.DelBotData(botId)
-
-	return ctx.SendStatus(fiber.StatusNoContent)
-}
+//func (h *ApiHandler) WipeBot(ctx *fiber.Ctx) error {
+//	userId, ok := ctx.Locals("userId").(int64)
+//	if !ok {
+//		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+//	if err != nil {
+//		return ctx.SendStatus(fiber.StatusBadRequest)
+//	}
+//
+//	// check bot exists
+//	existBot, err := h.db.CheckBotExist(userId, botId)
+//	if err != nil {
+//		h.log.Errorw("failed check bot exist", "error", err)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	if !existBot {
+//		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrBotNotFound)
+//	}
+//
+//	// check bot status is running
+//	botStatus, err := h.db.GetBotStatus(botId, userId)
+//	if err != nil {
+//		h.log.Errorw("failed get bot status", "error", err)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	if botStatus == model.StatusBotRunning {
+//		token, err := h.db.GetBotToken(userId, botId)
+//		if err != nil {
+//			h.log.Errorw("failed get bot token", "error", err)
+//			return ctx.SendStatus(fiber.StatusInternalServerError)
+//		}
+//
+//		if token == nil || *token == "" {
+//			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrTokenNotFound)
+//		}
+//
+//		if err := h.bs.StopBot(*token); err != nil {
+//			if err.Error() == bot.ErrTgAuth401.Error() {
+//				return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrInvalidToken)
+//			}
+//
+//			h.log.Errorw("failed stop bot (delete webhook)", "error", err)
+//			return ctx.SendStatus(fiber.StatusInternalServerError)
+//		}
+//
+//		if err = h.db.SetBotStatus(botId, userId, model.StatusBotStopped); err != nil {
+//			h.log.Errorw("failed set bot status", "error", err)
+//			return ctx.SendStatus(fiber.StatusInternalServerError)
+//		}
+//	}
+//
+//	// TODO: create transaction
+//	// remove components
+//	err = h.db.DelAllComponents(botId)
+//	if err != nil {
+//		h.log.Errorw("failed delete all components of bot", "error", err)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	// remove commands
+//	err = h.db.DelAllCommands(botId)
+//	if err != nil {
+//		h.log.Errorw("failed delete all commands of bot", "error", err)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	// remove next step from main component
+//	if err = h.db.DelNextStepComponent(botId, config.MainComponentId); err != nil {
+//		h.log.Errorw("failed next step from main component", "error", err)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	// remove token
+//	token := ""
+//	if err = h.db.SetBotToken(userId, botId, &token); err != nil {
+//		h.log.Errorw("failed set bot token (delete token)", "error", err)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	// Invalidate bot cache
+//	h.r.DelBotData(botId)
+//
+//	return ctx.SendStatus(fiber.StatusNoContent)
+//}

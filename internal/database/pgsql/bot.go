@@ -36,12 +36,21 @@ func (db *Db) CreateBot(m *model.Bot, mc *model.Component) (botId int64, compone
 	if _, err = tx.Exec(ctx, query); err != nil {
 		return 0, 0, err
 	}
+	var groupId int
+	bot := prefixSchema + strconv.FormatInt(botId, 10)
+	query = `INSERT INTO ` + bot + `.component_group
+			(name) VALUES ('main') RETURNING id;`
+	if err = tx.QueryRow(
+		ctx, query,
+	).Scan(&groupId); err != nil {
+		return 0, 0, err
+	}
 
 	// add component
-	query = `INSERT INTO ` + prefixSchema + strconv.FormatInt(botId, 10) + `.component
-			("data", keyboard, next_step_id, is_main, position, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
+	query = `INSERT INTO ` + bot + `.component
+			(type, next_id, path, position, group_id) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 	if err = tx.QueryRow(
-		ctx, query, mc.Data, mc.Keyboard, mc.NextStepId, mc.IsMain, mc.Position, mc.Status,
+		ctx, query, mc.Type, mc.NextComponentId, mc.Path, mc.Position, groupId,
 	).Scan(&componentId); err != nil {
 		return 0, 0, err
 	}
