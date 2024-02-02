@@ -42,13 +42,11 @@ func (h *ApiHandler) NewBot(ctx *fiber.Ctx) error {
 		Status: model.StatusBotStopped,
 	}
 
-	componentType := "start"
-
 	mc := &model.Component{
 
 		ComponentData: components.ComponentData{
 			ComponentTypeData: components.ComponentTypeData{
-				Type: componentType,
+				Type: components.TypeStart,
 			},
 		},
 		Position: &model.Point{

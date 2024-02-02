@@ -98,6 +98,18 @@ func (db *Db) CheckBotExist(userId int64, botId int64) (bool, error) {
 	return c, nil
 }
 
+func (db *Db) CheckGroupExist(botId int64, groupId int64) (bool, error) {
+	var c bool
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+
+	query := `SELECT EXISTS(SELECT 1 FROM ` + schema + `.component_group WHERE id = $1);`
+	if err := db.Pool.QueryRow(context.Background(), query, groupId).Scan(&c); err != nil {
+		return false, err
+	}
+
+	return c, nil
+}
+
 func (db *Db) CheckBotTokenExist(token *string) (bool, error) {
 	var c bool
 	query := `SELECT EXISTS(SELECT 1 FROM public.bot WHERE token = $1) AS "exists";`

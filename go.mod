@@ -3,6 +3,7 @@ module github.com/botscubes/bot-service
 go 1.21.4
 
 require (
+	github.com/botscubes/bot-components v0.0.0-20240202095845-076e43526c72
 	github.com/botscubes/user-service v0.2.0
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.49.2
@@ -16,7 +17,6 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/botscubes/bot-components v0.0.0-20240107185121-9e114d786aae // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fasthttp/router v1.4.20 // indirect
