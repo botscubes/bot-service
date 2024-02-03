@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/botscubes/bot-service/internal/api/handlers"
 	m "github.com/botscubes/bot-service/internal/api/middlewares"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
@@ -15,8 +16,20 @@ func (app *App) regiterHandlers(h *handlers.ApiHandler) {
 	// Auth middleware
 	app.server.Use(m.Auth(&app.sessionStorage, &app.conf.JWTKey, app.log))
 
-	app.regBotsHandlers(h)
-	app.regComponentsHandlers(h)
+	api := app.server.Group("/api")
+	bots := api.Group("/bots")
+	bot := bots.Group("/:botId<int>", m.GetBotMiddleware(app.db, app.log))
+	groups := bot.Group("/groups")
+	group := groups.Group("/:groupId<int>", m.GetGroupMiddleware(app.db, app.log))
+	components := group.Group("/components")
+	component := components.Group("/:componentId<int>")
+
+	regBotsHandlers(bots, h)
+	regBotHandlers(bot, h)
+	//components := app.server.Group("/api/bots/:botId<int>/groups/:groupId<int>/components")
+	regComponentsHandlers(components, h)
+
+	regComponentHandlers(component, h)
 	//app.regCommandsHandlers(h)
 
 	// custom 404 handler
@@ -24,33 +37,44 @@ func (app *App) regiterHandlers(h *handlers.ApiHandler) {
 }
 
 // Bot handlers
-func (app *App) regBotsHandlers(h *handlers.ApiHandler) {
+func regBotsHandlers(bots fiber.Router, h *handlers.ApiHandler) {
 	// Create new bot
-	app.server.Post("/api/bots", h.NewBot)
-
-	// Delete bot
-	app.server.Delete("/api/bots/:botId<int>", h.DeleteBot)
-
-	// Set bot token
-	app.server.Post("/api/bots/:botId<int>/token", h.SetBotToken)
-
-	// Delete bot token
-	app.server.Delete("/api/bots/:botId<int>/token", h.DeleteBotToken)
-
-	// Start bot
-	app.server.Patch("/api/bots/:botId<int>/start", h.StartBot)
-
-	// Stop bot
-	app.server.Patch("/api/bots/:botId<int>/stop", h.StopBot)
-
+	bots.Post("", h.NewBot)
 	// Get user bots
-	app.server.Get("/api/bots", h.GetBots)
+	bots.Get("", h.GetBots)
 
 	// Wipe bot data
 	//app.server.Patch("/api/bots/:botId<int>/wipe", h.WipeBot)
 }
 
-func (app *App) regComponentsHandlers(h *handlers.ApiHandler) {
+func regBotHandlers(bot fiber.Router, h *handlers.ApiHandler) {
+
+	// Delete bot
+	bot.Delete("", h.DeleteBot)
+
+	// Set bot token
+	bot.Post("/token", h.SetBotToken)
+
+	// Delete bot token
+	bot.Delete("/token", h.DeleteBotToken)
+
+	// Start bot
+	bot.Patch("/start", h.StartBot)
+
+	// Stop bot
+	bot.Patch("/stop", h.StopBot)
+
+}
+
+func regGroupsHandlers(groups fiber.Router, h *handlers.ApiHandler) {
+
+}
+
+func regGroupHandlers(group fiber.Router, h *handlers.ApiHandler) {
+
+}
+
+func regComponentsHandlers(components fiber.Router, h *handlers.ApiHandler) {
 	// // Adds a component to the bot structure
 	// app.server.Post("/api/bots/:botId<int>/components", h.AddComponent)
 	//
@@ -67,10 +91,13 @@ func (app *App) regComponentsHandlers(h *handlers.ApiHandler) {
 	// app.server.Post("/api/bots/:botId<int>/components/:compId<int>/next", h.SetNextStepComponent)
 	//
 	// Get bot components
-	app.server.Get("/api/bots/:botId<int>/groups/:groupId<int>/components", h.GetBotComponents)
+	components.Get("", h.GetBotComponents)
 	//
 	// // Delete next step component
 	// app.server.Delete("/api/bots/:botId<int>/components/:compId<int>/next", h.DelNextStepComponent)
+}
+
+func regComponentHandlers(component fiber.Router, h *handlers.ApiHandler) {
 }
 
 //func (app *App) regCommandsHandlers(h *handlers.ApiHandler) {

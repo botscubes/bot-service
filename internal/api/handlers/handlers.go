@@ -3,12 +3,10 @@ package handlers
 import (
 	"errors"
 
-	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
 	mb "github.com/botscubes/bot-service/internal/broker"
 	"github.com/botscubes/bot-service/internal/database/pgsql"
 	rdb "github.com/botscubes/bot-service/internal/database/redis"
-	resp "github.com/botscubes/bot-service/pkg/api_response"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
@@ -46,5 +44,5 @@ func Health(ctx *fiber.Ctx) error {
 }
 
 func NotFoundHandler(ctx *fiber.Ctx) error {
-	return ctx.Status(fiber.StatusNotFound).JSON(resp.New(false, nil, e.ErrNotFound))
+	return ctx.SendStatus(fiber.StatusNotFound)
 }

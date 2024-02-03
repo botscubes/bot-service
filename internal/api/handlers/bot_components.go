@@ -51,3 +51,16 @@ func (h *ApiHandler) GetBotComponents(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(components)
 }
+
+//func (h *ApiHandler) SetPosition(ctx *fiber.Ctx) error {
+//	userId, ok := ctx.Locals("userId").(int64)
+//	if !ok {
+//		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
+//		return ctx.SendStatus(fiber.StatusInternalServerError)
+//	}
+//
+//	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
+//	if err != nil {
+//		return ctx.SendStatus(fiber.StatusBadRequest)
+//	}
+//}
