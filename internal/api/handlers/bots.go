@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"strconv"
-
 	"github.com/botscubes/bot-components/components"
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/bot"
@@ -76,18 +74,10 @@ func (h *ApiHandler) DeleteBot(ctx *fiber.Ctx) error {
 		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
-	}
-	existBot, err := h.db.CheckBotExist(userId, botId)
-	if err != nil {
-		h.log.Errorw("failed check bot exist", "error", err)
+	botId, ok := ctx.Locals("botId").(int64)
+	if !ok {
+		h.log.Errorw("BotId to int64 convert", "error", ErrUserIDConvertation)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	if !existBot {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrBotNotFound)
 	}
 
 	// check bot status is running
@@ -125,28 +115,17 @@ func (h *ApiHandler) DeleteBot(ctx *fiber.Ctx) error {
 }
 
 func (h *ApiHandler) StartBot(ctx *fiber.Ctx) error {
+
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
 		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-
-	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
-	}
-
-	// check bot exists
-	existBot, err := h.db.CheckBotExist(userId, botId)
-	if err != nil {
-		h.log.Errorw("failed check bot exist", "error", err)
+	botId, ok := ctx.Locals("botId").(int64)
+	if !ok {
+		h.log.Errorw("BotId to int64 convert", "error", ErrUserIDConvertation)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-
-	if !existBot {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrBotNotFound)
-	}
-
 	// check bot already running
 	botStatus, err := h.db.GetBotStatus(botId, userId)
 	if err != nil {
@@ -205,28 +184,17 @@ func (h *ApiHandler) StartBot(ctx *fiber.Ctx) error {
 }
 
 func (h *ApiHandler) StopBot(ctx *fiber.Ctx) error {
+
 	userId, ok := ctx.Locals("userId").(int64)
 	if !ok {
 		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-
-	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
-	if err != nil {
-		return ctx.SendStatus(fiber.StatusBadRequest)
-	}
-
-	// check bot exists
-	existBot, err := h.db.CheckBotExist(userId, botId)
-	if err != nil {
-		h.log.Errorw("failed check bot exist", "error", err)
+	botId, ok := ctx.Locals("botId").(int64)
+	if !ok {
+		h.log.Errorw("BotId to int64 convert", "error", ErrUserIDConvertation)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-
-	if !existBot {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrBotNotFound)
-	}
-
 	// check bot already stopped
 	botStatus, err := h.db.GetBotStatus(botId, userId)
 	if err != nil {
