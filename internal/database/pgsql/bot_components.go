@@ -81,6 +81,20 @@ func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, err
 
 }
 
+func (db *Db) SetComponentPosition(botId int64, groupId int64, componentId int64, position *model.Point) error {
+
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+
+	query := `
+			UPDATE ` + schema + `.component
+			SET position = $3
+			WHERE group_id = $1 AND component_id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, groupId, componentId, position)
+	return err
+
+}
+
 func (db *Db) CheckComponentExist(botId int64, groupId int64, compId int64) (bool, error) {
 	schema := prefixSchema + strconv.FormatInt(botId, 10)
 	var c bool
