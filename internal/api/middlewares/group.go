@@ -33,7 +33,7 @@ func GetGroupMiddleware(db *pgsql.Db, log *zap.SugaredLogger,
 			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrGroupNotFound)
 		}
 
-		ctx.Locals("groupId", botId)
+		ctx.Locals("groupId", groupId)
 
 		return ctx.Next()
 	}

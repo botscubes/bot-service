@@ -36,7 +36,7 @@ func (db *Db) DeleteComponent(botId int64, groupId int64, componentId int64) err
 
 	schema := prefixSchema + strconv.FormatInt(botId, 10)
 
-	query := `DELETE FROM` + schema + `.component
+	query := `DELETE FROM ` + schema + `.component
 			WHERE group_id = $1 AND component_id = $2;`
 
 	_, err := db.Pool.Exec(context.Background(), query, groupId, componentId)
