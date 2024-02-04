@@ -22,7 +22,7 @@ func (app *App) regiterHandlers(h *handlers.ApiHandler) {
 	groups := bot.Group("/groups")
 	group := groups.Group("/:groupId<int>", m.GetGroupMiddleware(app.db, app.log))
 	components := group.Group("/components")
-	component := components.Group("/:componentId<int>")
+	component := components.Group("/:componentId<int>", m.GetComponentMiddleware(app.db, app.log))
 
 	regBotsHandlers(bots, h)
 	regBotHandlers(bot, h)

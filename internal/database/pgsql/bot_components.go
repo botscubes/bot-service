@@ -52,17 +52,20 @@ func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, err
 	}
 
 	return data, nil
-	// query := `INSERT INTO ` + +`.component
-	//
-	//	("data", keyboard, next_step_id, is_main,"position", status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
-	//
-	// if err := tx.QueryRow(
-	//
-	//	ctx, query, m.Data, m.Keyboard, m.NextStepId, m.IsMain, m.Position, m.Status,
-	//
-	//	).Scan(&id); err != nil {
-	//		return 0, err
-	//	}
-	//
-	// return id, nil
+
+}
+
+func (db *Db) CheckComponentExist(botId int64, groupId int64, compId int64) (bool, error) {
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+	var c bool
+	query := `SELECT EXISTS(SELECT 1 FROM ` + schema + `.component
+			WHERE group_id = $1 AND component_id = $2);`
+
+	if err := db.Pool.QueryRow(
+		context.Background(), query, groupId, compId,
+	).Scan(&c); err != nil {
+		return false, err
+	}
+
+	return c, nil
 }
