@@ -49,6 +49,7 @@ var (
 	ErrComponentTextTooLong  = err.New(121, "Text is too long")
 	ErrTooManyCommands       = err.New(122, "Too many commands")
 	ErrGroupNotFound         = err.New(123, "Group not found")
+	ErrDeleteStartComponent  = err.New(124, "Starting component cannot be deleted")
 )
 
 func InvalidParam(mes string) *err.ServiceError {

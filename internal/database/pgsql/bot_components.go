@@ -7,16 +7,42 @@ import (
 	"github.com/botscubes/bot-service/internal/model"
 )
 
-//			id bigserial NOT NULL,
-//            type VARCHAR(20),
-//            component_id BIGINT NOT NULL UNIQUE,
-//            next_id BIGINT,
-//            path text NOT NULL DEFAULT '''',
-//            position POINT,
-//            group_id BIGINT,
-//            PRIMARY KEY (id),
-//            FOREIGN KEY(group_id)
+//				id bigserial NOT NULL,
+//	           type VARCHAR(20),
+//	           component_id BIGINT NOT NULL UNIQUE,
+//	           next_id BIGINT,
+//	           path text NOT NULL DEFAULT '''',
+//	           position POINT,
+//	           group_id BIGINT,
+//	           PRIMARY KEY (id),
+//	           FOREIGN KEY(group_id)
+func (db *Db) AddComponent(botId int64, groupId int64, m *model.Component) (int64, error) {
 
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+	var id int64
+	query := `INSERT INTO ` + schema + `.component
+			(type, path, position, group_id) VALUES ($1, $2, $3, $4) RETURNING component_id;`
+
+	if err := db.Pool.QueryRow(
+		context.Background(), query, m.Type, m.Path, m.Position, groupId,
+	).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (db *Db) DeleteComponent(botId int64, groupId int64, componentId int64) error {
+
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+
+	query := `DELETE FROM` + schema + `.component
+			WHERE group_id = $1 AND component_id = $2;`
+
+	_, err := db.Pool.Exec(context.Background(), query, groupId, componentId)
+	return err
+
+}
 func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, error) {
 
 	schema := prefixSchema + strconv.FormatInt(botId, 10)

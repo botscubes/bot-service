@@ -92,12 +92,14 @@ func regComponentsHandlers(components fiber.Router, h *handlers.ApiHandler) {
 	//
 	// Get bot components
 	components.Get("", h.GetBotComponents)
+	components.Post("", h.AddComponent)
 	//
 	// // Delete next step component
 	// app.server.Delete("/api/bots/:botId<int>/components/:compId<int>/next", h.DelNextStepComponent)
 }
 
 func regComponentHandlers(component fiber.Router, h *handlers.ApiHandler) {
+	component.Delete("", h.DeleteComponent)
 }
 
 //func (app *App) regCommandsHandlers(h *handlers.ApiHandler) {

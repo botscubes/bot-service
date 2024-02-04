@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/botscubes/bot-components/components"
 	e "github.com/botscubes/bot-service/internal/api/errors"
 	"github.com/botscubes/bot-service/internal/config"
 	se "github.com/botscubes/user-service/pkg/service_error"
@@ -53,16 +54,8 @@ func (p *Point) Validate() *se.ServiceError {
 }
 
 func (r *AddComponentReq) Validate() *se.ServiceError {
-	// validate data
-	if err := r.Data.Validate(); err != nil {
-		return err
-	}
-
-	// Validate commands
-	if r.Commands != nil {
-		if err := r.Commands.Validate(); err != nil {
-			return err
-		}
+	if r.Type != components.TypeFormat && r.Type != components.TypeCondition {
+		return e.InvalidParam("type")
 	}
 
 	// Validate position

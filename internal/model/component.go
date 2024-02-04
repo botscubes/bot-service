@@ -68,9 +68,8 @@ func (c *Component) UnmarshalBinary(data []byte) error {
 }
 
 type AddComponentReq struct {
-	Data     *ComponentData `json:"data"`
-	Commands *CommandsParam `json:"commands"`
-	Position *Point         `json:"position"`
+	Type     components.ComponentType `json:"type"`
+	Position *Point                   `json:"position"`
 }
 
 type SetNextStepComponentReq struct {
