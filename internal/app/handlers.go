@@ -26,6 +26,7 @@ func (app *App) regiterHandlers(h *handlers.ApiHandler) {
 
 	regBotsHandlers(bots, h)
 	regBotHandlers(bot, h)
+	regGroupHandlers(group, h)
 	//components := app.server.Group("/api/bots/:botId<int>/groups/:groupId<int>/components")
 	regComponentsHandlers(components, h)
 

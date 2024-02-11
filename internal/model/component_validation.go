@@ -42,13 +42,13 @@ func (p *Point) Validate() *se.ServiceError {
 		return e.MissingParam("position")
 	}
 
-	if int64(p.X) < 0 || int64(p.X) > MaxPositionX {
-		return e.InvalidParam("position.x")
-	}
+	//if int64(p.X) < 0 || int64(p.X) > MaxPositionX {
+	//		return e.InvalidParam("position.x")
+	//	}
 
-	if int64(p.Y) < 0 || int64(p.Y) > MaxPositionY {
-		return e.InvalidParam("position.y")
-	}
+	//	if int64(p.Y) < 0 || int64(p.Y) > MaxPositionY {
+	//		return e.InvalidParam("position.y")
+	//	}
 
 	return nil
 }

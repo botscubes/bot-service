@@ -48,9 +48,9 @@ func (db *Db) CreateBot(m *model.Bot, mc *model.Component) (botId int64, compone
 
 	// add component
 	query = `INSERT INTO ` + bot + `.component
-			(type, next_id, path, position, group_id) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+			(type, path, position, group_id) VALUES ($1, $2, $3, $4) RETURNING id;`
 	if err = tx.QueryRow(
-		ctx, query, mc.Type, mc.NextComponentId, mc.Path, mc.Position, groupId,
+		ctx, query, mc.Type, mc.Path, mc.Position, groupId,
 	).Scan(&componentId); err != nil {
 		return 0, 0, err
 	}

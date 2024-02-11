@@ -51,7 +51,6 @@ func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, err
 			
 			component_id, 
 			type, 
-			next_id, 
 			path, 
 			position 
 		FROM ` + schema + `.component WHERE group_id = $1;`
@@ -66,7 +65,7 @@ func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, err
 	for rows.Next() {
 		var c model.Component
 
-		if err = rows.Scan(&c.Id, &c.Type, &c.NextComponentId, &c.Path, &c.Position); err != nil {
+		if err = rows.Scan(&c.Id, &c.Type, &c.Path, &c.Position); err != nil {
 			return nil, err
 		}
 
@@ -79,6 +78,22 @@ func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, err
 
 	return data, nil
 
+}
+func (db *Db) GetComponentType(botId int64, groupId int64, componentId int64) (string, error) {
+
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+	query := `
+		SELECT 
+			type 
+		FROM ` + schema + `.component 
+		WHERE group_id = $1 AND component_id = $2;`
+	var cType string
+	err := db.Pool.QueryRow(context.Background(), query, groupId, componentId).Scan(&cType)
+	if err != nil {
+		return "", err
+	}
+
+	return cType, nil
 }
 
 func (db *Db) SetComponentPosition(botId int64, groupId int64, componentId int64, position *model.Point) error {
