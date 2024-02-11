@@ -47,6 +47,21 @@ func (h *ApiHandler) AddConnetion(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrComponentNotFound)
 	}
 
+	componentType, err := h.db.GetComponentType(botId, groupId, *reqData.SourceComponentId)
+	if err != nil {
+		h.log.Errorw("failed get component type", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	validate, ok := model.SpecificComponentPointValidation[componentType]
+	if !ok {
+		h.log.Errorw("failed get validation function", "error")
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	err = validate(*reqData.SourcePointName)
+	if err != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(err)
+	}
+
 	err = h.db.AddConnection(botId, groupId, reqData)
 	if err != nil {
 		h.log.Errorw("failed create bot", "error", err)

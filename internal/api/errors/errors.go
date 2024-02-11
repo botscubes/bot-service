@@ -59,3 +59,7 @@ func InvalidParam(mes string) *err.ServiceError {
 func MissingParam(mes string) *err.ServiceError {
 	return err.New(InvalidParamCode, "Required parameter is missing: "+mes)
 }
+
+func NoOutputPointName(mes string) *err.ServiceError {
+	return err.New(InvalidParamCode, "No output point name: "+mes)
+}
