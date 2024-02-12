@@ -73,6 +73,7 @@ func regGroupsHandlers(groups fiber.Router, h *handlers.ApiHandler) {
 
 func regGroupHandlers(group fiber.Router, h *handlers.ApiHandler) {
 	group.Post("/connections", h.AddConnetion)
+	group.Delete("/connections", h.DeleteConnection)
 }
 
 func regComponentsHandlers(components fiber.Router, h *handlers.ApiHandler) {

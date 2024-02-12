@@ -24,10 +24,6 @@ func (h *ApiHandler) AddConnetion(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
 
-	if errValidate := reqData.Validate(); errValidate != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errValidate)
-	}
-
 	componentExist, err := h.db.CheckComponentExist(botId, groupId, *reqData.SourceComponentId)
 	if err != nil {
 		h.log.Errorw("failed check component exist", "error", err)
@@ -52,19 +48,13 @@ func (h *ApiHandler) AddConnetion(ctx *fiber.Ctx) error {
 		h.log.Errorw("failed get component type", "error", err)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
-	validate, ok := model.SpecificComponentPointValidation[componentType]
-	if !ok {
-		h.log.Errorw("failed get validation function", "error")
-		return ctx.SendStatus(fiber.StatusInternalServerError)
-	}
-	err = validate(*reqData.SourcePointName)
-	if err != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(err)
+	if errValidate := reqData.Validate(componentType); errValidate != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errValidate)
 	}
 
 	err = h.db.AddConnection(botId, groupId, reqData)
 	if err != nil {
-		h.log.Errorw("failed create bot", "error", err)
+		h.log.Errorw("failed add connection", "error", err)
 
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
@@ -73,5 +63,58 @@ func (h *ApiHandler) AddConnetion(ctx *fiber.Ctx) error {
 }
 
 func (h *ApiHandler) DeleteConnection(ctx *fiber.Ctx) error {
-	return nil
+	botId, ok := ctx.Locals("botId").(int64)
+	if !ok {
+		h.log.Errorw("BotId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	groupId, ok := ctx.Locals("groupId").(int64)
+	if !ok {
+		h.log.Errorw("GroupId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	reqData := new(model.SourceConnectionPoint)
+	if err := ctx.BodyParser(reqData); err != nil {
+		return ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	componentExist, err := h.db.CheckComponentExist(botId, groupId, *reqData.SourceComponentId)
+	if err != nil {
+		h.log.Errorw("failed check component exist", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	if !componentExist {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrComponentNotFound)
+	}
+
+	componentType, err := h.db.GetComponentType(botId, groupId, *reqData.SourceComponentId)
+	if err != nil {
+		h.log.Errorw("failed get component type", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	if errValidate := reqData.Validate(componentType); errValidate != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errValidate)
+	}
+
+	targetComponentId, err := h.db.GetTargetComponentId(botId, groupId, reqData)
+	if err != nil {
+		h.log.Errorw("failed get target component id", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+
+	}
+	if targetComponentId == nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrTargetComponentIdIsNull)
+	}
+
+	err = h.db.DeleteConnection(botId, groupId, reqData, *targetComponentId)
+	if err != nil {
+		h.log.Errorw("failed delete connection", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+
 }

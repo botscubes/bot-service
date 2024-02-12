@@ -32,18 +32,18 @@ func checkKeyInMap(m map[string]bool, k string) *se.ServiceError {
 	return nil
 }
 
-var SpecificComponentPointValidation = map[string]func(pointName string) *se.ServiceError{
-	"start": func(pointName string) *se.ServiceError {
-		pointNames := map[string]bool{
+var SpecificComponentOutputValidation = map[string]func(outputName string) *se.ServiceError{
+	"start": func(outputName string) *se.ServiceError {
+		outputNames := map[string]bool{
 			"nextComponentId": true,
 		}
-		return checkKeyInMap(pointNames, pointName)
+		return checkKeyInMap(outputNames, outputName)
 	},
-	"condition": func(pointName string) *se.ServiceError {
-		pointNames := map[string]bool{
+	"condition": func(outputName string) *se.ServiceError {
+		outputNames := map[string]bool{
 			"idIfError": true,
 		}
 
-		return checkKeyInMap(pointNames, pointName)
+		return checkKeyInMap(outputNames, outputName)
 	},
 }
