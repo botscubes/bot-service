@@ -86,7 +86,9 @@ func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, err
 			component_id, 
 			type, 
 			path, 
-			position 
+			position,
+			connection_points,
+			outputs
 		FROM ` + schema + `.component WHERE group_id = $1;`
 
 	rows, err := db.Pool.Query(context.Background(), query, groupId)
@@ -98,8 +100,7 @@ func (db *Db) GetComponents(botId int64, groupId int64) ([]*model.Component, err
 	// WARN: status not used
 	for rows.Next() {
 		var c model.Component
-
-		if err = rows.Scan(&c.Id, &c.Type, &c.Path, &c.Position); err != nil {
+		if err = rows.Scan(&c.Id, &c.Type, &c.Path, &c.Position, &c.ConnectionPoints, &c.Outputs); err != nil {
 			return nil, err
 		}
 

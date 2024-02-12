@@ -16,8 +16,10 @@ var (
 
 type Component struct {
 	components.ComponentData
-	Id       int64  `json:"id"`
-	Position *Point `json:"position"`
+	Id               int64                       `json:"id"`
+	Position         *Point                      `json:"position"`
+	ConnectionPoints map[string]*ConnectionPoint `json:"connectionPoints"`
+	Outputs          map[string]int64            `json:"outputs"`
 }
 
 type ComponentData struct {
