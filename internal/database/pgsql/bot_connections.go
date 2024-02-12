@@ -88,10 +88,10 @@ func (db *Db) DeleteConnection(botId int64, groupId int64, m *model.SourceConnec
 	}()
 	schema := prefixSchema + strconv.FormatInt(botId, 10)
 
-	idx := "{\"" + strconv.FormatInt(*m.SourceComponentId, 10) + " " + *m.SourcePointName + "\"}"
+	idx := strconv.FormatInt(*m.SourceComponentId, 10) + " " + *m.SourcePointName
 	query := `
 		UPDATE ` + schema + `.component 
-		SET connection_points = JSONB_SET(connection_points, $1, 'null') 
+		SET connection_points = connection_points - $1
 		WHERE group_id = $2 AND component_id = $3;`
 
 	_, err = tx.Exec(
@@ -101,10 +101,10 @@ func (db *Db) DeleteConnection(botId int64, groupId int64, m *model.SourceConnec
 		return err
 	}
 
-	idx = "{\"" + *m.SourcePointName + "\"}"
+	idx = *m.SourcePointName
 	query = `
 		UPDATE ` + schema + `.component 
-		SET outputs = JSONB_SET(outputs, $1, 'null') 
+		SET outputs = outputs - $1
 		WHERE group_id = $2 AND component_id = $3;`
 
 	_, err = tx.Exec(

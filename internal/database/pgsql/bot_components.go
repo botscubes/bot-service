@@ -35,11 +35,45 @@ func (db *Db) AddComponent(botId int64, groupId int64, m *model.Component) (int6
 func (db *Db) DeleteComponent(botId int64, groupId int64, componentId int64) error {
 
 	schema := prefixSchema + strconv.FormatInt(botId, 10)
+	ctx := context.Background()
 
-	query := `DELETE FROM ` + schema + `.component
+	tx, err := db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		} else {
+			_ = tx.Commit(ctx)
+		}
+	}()
+
+	var m map[string]model.ConnectionPoint
+	query := `
+		SELECT connection_points FROM ` + schema + `.component
+		WHERE group_id = $1 AND component_id = $2;`
+	err = tx.QueryRow(context.Background(), query, groupId, componentId).Scan(&m)
+	query = `
+		UPDATE ` + schema + `.component 
+		SET outputs = outputs - $1
+		WHERE group_id = $2 AND component_id = $3;`
+
+	for _, val := range m {
+
+		_, err = tx.Exec(
+			ctx, query, val.SourcePointName, groupId, val.SourceComponentId,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	query = `DELETE FROM ` + schema + `.component
 			WHERE group_id = $1 AND component_id = $2;`
 
-	_, err := db.Pool.Exec(context.Background(), query, groupId, componentId)
+	_, err = tx.Exec(context.Background(), query, groupId, componentId)
 	return err
 
 }
