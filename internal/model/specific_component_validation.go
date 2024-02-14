@@ -20,8 +20,32 @@ func validateId(data any) error {
 	return nil
 }
 
-var SpecificComponentDataValidation = map[string]map[string]func(data any) error{
-	"start": {},
+func validateSpecificComponentData(ctype string, data map[string]any) *se.ServiceError {
+	for key, value := range data {
+		validate, ok := SpecificComponentDataValidation[ctype][key]
+		if !ok {
+			return e.NonExistentParam(key)
+		}
+		se := validate(value)
+
+		if se != nil {
+			return se
+		}
+	}
+	return nil
+}
+
+var SpecificComponentDataValidation = map[string]map[string]func(data any) *se.ServiceError{
+	"condition": {
+		"expression": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("expression")
+			}
+
+			return nil
+		},
+	},
 }
 
 func checkKeyInMap(m map[string]bool, k string) *se.ServiceError {
