@@ -159,3 +159,20 @@ func (db *Db) CheckComponentExist(botId int64, groupId int64, compId int64) (boo
 
 	return c, nil
 }
+
+func (db *Db) UpdateComponentData(botId int64, groupId int64, componentId int64, data map[string]any) error {
+
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+	query := `
+		UPDATE ` + schema + `.component 
+		SET data = data || $1
+		WHERE group_id = $2 AND component_id = $3;`
+
+	_, err := db.Pool.Exec(
+		context.Background(), query, data, groupId, componentId,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -138,6 +138,42 @@ func (h *ApiHandler) SetComponentPosition(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
+func (h *ApiHandler) UpdateComponentData(ctx *fiber.Ctx) error {
+	botId, ok := ctx.Locals("botId").(int64)
+	if !ok {
+		h.log.Errorw("BotId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	groupId, ok := ctx.Locals("groupId").(int64)
+	if !ok {
+		h.log.Errorw("GroupId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	componentId, ok := ctx.Locals("componentId").(int64)
+	if !ok {
+		h.log.Errorw("GroupId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	componentType, err := h.db.GetComponentType(botId, groupId, componentId)
+	if err != nil {
+		h.log.Errorw("failed get component type", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	data := new(map[string]any)
+	if err := ctx.BodyParser(data); err != nil {
+		return ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	if errValidate := model.ValidateSpecificComponentData(componentType, *data); errValidate != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errValidate)
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
 //func (h *ApiHandler) SetPosition(ctx *fiber.Ctx) error {
 //	userId, ok := ctx.Locals("userId").(int64)
 //	if !ok {

@@ -20,7 +20,7 @@ func validateId(data any) error {
 	return nil
 }
 
-func validateSpecificComponentData(ctype string, data map[string]any) *se.ServiceError {
+func ValidateSpecificComponentData(ctype string, data map[string]any) *se.ServiceError {
 	for key, value := range data {
 		validate, ok := SpecificComponentDataValidation[ctype][key]
 		if !ok {
