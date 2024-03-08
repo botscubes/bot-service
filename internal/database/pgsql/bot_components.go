@@ -70,6 +70,24 @@ func (db *Db) DeleteComponent(botId int64, groupId int64, componentId int64) err
 		}
 	}
 
+	var outputs map[string]int64
+	query = `
+		SELECT outputs FROM ` + schema + `.component
+		WHERE group_id = $1 AND component_id = $2;`
+	err = tx.QueryRow(context.Background(), query, groupId, componentId).Scan(&outputs)
+	query = `UPDATE ` + schema + `.component 
+		SET connection_points = connection_points - $1
+		WHERE group_id = $2 AND component_id = $3;`
+
+	for name, val := range outputs {
+		var idx = strconv.FormatInt(componentId, 10) + " " + name
+		_, err = tx.Exec(
+			ctx, query, idx, groupId, val,
+		)
+		if err != nil {
+			return err
+		}
+	}
 	query = `DELETE FROM ` + schema + `.component
 			WHERE group_id = $1 AND component_id = $2;`
 
