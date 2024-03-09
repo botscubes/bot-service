@@ -171,6 +171,12 @@ func (h *ApiHandler) UpdateComponentData(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errValidate)
 	}
 
+	if err = h.db.UpdateComponentData(botId, groupId, componentId, *data); err != nil {
+
+		h.log.Errorw("failed set component data", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 

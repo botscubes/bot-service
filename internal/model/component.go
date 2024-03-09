@@ -20,6 +20,7 @@ type Component struct {
 	Position         *Point                      `json:"position"`
 	ConnectionPoints map[string]*ConnectionPoint `json:"connectionPoints"`
 	Outputs          map[string]int64            `json:"outputs"`
+	Data             map[string]any              `json:"data"`
 }
 
 type ComponentData struct {
