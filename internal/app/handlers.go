@@ -54,11 +54,12 @@ func regBotHandlers(bot fiber.Router, h *handlers.ApiHandler) {
 	bot.Delete("", h.DeleteBot)
 
 	// Set bot token
-	bot.Post("/token", h.SetBotToken)
+	bot.Patch("/token", h.SetBotToken)
 
 	// Delete bot token
 	bot.Delete("/token", h.DeleteBotToken)
 
+	bot.Get("/token", h.GetBotToken)
 	// Start bot
 	bot.Patch("/start", h.StartBot)
 
