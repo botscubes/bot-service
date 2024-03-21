@@ -76,6 +76,7 @@ var SpecificComponentOutputValidation = map[string]func(outputName string) *se.S
 		outputNames := map[string]bool{
 			"idIfError":       true,
 			"nextComponentId": true,
+			"idIfFalse":       true,
 		}
 
 		return checkKeyInMap(outputNames, outputName)
