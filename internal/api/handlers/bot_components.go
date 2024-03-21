@@ -152,7 +152,7 @@ func (h *ApiHandler) UpdateComponentData(ctx *fiber.Ctx) error {
 
 	componentId, ok := ctx.Locals("componentId").(int64)
 	if !ok {
-		h.log.Errorw("GroupId to int64 convert", "error", ErrUserIDConvertation)
+		h.log.Errorw("ComponentId to int64 convert", "error", ErrUserIDConvertation)
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
 
@@ -180,15 +180,37 @@ func (h *ApiHandler) UpdateComponentData(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-//func (h *ApiHandler) SetPosition(ctx *fiber.Ctx) error {
-//	userId, ok := ctx.Locals("userId").(int64)
-//	if !ok {
-//		h.log.Errorw("UserId to int64 convert", "error", ErrUserIDConvertation)
-//		return ctx.SendStatus(fiber.StatusInternalServerError)
-//	}
-//
-//	botId, err := strconv.ParseInt(ctx.Params("botId"), 10, 64)
-//	if err != nil {
-//		return ctx.SendStatus(fiber.StatusBadRequest)
-//	}
-//}
+func (h *ApiHandler) UpdateComponentPath(ctx *fiber.Ctx) error {
+	botId, ok := ctx.Locals("botId").(int64)
+	if !ok {
+		h.log.Errorw("BotId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+	groupId, ok := ctx.Locals("groupId").(int64)
+	if !ok {
+		h.log.Errorw("GroupId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	componentId, ok := ctx.Locals("componentId").(int64)
+	if !ok {
+		h.log.Errorw("ComponentId to int64 convert", "error", ErrUserIDConvertation)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	var path string
+	if err := ctx.BodyParser(&path); err != nil {
+		return ctx.SendStatus(fiber.StatusBadRequest)
+	}
+	if path == "" {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(e.ErrEmptyPath)
+	}
+
+	if err := h.db.UpdateComponentPath(botId, groupId, componentId, path); err != nil {
+
+		h.log.Errorw("failed set component path", "error", err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}

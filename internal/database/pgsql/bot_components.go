@@ -195,3 +195,20 @@ func (db *Db) UpdateComponentData(botId int64, groupId int64, componentId int64,
 	}
 	return nil
 }
+
+func (db *Db) UpdateComponentPath(botId int64, groupId int64, componentId int64, path string) error {
+
+	schema := prefixSchema + strconv.FormatInt(botId, 10)
+	query := `
+		UPDATE ` + schema + `.component 
+		SET path = $1
+		WHERE group_id = $2 AND component_id = $3;`
+
+	_, err := db.Pool.Exec(
+		context.Background(), query, path, groupId, componentId,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}

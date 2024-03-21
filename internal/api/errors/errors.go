@@ -52,6 +52,7 @@ var (
 	ErrDeleteStartComponent    = err.New(124, "Starting component cannot be deleted")
 	ErrValidation              = err.New(125, "Validation error")
 	ErrTargetComponentIdIsNull = err.New(126, "The output does not have a target component id")
+	ErrEmptyPath               = err.New(127, "Empty path")
 )
 
 func InvalidParam(mes string) *err.ServiceError {
