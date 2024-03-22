@@ -56,7 +56,8 @@ func (p *Point) Validate() *se.ServiceError {
 func (r *AddComponentReq) Validate() *se.ServiceError {
 	if r.Type != components.TypeFormat &&
 		r.Type != components.TypeCondition &&
-		r.Type != components.TypeMessage {
+		r.Type != components.TypeMessage &&
+		r.Type != components.TypeTextInput {
 		return e.InvalidParam("type")
 	}
 
