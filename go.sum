@@ -10,6 +10,8 @@ github.com/botscubes/bot-components v0.0.0-20240320133625-42236da8f444 h1:RWawX5
 github.com/botscubes/bot-components v0.0.0-20240320133625-42236da8f444/go.mod h1:q6VJNNk6rhw6/NwXuXB3eDxidDhV6LGeZUfhU9XeFHQ=
 github.com/botscubes/bot-components v0.0.0-20240321151217-cd86363d7348 h1:Vcg0rN+tdDfqfTX0GA/O65xZTZhqDxifL4mu4AHG+KU=
 github.com/botscubes/bot-components v0.0.0-20240321151217-cd86363d7348/go.mod h1:q6VJNNk6rhw6/NwXuXB3eDxidDhV6LGeZUfhU9XeFHQ=
+github.com/botscubes/bot-components v0.0.0-20240325133226-a92fc176dd57 h1:fnIjrZ2+xeuM5tZiaWvBSbM7tdQu0FCVLEmrfB+0oks=
+github.com/botscubes/bot-components v0.0.0-20240325133226-a92fc176dd57/go.mod h1:q6VJNNk6rhw6/NwXuXB3eDxidDhV6LGeZUfhU9XeFHQ=
 github.com/botscubes/user-service v0.2.0 h1:4PFF7PtnfOhQ7/8MiIkqXW1TWhe6wYWJ1UZous7zc/I=
 github.com/botscubes/user-service v0.2.0/go.mod h1:NCps0e7H8se0DIshHzf1P9lM7cV2jhX42pcLQvwHPv4=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=

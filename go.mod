@@ -3,7 +3,7 @@ module github.com/botscubes/bot-service
 go 1.21.4
 
 require (
-	github.com/botscubes/bot-components v0.0.0-20240321151217-cd86363d7348
+	github.com/botscubes/bot-components v0.0.0-20240325133226-a92fc176dd57
 	github.com/botscubes/user-service v0.2.0
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.49.2

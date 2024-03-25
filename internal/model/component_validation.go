@@ -57,8 +57,9 @@ func (r *AddComponentReq) Validate() *se.ServiceError {
 	if r.Type != components.TypeFormat &&
 		r.Type != components.TypeCondition &&
 		r.Type != components.TypeMessage &&
-		r.Type != components.TypeTextInput {
-		return e.InvalidParam("type")
+		r.Type != components.TypeTextInput &&
+		r.Type != components.TypeButtons {
+		return e.InvalidParam("type: " + r.Type)
 	}
 
 	// Validate position
