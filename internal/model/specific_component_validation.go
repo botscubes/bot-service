@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"strconv"
 
 	e "github.com/botscubes/bot-service/internal/api/errors"
 
@@ -64,6 +65,18 @@ var SpecificComponentDataValidation = map[string]map[string]func(data any) *se.S
 			return nil
 		},
 	},
+	"buttons": {
+		"text": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("text")
+			}
+			return nil
+		},
+		"buttons": func(data any) *se.ServiceError {
+			return nil
+		},
+	},
 }
 
 func checkKeyInMap(m map[string]bool, k string) *se.ServiceError {
@@ -113,5 +126,11 @@ var SpecificComponentOutputValidation = map[string]func(outputName string) *se.S
 		}
 
 		return checkKeyInMap(outputNames, outputName)
+	},
+	"buttons": func(outputName string) *se.ServiceError {
+		if _, err := strconv.Atoi(outputName); err != nil {
+			return e.OutputPointNameIsNotNumber(outputName)
+		}
+		return nil
 	},
 }

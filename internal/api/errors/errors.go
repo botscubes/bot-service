@@ -70,3 +70,7 @@ func NonExistentParam(mes string) *err.ServiceError {
 func NoOutputPointName(mes string) *err.ServiceError {
 	return err.New(InvalidParamCode, "No output point name: "+mes)
 }
+
+func OutputPointNameIsNotNumber(mes string) *err.ServiceError {
+	return err.New(InvalidParamCode, "Output point name in not number: "+mes)
+}
