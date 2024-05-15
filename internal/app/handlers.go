@@ -66,6 +66,7 @@ func regBotHandlers(bot fiber.Router, h *handlers.ApiHandler) {
 	// Stop bot
 	bot.Patch("/stop", h.StopBot)
 
+	bot.Get("/status", h.GetBotStatus)
 }
 
 func regGroupsHandlers(groups fiber.Router, h *handlers.ApiHandler) {
