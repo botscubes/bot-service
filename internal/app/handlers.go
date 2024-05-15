@@ -79,7 +79,7 @@ func regComponentsHandlers(components fiber.Router, h *handlers.ApiHandler) {
 	// Get bot components
 	components.Get("", h.GetBotComponents)
 	components.Post("", h.AddComponent)
-	//
+
 }
 
 func regComponentHandlers(component fiber.Router, h *handlers.ApiHandler) {

@@ -4,21 +4,16 @@
 
 ## Methods
 
-- **COMPONENTS:**
-- [Add component](#add-component)
-- [Delete component](#delete-component)
-- [Delete set of components](#delete-set-of-components)
-- [Update component](#update-component)
-- [Get bot structure](#get-bot-structure)
-- **NEXT STEPS:**
-- [Set next step for component](#set-next-step-for-component)
-- [Delete next step for component](#delete-next-step-for-component)
-- [Set next step for command](#set-next-step-for-command)
-- [Delete next step for command](#delete-next-step-for-command)
-- **COMMANDS:**
-- [Add command](#add-command)
-- [Delete command](#delete-command)
-- [Update command](#update-command)
+- **Components:**
+    - [Get components](#get-components)
+    - [Add component](#add-component)
+    - [Delete component](#delete-component)
+    - [Update component data](#update-component-data)
+    - [Update component position](#update-component-position)
+- **Connections:**
+    - [Add connection](#add connection)
+    - [Delete connection](#delete-connection)
+
 
 
 - - -
