@@ -139,6 +139,6 @@ var SpecificComponentOutputValidation = map[string]func(outputName string) *se.S
 		if _, err := strconv.Atoi(outputName); err != nil {
 			return e.OutputPointNameIsNotNumber(outputName)
 		}
-		return err
+		return nil
 	},
 }
