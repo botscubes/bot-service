@@ -131,9 +131,14 @@ var SpecificComponentOutputValidation = map[string]func(outputName string) *se.S
 		outputNames := map[string]bool{
 			"idIfError": true,
 		}
+		err := checkKeyInMap(outputNames, outputName)
+		if err == nil {
+			return nil
+		}
+
 		if _, err := strconv.Atoi(outputName); err != nil {
 			return e.OutputPointNameIsNotNumber(outputName)
 		}
-		return checkKeyInMap(outputNames, outputName)
+		return err
 	},
 }
