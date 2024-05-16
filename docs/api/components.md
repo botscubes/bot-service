@@ -221,7 +221,7 @@ PATCH /api/bots/{botId}/groups/{groupId}/components/{compId}/position
 Параметры пути
 
 - botId: integer - id бота
-- groupdId: integer - id группы компонентов
+- groupId: integer - id группы компонентов
 - compId: integer - id компонента
 
 Параметры тела запроса
@@ -255,7 +255,7 @@ POST /api/bots/{botId}/groups/{groupId}/connections
 Параметры пути
 
 - botId: integer - id бота
-- groupdId: integer - id группы компонентов
+- groupId: integer - id группы компонентов
 
 Параметры тела запроса
 
@@ -299,7 +299,7 @@ DELETE /api/bots/{botId}/groups/{groupId}/connections
 Параметры пути
 
 - botId: integer - id бота
-- groupdId: integer - id группы компонентов
+- groupId: integer - id группы компонентов
 
 Параметры тела запроса
 
