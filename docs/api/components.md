@@ -31,13 +31,13 @@ GET /api/bots/{botId}/groups/{groupId}/components
 Параметры пути
 
 - botId: integer - id бота
-- groupdId: integer - id группы компонентов
+- groupId: integer - id группы компонентов
 
 #### Ответ
 
 В случае успеха статус 200 с телом ответа: 
 
-```json
+```plaintext
 [
     ..."components"
 ]
@@ -45,7 +45,7 @@ GET /api/bots/{botId}/groups/{groupId}/components
 
 Структура компонента:
 
-```
+```plaintext
 {
     "id": "integer",
     "type": "string",
@@ -89,7 +89,7 @@ POST /api/bots/{botId}/groups/{groupId}/components
 Параметры пути
 
 - botId: integer - id бота
-- groupdId: integer - id группы компонентов
+- groupId: integer - id группы компонентов
 
 Параметры тела запроса
 
@@ -162,7 +162,7 @@ DELETE /api/bots/{botId}/groups/{groupId}/components/{compId}
 Параметры пути
 
 - botId: integer - id бота
-- groupdId: integer - id группы компонентов
+- groupId: integer - id группы компонентов
 - compId: integer - id компонента
 
 
@@ -187,13 +187,13 @@ PATCH /api/bots/{botId}/groups/{groupId}/components/{compId}/data
 Параметры пути
 
 - botId: integer - id бота
-- groupdId: integer - id группы компонентов
+- groupId: integer - id группы компонентов
 - compId: integer - id компонента
 
 
 Параметры тела запроса
 
-```json
+```plaintext
 {
     "<property name>": "any",
     ...
