@@ -11,10 +11,67 @@
     - [Update component data](#update-component-data)
     - [Update component position](#update-component-position)
 - **Connections:**
-    - [Add connection](#add connection)
+    - [Add connection](#add-connection)
     - [Delete connection](#delete-connection)
 
 
+
+- - -
+
+## Get components
+
+[Наверх][toup]
+
+Получение компонентов бота
+
+```plaintext
+GET /api/bots/{botId}/groups/{groupId}/components
+```
+
+Параметры пути
+
+- botId: integer - id бота
+- groupdId: integer - id группы компонентов
+
+#### Ответ
+
+В случае успеха статус 200 с телом ответа: 
+
+```json
+[
+    ..."components"
+]
+```
+
+Структура компонента:
+
+```
+{
+    "id": "integer",
+    "type": "string",
+    "data": "object",
+    "path": "string",
+    "outputs": {
+        "nextComponentId": "integer",
+        ...
+    },
+    "connectionPoints": {
+        "<pointId: string>": {
+            "sourceComponentId": "integer",
+            "sourcePointName": "string",
+            "relativePointPosition": {
+                "x": "integer",
+                "y": "integer"
+            }
+        }
+        ...
+    },
+    "position": {
+        "x": "integer",
+        "y": "integer"
+    }
+}
+```
 
 - - -
 
@@ -26,72 +83,37 @@
 Добавление нового компонента в структуру бота
 
 ```plaintext
-POST /api/bots/{botId}/components
+POST /api/bots/{botId}/groups/{groupId}/components
 ```
 
 Параметры пути
 
-Поле    | Описание
---------|---------
-`botId` | id бота
+- botId: integer - id бота
+- groupdId: integer - id группы компонентов
 
 Параметры тела запроса
 
 ```json
 {
-    "data": {
-        "type": "string",
-        "content": [
-            "content"
-        ]
-    },
-    "commands": [
-        {
-            "type": "string",
-            "data": "string"
-        },
-    ],
+    "type": "string",
     "position": {
         "x": "integer",
         "y": "integer"
     }
 }
 ```
-
-Поле              | Тип                       | Обязательное | Описание
-------------------|---------------------------|--------------|-----------------------------------------------------------
-`data`            | object                    | Да           | Данные компонента
-`data.type`       | string                    | Да           | Тип компонента
-`data.content`    | [content][type_content][] | Да           | Список c данными, специфичными для каждого типа компонента
-`commands`        | [command][type_command][] | Нет          | Список команд
-`commands[].type` | string                    | Да           | Тип команды
-`commands[].data` | string                    | Да           | Текст команды
-`position`        | object                    | Да           | Координаты компонента на поле редактора
-`position.x`      | integer                   | Да           | Координата X
-`position.y`      | integer                   | Да           | Координата Y
-
 #### Ответ
 
-Включает только одно из полей: `data`, `error`  
+В случае успеха статус 201 с телом ответа: 
 
 ```json
 {
-    "ok": "bool",
-    "data": {
-        "id": "integer",
-    },
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
+    "id": "integer"
 }
 ```
 
-_data_
+где id: integer - id вновь созданного бота.
 
-Поле | Тип     | Описание
------|---------|--------------
-`id` | integer | id компонента
 
 <details>
     <summary>Пример</summary>
@@ -99,31 +121,14 @@ _data_
 `Запрос`
 
 ```plaintext
-POST /api/bots/64/components
+POST /api/bots/64/groups/1/components
 ```
 
 Тело запроса
 
 ```json
 {
-    "data": {
-        "type": "text",
-        "content": [
-            {
-                "text": "Hello Telegram"
-            }
-        ]
-    },
-    "commands": [
-        {
-            "type": "text",
-            "data": "First button"
-        },
-        {
-            "type": "text",
-            "data": "Second button"
-        }
-    ],
+    "type": "message",
     "position": {
         "x": 141,
         "y": 112
@@ -135,10 +140,7 @@ POST /api/bots/64/components
 
 ```json
 {
-    "ok": true,
-    "data": {
-        "id": 7
-    }
+    "id": 7
 }
 ```
 </details>
@@ -154,697 +156,173 @@ POST /api/bots/64/components
 Удаление компонента из структуры бота
 
 ```plaintext
-DELETE /api/bots/{botId}/components/{compId}
+DELETE /api/bots/{botId}/groups/{groupId}/components/{compId}
 ```
 
 Параметры пути
 
-Поле     | Описание
----------|--------------
-`botId`  | id бота
-`compId` | id компонента
+- botId: integer - id бота
+- groupdId: integer - id группы компонентов
+- compId: integer - id компонента
+
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
+В случае успеха статус 204 без тела ответа.
 
 
 - - -
 
 
-## Delete set of components
+## Update component data
 
 [Наверх][toup]
 
-Удаление набора компонентов из структуры бота
+Обновление данных компонента
 
 ```plaintext
-POST /api/bots/{botId}/components/del
+PATCH /api/bots/{botId}/groups/{groupId}/components/{compId}/data
 ```
 
 Параметры пути
 
-Поле    | Описание
---------|---------
-`botId` | id бота
+- botId: integer - id бота
+- groupdId: integer - id группы компонентов
+- compId: integer - id компонента
+
 
 Параметры тела запроса
 
 ```json
 {
-    "data": [ "componentID" ]
+    "<property name>": "any",
+    ...
 }
 ```
-
-Поле          | Тип           | Описание
---------------|---------------|------------------------
-`data`        | []componentID | Список с id компонентов
-`componentID` | integer       | id компонента
-
 #### Ответ
 
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-<details>
-    <summary>Пример</summary>
-   
-`Запрос`
-
-```plaintext
-POST /api/bots/64/components/del
-```
-
-Тело запроса
-
-```json
-{
-    "data": [21, 24]
-}
-```
-
-`Ответ` 
-
-```json
-{
-    "ok": true
-}
-```
-</details>
+В случае успеха статус 204 без тела ответа.
 
 
 - - -
 
 
-## Update component
+## Update component position
 
 [Наверх][toup]
 
-Обновление компонента в структуре бота
+Обновление позиции компонента
+
 
 ```plaintext
-PATCH /api/bots/{botId}/components/{compId}
+PATCH /api/bots/{botId}/groups/{groupId}/components/{compId}/position
 ```
 
 Параметры пути
 
-Поле     | Описание
----------|--------------
-`botId`  | id бота
-`compId` | id компонента
+- botId: integer - id бота
+- groupdId: integer - id группы компонентов
+- compId: integer - id компонента
 
 Параметры тела запроса
 
-Запрос должен включать только необходимые для обновления поля.  
-Т.е основные поля тела запроса являются необзательными (см. пример).
+```json
+{
+    "x": "integer",
+    "y": "integer"
+}
+```
+
+#### Ответ
+
+В случае успеха статус 204 без тела ответа.
+
+
+- - - 
+
+
+## Add connection
+
+[Наверх][toup]
+
+Добавление соединения между компонентами.
+
+
+```plaintext
+POST /api/bots/{botId}/groups/{groupId}/connections
+```
+
+Параметры пути
+
+- botId: integer - id бота
+- groupdId: integer - id группы компонентов
+
+Параметры тела запроса
 
 ```json
 {
-    "data": {
-        "type": "string",
-        "content": [
-            "content"
-        ]
-    },
-    "position": {
+    "sourceComponentId": "integer",
+    "sourcePointName": "string",
+    "targetComponentId": "integer",
+    "relativePointPosition": {
         "x": "integer",
         "y": "integer"
     }
 }
 ```
 
-Поле           | Тип                       | Описание
----------------|---------------------------|-----------------------------------------------------------
-`data`         | object                    | Данные компонента
-`data.type`    | string                    | Тип компонента
-`data.content` | [content][type_content][] | Список c данными, специфичными для каждого типа компонента
-`position`     | object                    | Координаты компонента на поле редактора
-`position.x`   | integer                   | Координата X
-`position.y`   | integer                   | Координата Y
-
+где
+- sourceComponentId - id компонента, от которого будет переход
+- sourcePointName - имя точки компонента, от которого будет переход
+- targetComponentId - id компонента, к которому будет переход
+- relativePointPosition - расположение точки относительно компонента, от которого будет переход
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-<details>
-    <summary>Пример</summary>
-   
-`Запрос`
-
-```plaintext
-PACTH /api/bots/64/components/5
-```
-
-Обновление текста и позиции
-
-Тело запроса
-
-```json
-{
-    "data": {
-        "type": "text",
-        "content": [
-            {
-                "text": "Updated Hello Telegram"
-            }
-        ]
-    },
-    "position": {
-        "x": 141,
-        "y": 112
-    }
-}
-```
-
-Обновление только позиции
-
-Тело запроса
-
-```json
-{
-    "position": {
-        "x": 111,
-        "y": 222
-    }
-}
-```
-
-
-</details>
+В случае успеха статус 201 без тела ответа.
 
 
 - - - 
 
 
-## Get bot structure
+## Delete connection
 
 [Наверх][toup]
 
-Получение структуры бота  
-(Список всех компонентов входящих в структуру)
+Добавление соединения между компонентами.
+
 
 ```plaintext
-GET /api/bots/{botId}/components
+DELETE /api/bots/{botId}/groups/{groupId}/connections
 ```
 
 Параметры пути
 
-Поле    | Описание
---------|---------
-`botId` | id бота
-
-#### Ответ
-
-Включает только одно из полей: `data`, `error` 
-
-```json
-{
-    "ok": "bool",
-    "data": [
-        "component"
-    ],
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-Поле        | Тип                         | Описание
-------------|-----------------------------|-------------------
-`data`      | component[]                 | Список компонентов
-`component` | [component][type_component] | Компонент
-
-<details>
-    <summary>Пример</summary>
-   
-`Запрос`
-
-```plaintext
-GET /api/bots/67/components
-```
-
-`Ответ` 
-
-```json
-{
-    "ok": true,
-    "data": [
-        {
-            "id": 1,
-            "data": {
-                "type": "start",
-                "content": []
-            },
-            "keyboard": {
-                "buttons": []
-            },
-            "commands": [],
-            "nextStepId": null,
-            "isMain": true,
-            "position": {
-                "x": 50,
-                "y": 50
-            }
-        },
-        {
-            "id": 2,
-            "data": {
-                "type": "text",
-                "content": [
-                    {
-                        "text": "Hello Telegram"
-                    }
-                ]
-            },
-            "keyboard": {
-                "buttons": []
-            },
-            "commands": [
-                {
-                    "id": 1,
-                    "type": "text",
-                    "data": "First button",
-                    "componentId": 2,
-                    "nextStepId": null
-                },
-                {
-                    "id": 2,
-                    "type": "text",
-                    "data": "Second button",
-                    "componentId": 2,
-                    "nextStepId": null
-                }
-            ],
-            "nextStepId": null,
-            "isMain": false,
-            "position": {
-                "x": 141,
-                "y": 112
-            }
-        }
-    ]
-}
-```
-</details>
-
-
-- - -
-
-
-## Set next step for component
-
-[Наверх][toup]
-
-Установка номера следующего шага для компонента
-
-```plaintext
-POST /api/bots/{botId}/components/{compId}/next
-```
-
-Параметры пути
-
-Поле     | Описание
----------|------------------------
-`botId`  | id бота
-`compId` | id исходного компонента
+- botId: integer - id бота
+- groupdId: integer - id группы компонентов
 
 Параметры тела запроса
 
 ```json
 {
-    "nextStepId": "integer"
+    "sourceComponentId": "integer",
+    "sourcePointName": "string"
 }
 ```
 
-Поле         | Тип     | Описание
--------------|---------|--------------------------------
-`nextStepId` | integer | id следующего шага (компонента)
+где
+- sourceComponentId - id компонента, от которого будет переход
+- sourcePointName - имя точки компонента, от которого будет переход
 
 #### Ответ
 
-В случае успеха включает только поле `ok`
+В случае успеха статус 204 без тела ответа.
 
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
 
-```
 
 
-- - - 
 
 
-## Delete next step for component
-
-[Наверх][toup]
-
-Удаление номера следующего шага для компонента
-
-```plaintext
-DELETE /api/bots/{botId}/components/{compId}/next
-```
-
-Параметры пути
-
-Поле     | Описание
----------|------------------------
-`botId`  | id бота
-`compId` | id исходного компонента
-
-#### Ответ
-
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-
-- - -
-
-
-## Set next step for command
-
-[Наверх][toup]
-
-Установка номера следующего шага для команды в компоненте
-
-```plaintext
-POST /api/bots/{botId}/components/{compId}/commands/{commandId}/next
-```
-
-Параметры пути
-
-Поле        | Описание
-------------|--------------
-`botId`     | id бота
-`compId`    | id компонента
-`commandId` | id команды
-
-Параметры тела запроса
-
-```json
-{
-    "nextStepId": "integer"
-}
-```
-
-Поле         | Тип     | Описание
--------------|---------|--------------------------------
-`nextStepId` | integer | id следующего шага (компонента)
-
-#### Ответ
-
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-
-- - -
-
-
-## Delete next step for command
-
-[Наверх][toup]
-
-Удаление номера следующего шага для команды в компоненте
-
-```plaintext
-DELETE /api/bots/{botId}/components/{compId}/commands/{commandId}/next
-```
-
-Параметры пути
-
-Поле        | Описание
-------------|--------------
-`botId`     | id бота
-`compId`    | id компонента
-`commandId` | id команды
-
-#### Ответ
-
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-
-- - -
-
-
-## Add command
-
-[Наверх][toup]
-
-Добавление [команды][type_command] в компоненте
-
-```plaintext
-POST /api/bots/{botId}/components/{compId}/commands
-```
-
-Параметры пути
-
-Поле     | Описание
----------|--------------
-`botId`  | id бота
-`compId` | id компонента
-
-Параметры тела запроса
-
-```json
-{
-    "type": "string",
-    "data": "string"
-}
-```
-
-Поле   | Тип    | Описание
--------|--------|---------------------------------------------
-`type` | string | Тип команды
-`data` | string | Данные, специфичные для каждого типа команды
-
-#### Ответ
-
-Включает только одно из полей: `data`, `error`  
-
-```json
-{
-    "ok": "bool",
-    "data": {
-        "id": "integer",
-    },
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-_data_
-
-Поле | Тип     | Описание
------|---------|-----------
-`id` | integer | id команды
-
-<details>
-    <summary>Пример</summary>  
-
-`Запрос`
-
-```plaintext
-POST /api/bots/67/components/3/commands
-```
-
-Тело запроса
-
-```json
-{
-    "type": "text",
-    "data": "abc"
-}
-```
-
-`Ответ` 
-
-```json
-{
-    "ok": true,
-    "data": {
-        "id": 4
-    }
-}
-```
-</details>
-
-
-- - -
-
-
-## Delete command
-
-[Наверх][toup]
-
-Удаление команды в компоненте
-
-```plaintext
-DELETE /api/bots/{botId}/components/{compId}/commands/{commandId}
-```
-
-Параметры пути
-
-Поле        | Описание
-------------|--------------
-`botId`     | id бота
-`compId`    | id компонента
-`commandId` | id команды
-
-#### Ответ
-
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-
-- - -
-
-
-## Update command
-
-[Наверх][toup]
-
-Обновление [команды][type_command] в компоненте
-
-```plaintext
-PATCH /api/bots/{botId}/components/{compId}/commands/{commandId}
-```
-
-Параметры пути
-
-Поле        | Описание
-------------|--------------
-`botId`     | id бота
-`compId`    | id компонента
-`commandId` | id команды
-
-Параметры тела запроса
-
-```json
-{
-    "type": "string",
-    "data": "string"
-}
-```
-
-Поле   | Тип    | Описание
--------|--------|---------------------------------------------
-`type` | string | Тип команды
-`data` | string | Данные, специфичные для каждого типа команды
-
-#### Ответ
-
-В случае успеха включает только поле `ok`
-
-```json
-{
-    "ok": "bool",
-    "error": {
-        "code": "integer",
-        "message": "string"
-    }
-}
-```
-
-<details>
-    <summary>Пример</summary>  
-
-`Запрос`
-
-```plaintext
-POST /api/bots/67/components/5/commands/5
-```
-
-Тело запроса
-
-```json
-{
-    "type": "text",
-    "data": "updated"
-}
-```
-
-`Ответ` 
-
-```json
-{
-    "ok": true,
-}
-```
-</details>
 
 
 [//]: # (LINKS)
