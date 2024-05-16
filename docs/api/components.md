@@ -289,7 +289,7 @@ POST /api/bots/{botId}/groups/{groupId}/connections
 
 [Наверх][toup]
 
-Добавление соединения между компонентами.
+Удаление соединения между компонентами.
 
 
 ```plaintext
