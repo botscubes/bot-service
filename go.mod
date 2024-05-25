@@ -1,6 +1,6 @@
 module github.com/botscubes/bot-service
 
-go 1.21.4
+go 1.22
 
 require (
 	github.com/botscubes/bot-components v0.0.0-20240325133226-a92fc176dd57
