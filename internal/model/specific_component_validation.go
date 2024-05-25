@@ -128,6 +128,14 @@ var SpecificComponentOutputValidation = map[string]func(outputName string) *se.S
 		return checkKeyInMap(outputNames, outputName)
 	},
 	"buttons": func(outputName string) *se.ServiceError {
+		outputNames := map[string]bool{
+			"idIfError": true,
+		}
+		err := checkKeyInMap(outputNames, outputName)
+		if err == nil {
+			return nil
+		}
+
 		if _, err := strconv.Atoi(outputName); err != nil {
 			return e.OutputPointNameIsNotNumber(outputName)
 		}

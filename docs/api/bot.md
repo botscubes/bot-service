@@ -11,8 +11,7 @@
 - [Delete token](#delete-token)
 - [Start](#start)
 - [Stop](#stop)
-- [Wipe bot](#wipe-bot)
-
+- [Get status](#get-status)
 
 - - -
 
@@ -55,7 +54,7 @@ _data_
 Поле        | Тип                         | Описание
 ------------|-----------------------------|----------
 `botId`     | integer                     | id бота
-`component` | [component][type_component] | Компонент
+`component` | component                   | Компонент
 
 <details>
     <summary>Пример</summary>
@@ -81,16 +80,11 @@ POST /api/bots
     "botId": 66,
     "component": {
         "id": 1,
-        "data": {
-            "type": "start",
-            "content": []
+        "type": "start",
+        "path": "",
+        "outputs": {
+            "nextComponentId": null
         },
-        "keyboard": {
-            "buttons": []
-        },
-        "commands": [],
-        "nextStepId": null,
-        "isMain": true,
         "position": {
             "x": 50,
             "y": 50
@@ -148,7 +142,19 @@ GET /api/bots
 Поле   | Тип             | Описание
 -------|-----------------|-------------
 `data` | bot[]           | Список ботов
-`bot`  | [bot][type_bot] | Бот
+`bot`  | bot             | Бот
+
+
+Структура бота:
+
+```
+{
+    "id": "integer",
+    "title": "string",
+    "status": "integer"
+}
+```
+
 
 <details>
     <summary>Пример</summary>
@@ -295,31 +301,19 @@ PATCH /api/bots/{botId}/stop
 В случае успеха http статус 204 без тела ответа.
 
 
-- - -
-
-
-## Wipe bot
+## Get status
 
 [Наверх][toup]
 
-Очистка бота:  
-- Удаление всех компонентов в структре, кроме начального  
-- Удаление всех команд  
-- Сброс токена  
+Получение статуса бота
 
 ```plaintext
-PATCH /api/bots/{botId}/wipe
+GET /api/bots/{botId}/status
 ```
 
-Параметры пути
-
-Поле    | Описание
---------|---------
-`botId` | id бота
-
-#### Ответ
-
-В случае успеха http статус 204 без тела ответа.
+В случае успеха http статус 200 с телом ответа, содержащим номер статуса бота:
+- 0 - остановлен;
+- 1 - запущен.
 
 
 [//]: # (LINKS)
