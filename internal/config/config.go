@@ -9,8 +9,8 @@ import (
 
 const (
 	MainComponentId    = 1
-	StartComponentPosX = 50
-	StartComponentPosY = 50
+	StartComponentPosX = 100
+	StartComponentPosY = 100
 
 	RedisExpire     = 1 * time.Hour
 	ShutdownTimeout = 1 * time.Minute
