@@ -86,6 +86,22 @@ var SpecificComponentDataValidation = map[string]map[string]func(data any) *se.S
 			return nil
 		},
 	},
+	"toInt": {
+		"source": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("source")
+			}
+			return nil
+		},
+		"destination": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("destination")
+			}
+			return nil
+		},
+	},
 }
 
 func checkKeyInMap(m map[string]bool, k string) *se.ServiceError {
@@ -137,6 +153,14 @@ var SpecificComponentOutputValidation = map[string]func(outputName string) *se.S
 		return checkKeyInMap(outputNames, outputName)
 	},
 	"code": func(outputName string) *se.ServiceError {
+		outputNames := map[string]bool{
+			"idIfError":       true,
+			"nextComponentId": true,
+		}
+
+		return checkKeyInMap(outputNames, outputName)
+	},
+	"toInt": func(outputName string) *se.ServiceError {
 		outputNames := map[string]bool{
 			"idIfError":       true,
 			"nextComponentId": true,
