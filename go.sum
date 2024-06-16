@@ -1,11 +1,8 @@
 github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/cCs=
 github.com/andybalholm/brotli v1.0.5/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
-github.com/botscubes/bot-components v0.0.0-20240614091455-6c46ec182125 h1:4Wr+g8/egf/pxHDucRDM5svfFuS4hJ/V+CtaqhFw3Gk=
-github.com/botscubes/bot-components v0.0.0-20240614091455-6c46ec182125/go.mod h1:aOdHdRE9e7ua2VRQSvWI88TVA/wthq/57AUzqWGW0ps=
-github.com/botscubes/bot-components v0.0.0-20240616212315-9b4843c046b5 h1:Vus9gZYoEvMQtqFFbEdfX7TJgNMriF48457xjbKijBA=
-github.com/botscubes/bot-components v0.0.0-20240616212315-9b4843c046b5/go.mod h1:Wxb/AzPCF6jJ0h4D43hr0u77zMG+yKmmD6nhYOcqT8A=
-github.com/botscubes/bql v0.0.0-20240530165240-e5c43a472ae5 h1:/x2GBd1O2YkKjUW3sD5CbrWSu+TquuwN8uNKVUT3PGk=
-github.com/botscubes/bql v0.0.0-20240530165240-e5c43a472ae5/go.mod h1:DgMsFnqIeKNWoXM9e8chHtxb+tlNKlK2YtQLzI72V+Q=
+github.com/botscubes/bot-components v0.0.0-20240616222320-1d3bc77a7954 h1:Z95vBLaxvAs/jqb1A6j15C6eiPX6s2ZXy39zqlTwf7U=
+github.com/botscubes/bot-components v0.0.0-20240616222320-1d3bc77a7954/go.mod h1:QWQZxm65nKeK5OCTEVVGSxypt2v5R8cKjSVBgobRDiQ=
+github.com/botscubes/bql v0.0.0-20240616210931-32c3a72e156c h1:6j7ZnEFcWPk5k5J+iPy8Ue1+WEc5iIfcL9lkYb+TQZY=
 github.com/botscubes/bql v0.0.0-20240616210931-32c3a72e156c/go.mod h1:DgMsFnqIeKNWoXM9e8chHtxb+tlNKlK2YtQLzI72V+Q=
 github.com/botscubes/user-service v0.2.0 h1:4PFF7PtnfOhQ7/8MiIkqXW1TWhe6wYWJ1UZous7zc/I=
 github.com/botscubes/user-service v0.2.0/go.mod h1:NCps0e7H8se0DIshHzf1P9lM7cV2jhX42pcLQvwHPv4=
