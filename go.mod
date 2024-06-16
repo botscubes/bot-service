@@ -3,7 +3,7 @@ module github.com/botscubes/bot-service
 go 1.22
 
 require (
-	github.com/botscubes/bot-components v0.0.0-20240614091455-6c46ec182125
+	github.com/botscubes/bot-components v0.0.0-20240616212315-9b4843c046b5
 	github.com/botscubes/user-service v0.2.0
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.49.2
@@ -17,7 +17,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/botscubes/bql v0.0.0-20240530165240-e5c43a472ae5 // indirect
+	github.com/botscubes/bql v0.0.0-20240616210931-32c3a72e156c // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
