@@ -10,6 +10,7 @@
     - [Delete component](#delete-component)
     - [Update component data](#update-component-data)
     - [Update component position](#update-component-position)
+    - [Update component path](#update-component-path)
 - **Connections:**
     - [Add connection](#add-connection)
     - [Delete connection](#delete-connection)
@@ -237,6 +238,35 @@ PATCH /api/bots/{botId}/groups/{groupId}/components/{compId}/position
 
 В случае успеха статус 204 без тела ответа.
 
+- - -
+
+
+## Update component path
+
+[Наверх][toup]
+
+Обновление пути сохранения данных компонента
+
+
+```plaintext
+PATCH /api/bots/{botId}/groups/{groupId}/components/{compId}/path
+```
+
+Параметры пути
+
+- botId: integer - id бота
+- groupId: integer - id группы компонентов
+- compId: integer - id компонента
+
+Параметры тела запроса
+
+```
+"path": "string"
+```
+
+#### Ответ
+
+В случае успеха статус 204 без тела ответа.
 
 - - - 
 

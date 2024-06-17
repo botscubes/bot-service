@@ -86,4 +86,5 @@ func regComponentHandlers(component fiber.Router, h *handlers.ApiHandler) {
 	component.Delete("", h.DeleteComponent)
 	component.Patch("/position", h.SetComponentPosition)
 	component.Patch("/data", h.UpdateComponentData)
+	component.Patch("/path", h.UpdateComponentPath)
 }
