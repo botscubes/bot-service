@@ -60,7 +60,8 @@ func (r *AddComponentReq) Validate() *se.ServiceError {
 		r.Type != components.TypeTextInput &&
 		r.Type != components.TypeCode &&
 		r.Type != components.TypeButtons &&
-		r.Type != components.TypeToInt {
+		r.Type != components.TypeToInt &&
+		r.Type != components.TypeMove {
 		return e.InvalidParam("type: " + r.Type)
 	}
 
