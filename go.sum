@@ -4,6 +4,8 @@ github.com/botscubes/bot-components v0.0.0-20240618130841-a831f562affa h1:LBqyav
 github.com/botscubes/bot-components v0.0.0-20240618130841-a831f562affa/go.mod h1:QWQZxm65nKeK5OCTEVVGSxypt2v5R8cKjSVBgobRDiQ=
 github.com/botscubes/bot-components v0.0.0-20240618140259-82f42765e3b2 h1:rVb1P6M/aExzYm47cqyoyowAlkiE/qsKAMyaTaHUhbo=
 github.com/botscubes/bot-components v0.0.0-20240618140259-82f42765e3b2/go.mod h1:QWQZxm65nKeK5OCTEVVGSxypt2v5R8cKjSVBgobRDiQ=
+github.com/botscubes/bot-components v0.0.0-20240618175944-a412323a3018 h1:l+ZwqyGVtmwrVMh1b+sqcGFPcQsX0xX31qzVCKpJQF8=
+github.com/botscubes/bot-components v0.0.0-20240618175944-a412323a3018/go.mod h1:QWQZxm65nKeK5OCTEVVGSxypt2v5R8cKjSVBgobRDiQ=
 github.com/botscubes/bql v0.0.0-20240616210931-32c3a72e156c h1:6j7ZnEFcWPk5k5J+iPy8Ue1+WEc5iIfcL9lkYb+TQZY=
 github.com/botscubes/bql v0.0.0-20240616210931-32c3a72e156c/go.mod h1:DgMsFnqIeKNWoXM9e8chHtxb+tlNKlK2YtQLzI72V+Q=
 github.com/botscubes/user-service v0.2.0 h1:4PFF7PtnfOhQ7/8MiIkqXW1TWhe6wYWJ1UZous7zc/I=
