@@ -61,7 +61,10 @@ func (r *AddComponentReq) Validate() *se.ServiceError {
 		r.Type != components.TypeCode &&
 		r.Type != components.TypeButtons &&
 		r.Type != components.TypeToInt &&
-		r.Type != components.TypeMove {
+		r.Type != components.TypeMove &&
+		r.Type != components.TypeHTTP &&
+		r.Type != components.TypeFromJSON &&
+		r.Type != components.TypePhoto {
 		return e.InvalidParam("type: " + r.Type)
 	}
 

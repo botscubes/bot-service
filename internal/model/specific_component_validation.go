@@ -104,6 +104,54 @@ var SpecificComponentDataValidation = map[string]map[string]func(data any) *se.S
 			return nil
 		},
 	},
+	"http": {
+		"url": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("url")
+			}
+			return nil
+		},
+		"method": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("method")
+			}
+			return nil
+		},
+		"body": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("body")
+			}
+			return nil
+		},
+		"header": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("header")
+			}
+			return nil
+		},
+	},
+	"photo": {
+		"name": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("name")
+			}
+			return nil
+		},
+	},
+	"fromJSON": {
+		"json": func(data any) *se.ServiceError {
+			_, ok := data.(string)
+			if !ok {
+				return e.InvalidParam("json")
+			}
+			return nil
+		},
+	},
 }
 
 func checkKeyInMap(m map[string]bool, k string) *se.ServiceError {
@@ -171,6 +219,30 @@ var SpecificComponentOutputValidation = map[string]func(outputName string) *se.S
 		return checkKeyInMap(outputNames, outputName)
 	},
 	"move": func(outputName string) *se.ServiceError {
+		outputNames := map[string]bool{
+			"idIfError":       true,
+			"nextComponentId": true,
+		}
+
+		return checkKeyInMap(outputNames, outputName)
+	},
+	"http": func(outputName string) *se.ServiceError {
+		outputNames := map[string]bool{
+			"idIfError":       true,
+			"nextComponentId": true,
+		}
+
+		return checkKeyInMap(outputNames, outputName)
+	},
+	"fromJSON": func(outputName string) *se.ServiceError {
+		outputNames := map[string]bool{
+			"idIfError":       true,
+			"nextComponentId": true,
+		}
+
+		return checkKeyInMap(outputNames, outputName)
+	},
+	"photo": func(outputName string) *se.ServiceError {
 		outputNames := map[string]bool{
 			"idIfError":       true,
 			"nextComponentId": true,
